@@ -13,7 +13,31 @@
 #define OAM_DMA     (*(volatile unsigned char*)0x4014)
 #define JOYPAD1     (*(volatile unsigned char*)0x4016)
 #define JOYPAD2     (*(volatile unsigned char*)0x4017)
+// APU (Audio Processing Unit) registers
 #define APU_STATUS  (*(volatile unsigned char*)0x4015)
+#define APU_FRAME   (*(volatile unsigned char*)0x4017)
+
+// Pulse 1 (Square wave channel 1)
+#define APU_PL1_VOL (*(volatile unsigned char*)0x4000)  // Duty, loop, env, volume
+#define APU_PL1_SWP (*(volatile unsigned char*)0x4001)  // Sweep
+#define APU_PL1_LO  (*(volatile unsigned char*)0x4002)  // Timer low
+#define APU_PL1_HI  (*(volatile unsigned char*)0x4003)  // Length, timer high
+
+// Pulse 2 (Square wave channel 2)
+#define APU_PL2_VOL (*(volatile unsigned char*)0x4004)
+#define APU_PL2_SWP (*(volatile unsigned char*)0x4005)
+#define APU_PL2_LO  (*(volatile unsigned char*)0x4006)
+#define APU_PL2_HI  (*(volatile unsigned char*)0x4007)
+
+// Triangle wave channel
+#define APU_TRI_LIN (*(volatile unsigned char*)0x4008)  // Linear counter
+#define APU_TRI_LO  (*(volatile unsigned char*)0x400A)  // Timer low
+#define APU_TRI_HI  (*(volatile unsigned char*)0x400B)  // Length, timer high
+
+// Noise channel
+#define APU_NOI_VOL (*(volatile unsigned char*)0x400C)  // Loop, env, volume
+#define APU_NOI_LO  (*(volatile unsigned char*)0x400E)  // Mode, period
+#define APU_NOI_HI  (*(volatile unsigned char*)0x400F)  // Length
 
 // OAM buffer location
 #define OAM         ((unsigned char*)0x0200)
@@ -115,6 +139,168 @@ static unsigned char confetti_x[MAX_CONFETTI];
 static unsigned char confetti_y[MAX_CONFETTI];
 static unsigned char confetti_color[MAX_CONFETTI];
 
+// ============================================
+// MUSIC ENGINE
+// ============================================
+
+// Music state
+static unsigned char music_enabled;
+static unsigned char music_frame;      // Frame counter for timing
+static unsigned char music_pos;        // Current position in sequence
+static unsigned char music_tempo;      // Frames per beat (lower = faster)
+static unsigned char current_track;    // 0=title, 1=racing, 2=win
+
+// Channel states
+static unsigned char tri_note;         // Current triangle note
+static unsigned char pl1_note;         // Current pulse 1 note
+static unsigned char pl2_note;         // Current pulse 2 note
+static unsigned char noise_on;         // Noise state
+
+// Note period table (NTSC, octave 2-5)
+// Lower value = higher pitch
+// Format: timer value low byte, high byte is note index dependent
+// Notes: C, C#, D, D#, E, F, F#, G, G#, A, A#, B
+static const unsigned int note_table[48] = {
+    // Octave 2
+    0x6B0, 0x650, 0x5F3, 0x59D, 0x54D, 0x501, 0x4B9, 0x475, 0x435, 0x3F8, 0x3BF, 0x388,
+    // Octave 3
+    0x358, 0x328, 0x2FA, 0x2CF, 0x2A7, 0x281, 0x25C, 0x23B, 0x21B, 0x1FC, 0x1DF, 0x1C4,
+    // Octave 4
+    0x1AC, 0x194, 0x17D, 0x168, 0x153, 0x140, 0x12E, 0x11D, 0x10D, 0x0FE, 0x0EF, 0x0E2,
+    // Octave 5
+    0x0D6, 0x0CA, 0x0BE, 0x0B4, 0x0AA, 0x0A0, 0x097, 0x08F, 0x087, 0x07F, 0x078, 0x071,
+};
+
+// Note definitions (index into note_table)
+#define NOTE_REST 0xFF
+#define C2  0
+#define CS2 1
+#define D2  2
+#define DS2 3
+#define E2  4
+#define F2  5
+#define FS2 6
+#define G2  7
+#define GS2 8
+#define A2  9
+#define AS2 10
+#define B2  11
+#define C3  12
+#define CS3 13
+#define D3  14
+#define DS3 15
+#define E3  16
+#define F3  17
+#define FS3 18
+#define G3  19
+#define GS3 20
+#define A3  21
+#define AS3 22
+#define B3  23
+#define C4  24
+#define CS4 25
+#define D4  26
+#define DS4 27
+#define E4  28
+#define F4  29
+#define FS4 30
+#define G4  31
+#define GS4 32
+#define A4  33
+#define AS4 34
+#define B4  35
+#define C5  36
+#define CS5 37
+#define D5  38
+#define DS5 39
+#define E5  40
+#define F5  41
+#define FS5 42
+#define G5  43
+
+// ============================================
+// RACING BGM - Energetic with heavy triangle bass!
+// ============================================
+#define RACING_LEN 32
+
+// Triangle bass line - driving bass!
+static const unsigned char racing_tri[RACING_LEN] = {
+    E2, E2, E3, E2,  G2, G2, G3, G2,
+    A2, A2, A3, A2,  G2, G2, G3, G2,
+    E2, E2, E3, E2,  G2, G2, G3, G2,
+    A2, A2, B2, B2,  C3, C3, B2, A2,
+};
+
+// Pulse 1 - melody
+static const unsigned char racing_pl1[RACING_LEN] = {
+    E4, NOTE_REST, G4, E4,  NOTE_REST, B4, A4, G4,
+    A4, NOTE_REST, C5, A4,  NOTE_REST, G4, E4, D4,
+    E4, NOTE_REST, G4, E4,  NOTE_REST, B4, A4, G4,
+    A4, A4, B4, B4,  C5, C5, B4, A4,
+};
+
+// Pulse 2 - harmony/arpeggios
+static const unsigned char racing_pl2[RACING_LEN] = {
+    B3, B3, E4, B3,  D4, D4, G4, D4,
+    E4, E4, A4, E4,  D4, D4, G4, D4,
+    B3, B3, E4, B3,  D4, D4, G4, D4,
+    E4, E4, FS4, FS4, G4, G4, FS4, E4,
+};
+
+// Noise pattern (0=off, 1=kick, 2=snare, 3=hihat)
+static const unsigned char racing_noise[RACING_LEN] = {
+    1, 3, 0, 3,  2, 3, 0, 3,
+    1, 3, 0, 3,  2, 3, 0, 3,
+    1, 3, 0, 3,  2, 3, 0, 3,
+    1, 3, 2, 3,  1, 2, 1, 2,
+};
+
+// ============================================
+// TITLE BGM - Chill but anticipating
+// ============================================
+#define TITLE_LEN 16
+
+static const unsigned char title_tri[TITLE_LEN] = {
+    C3, NOTE_REST, G2, NOTE_REST,
+    A2, NOTE_REST, E2, NOTE_REST,
+    F2, NOTE_REST, C3, NOTE_REST,
+    G2, NOTE_REST, G2, A2,
+};
+
+static const unsigned char title_pl1[TITLE_LEN] = {
+    E4, G4, C5, G4,
+    A4, C5, E5, C5,
+    F4, A4, C5, A4,
+    G4, B4, D5, B4,
+};
+
+static const unsigned char title_pl2[TITLE_LEN] = {
+    C4, E4, G4, E4,
+    E4, A4, C5, A4,
+    C4, F4, A4, F4,
+    D4, G4, B4, G4,
+};
+
+// ============================================
+// WIN BGM - Triumphant fanfare!
+// ============================================
+#define WIN_LEN 16
+
+static const unsigned char win_tri[WIN_LEN] = {
+    C3, C3, G2, G2,  C3, C3, C3, C3,
+    F2, F2, C3, C3,  G2, G2, C3, C3,
+};
+
+static const unsigned char win_pl1[WIN_LEN] = {
+    C5, E5, G5, G5,  E5, C5, E5, G5,
+    F5, F5, E5, E5,  D5, D5, C5, C5,
+};
+
+static const unsigned char win_pl2[WIN_LEN] = {
+    E4, G4, C5, C5,  G4, E4, G4, C5,
+    A4, A4, G4, G4,  F4, F4, E4, E4,
+};
+
 // Palette data
 const unsigned char palette[32] = {
     // BG palettes
@@ -128,6 +314,180 @@ const unsigned char palette[32] = {
     0x0F, 0x07, 0x17, 0x27,  // Obstacle (orange)
     0x0F, 0x30, 0x30, 0x30   // HUD (white)
 };
+
+// ============================================
+// MUSIC FUNCTIONS
+// ============================================
+
+// Initialize APU
+static void init_apu(void) {
+    // Enable all channels
+    APU_STATUS = 0x0F;  // Enable pulse1, pulse2, triangle, noise
+
+    // Set frame counter mode (4-step, no IRQ)
+    APU_FRAME = 0x40;
+
+    // Initialize channels to silence
+    APU_PL1_VOL = 0x30;  // Silence, constant volume
+    APU_PL2_VOL = 0x30;
+    APU_TRI_LIN = 0x80;  // Silence triangle
+    APU_NOI_VOL = 0x30;
+
+    music_enabled = 1;
+    music_frame = 0;
+    music_pos = 0;
+    music_tempo = 8;  // 8 frames per beat = ~7.5 BPS at 60fps
+    current_track = 0;
+}
+
+// Play a note on triangle channel
+static void play_triangle(unsigned char note) {
+    unsigned int period;
+    if (note == NOTE_REST || note >= 48) {
+        APU_TRI_LIN = 0x00;  // Silence
+        return;
+    }
+    period = note_table[note];
+    APU_TRI_LIN = 0xFF;  // Max linear counter (sustain)
+    APU_TRI_LO = (unsigned char)(period & 0xFF);
+    APU_TRI_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
+}
+
+// Play a note on pulse 1 channel
+static void play_pulse1(unsigned char note) {
+    unsigned int period;
+    if (note == NOTE_REST || note >= 48) {
+        APU_PL1_VOL = 0x30;  // Silence
+        return;
+    }
+    period = note_table[note];
+    APU_PL1_VOL = 0xBF;  // 50% duty, constant volume, max volume
+    APU_PL1_SWP = 0x00;  // No sweep
+    APU_PL1_LO = (unsigned char)(period & 0xFF);
+    APU_PL1_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
+}
+
+// Play a note on pulse 2 channel
+static void play_pulse2(unsigned char note) {
+    unsigned int period;
+    if (note == NOTE_REST || note >= 48) {
+        APU_PL2_VOL = 0x30;  // Silence
+        return;
+    }
+    period = note_table[note];
+    APU_PL2_VOL = 0x7A;  // 25% duty, constant volume, medium volume
+    APU_PL2_SWP = 0x00;  // No sweep
+    APU_PL2_LO = (unsigned char)(period & 0xFF);
+    APU_PL2_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
+}
+
+// Play noise drum
+static void play_noise(unsigned char type) {
+    switch (type) {
+        case 0:  // Off
+            APU_NOI_VOL = 0x30;
+            break;
+        case 1:  // Kick
+            APU_NOI_VOL = 0x3F;  // Constant, max volume
+            APU_NOI_LO = 0x0C;   // Low pitch
+            APU_NOI_HI = 0x18;
+            break;
+        case 2:  // Snare
+            APU_NOI_VOL = 0x3A;  // Constant, medium volume
+            APU_NOI_LO = 0x05;   // Mid pitch, mode bit
+            APU_NOI_HI = 0x28;
+            break;
+        case 3:  // Hi-hat
+            APU_NOI_VOL = 0x34;  // Constant, low volume
+            APU_NOI_LO = 0x02;   // High pitch
+            APU_NOI_HI = 0x08;
+            break;
+    }
+}
+
+// Start a music track
+static void music_play(unsigned char track) {
+    current_track = track;
+    music_pos = 0;
+    music_frame = 0;
+
+    switch (track) {
+        case 0:  // Title
+            music_tempo = 12;  // Slower
+            break;
+        case 1:  // Racing
+            music_tempo = 6;   // Fast!
+            break;
+        case 2:  // Win
+            music_tempo = 10;  // Medium
+            break;
+    }
+}
+
+// Stop music
+static void music_stop(void) {
+    APU_PL1_VOL = 0x30;
+    APU_PL2_VOL = 0x30;
+    APU_TRI_LIN = 0x00;
+    APU_NOI_VOL = 0x30;
+}
+
+// Update music (call every frame)
+static void music_update(void) {
+    unsigned char len;
+    const unsigned char *tri_data;
+    const unsigned char *pl1_data;
+    const unsigned char *pl2_data;
+    const unsigned char *noise_data;
+
+    if (!music_enabled) return;
+
+    ++music_frame;
+    if (music_frame < music_tempo) return;
+
+    music_frame = 0;
+
+    // Select track data
+    switch (current_track) {
+        case 0:  // Title
+            len = TITLE_LEN;
+            tri_data = title_tri;
+            pl1_data = title_pl1;
+            pl2_data = title_pl2;
+            noise_data = 0;
+            break;
+        case 1:  // Racing
+            len = RACING_LEN;
+            tri_data = racing_tri;
+            pl1_data = racing_pl1;
+            pl2_data = racing_pl2;
+            noise_data = racing_noise;
+            break;
+        case 2:  // Win
+            len = WIN_LEN;
+            tri_data = win_tri;
+            pl1_data = win_pl1;
+            pl2_data = win_pl2;
+            noise_data = 0;
+            break;
+        default:
+            return;
+    }
+
+    // Play current notes
+    play_triangle(tri_data[music_pos]);
+    play_pulse1(pl1_data[music_pos]);
+    play_pulse2(pl2_data[music_pos]);
+    if (noise_data) {
+        play_noise(noise_data[music_pos]);
+    }
+
+    // Advance position
+    ++music_pos;
+    if (music_pos >= len) {
+        music_pos = 0;
+    }
+}
 
 // Wait for vblank
 static void wait_vblank(void) {
@@ -507,7 +867,7 @@ static void check_bullet_collisions(void) {
                 player_inv = 60;
                 bullet_on[i] = 0;
                 if (player_hp == 0) {
-                    game_state = STATE_GAMEOVER;
+                    game_state = STATE_GAMEOVER; music_stop();
                 }
             }
         }
@@ -641,7 +1001,7 @@ static void check_collisions(void) {
             --player_hp;
             player_inv = 60;
             if (player_hp == 0) {
-                game_state = STATE_GAMEOVER;
+                game_state = STATE_GAMEOVER; music_stop();
             }
         }
     }
@@ -657,7 +1017,7 @@ static void check_collisions(void) {
                 player_inv = 60;
                 obs_on[i] = 0;
                 if (player_hp == 0) {
-                    game_state = STATE_GAMEOVER;
+                    game_state = STATE_GAMEOVER; music_stop();
                 }
             }
         }
@@ -686,6 +1046,7 @@ static void update_game(void) {
         if (lap_count >= 3 && position == 1) {
             game_state = STATE_WIN;
             init_win_animation();
+            music_play(2);  // Victory fanfare!
         }
     }
 
@@ -1013,6 +1374,10 @@ void main(void) {
     // Disable rendering during setup
     ppu_off();
 
+    // Initialize audio
+    init_apu();
+    music_play(0);  // Title BGM
+
     // Load palettes
     load_palettes();
 
@@ -1047,12 +1412,16 @@ void main(void) {
         // Clear sprites first
         clear_sprites();
 
+        // Update music every frame
+        music_update();
+
         // State machine
         switch (game_state) {
             case STATE_TITLE:
                 draw_title();
                 if (pad_new & BTN_START) {
                     init_game();
+                    music_play(1);  // Racing BGM - energetic!
                     game_state = STATE_RACING;
                 }
                 break;
@@ -1085,6 +1454,7 @@ void main(void) {
             case STATE_GAMEOVER:
                 draw_gameover();
                 if (pad_new & BTN_START) {
+                    music_play(0);  // Back to title BGM
                     game_state = STATE_TITLE;
                 }
                 break;
@@ -1094,6 +1464,7 @@ void main(void) {
                 draw_win();
                 // Only accept START after animation plays (about 1.5 seconds)
                 if (win_timer > 90 && (pad_new & BTN_START)) {
+                    music_play(0);  // Back to title BGM
                     game_state = STATE_TITLE;
                 }
                 break;
