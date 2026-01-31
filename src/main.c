@@ -1085,6 +1085,12 @@ static void update_game(void) {
         score += 100;
         if (position == 1) score += 100;
 
+        // Recover 3 HP on lap completion
+        player_hp += 3;
+        if (player_hp > PLAYER_MAX_HP) {
+            player_hp = PLAYER_MAX_HP;
+        }
+
         if (lap_count >= 3 && position == 1) {
             game_state = STATE_WIN;
             init_win_animation();
