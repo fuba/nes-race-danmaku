@@ -864,20 +864,15 @@ static void spawn_bullet(unsigned char x, unsigned char y, signed char dx, signe
     }
 }
 
-// Sine approximation table (8 values for 0-315 degrees, scaled -2 to 2)
-static const signed char sin_table[8] = { 0, 1, 2, 1, 0, -1, -2, -1 };
-static const signed char cos_table[8] = { 2, 1, 0, -1, -2, -1, 0, 1 };
-
 // Current pattern phase for complex patterns
 static unsigned char pattern_phase;
 static unsigned char pattern_type;
 
-// Spawn danmaku pattern from enemy - Geometric/Scientific patterns
+// Spawn danmaku pattern from enemy - Fast, sparse bullets
 static void spawn_danmaku(void) {
     unsigned char cx, cy;
-    unsigned char i;
     signed char dx, dy;
-    unsigned char angle_idx;
+    signed char aim_dx;
 
     if (!enemy_on) return;
     if (enemy_y < 24) return;  // Don't shoot while entering screen
@@ -893,124 +888,94 @@ static void spawn_danmaku(void) {
         pattern_phase = 0;
     }
 
+    // Calculate aim toward player (for aimed shots)
+    if (player_x + 8 > cx) {
+        aim_dx = (player_x + 8 - cx) > 32 ? 2 : 1;
+    } else if (player_x + 8 < cx) {
+        aim_dx = (cx - player_x - 8) > 32 ? -2 : -1;
+    } else {
+        aim_dx = 0;
+    }
+
     switch (pattern_type) {
         case 0:
-            // === SPIRAL GALAXY ===
-            // Rotating spiral arms, like a galaxy
-            if ((bullet_timer & 0x07) == 0) {
-                angle_idx = (pattern_phase) & 0x07;
-                dx = cos_table[angle_idx];
-                dy = 1 + ((sin_table[angle_idx] + 2) >> 1);  // 1-2 speed
-                spawn_bullet(cx, cy, dx, dy);
-
-                // Second arm (opposite)
-                angle_idx = (pattern_phase + 4) & 0x07;
-                dx = cos_table[angle_idx];
-                dy = 1 + ((sin_table[angle_idx] + 2) >> 1);
-                spawn_bullet(cx, cy, dx, dy);
-
-                ++pattern_phase;
+            // === SNIPER ===
+            // Single fast aimed shot
+            if ((bullet_timer & 0x3F) == 0) {
+                spawn_bullet(cx, cy, aim_dx, 4);
             }
             break;
 
         case 1:
-            // === FLOWER BLOOM ===
-            // Petals expanding outward
-            if ((bullet_timer & 0x1F) == 0) {
-                for (i = 0; i < 6; ++i) {
-                    angle_idx = (i + pattern_phase) & 0x07;
-                    dx = cos_table[angle_idx];
-                    dy = 1;
-                    spawn_bullet(cx, cy, dx, dy);
-                }
-                ++pattern_phase;
+            // === SPREAD SHOT ===
+            // 3-way fast spread
+            if ((bullet_timer & 0x2F) == 0) {
+                spawn_bullet(cx, cy, -1, 3);
+                spawn_bullet(cx, cy, 0, 4);
+                spawn_bullet(cx, cy, 1, 3);
             }
             break;
 
         case 2:
-            // === DNA HELIX ===
-            // Double helix pattern
-            if ((bullet_timer & 0x0F) == 0) {
-                angle_idx = pattern_phase & 0x07;
-                // Strand 1
-                dx = cos_table[angle_idx];
-                spawn_bullet(cx - 8, cy, dx, 1);
-                // Strand 2 (opposite phase)
-                dx = cos_table[(angle_idx + 4) & 0x07];
-                spawn_bullet(cx + 8, cy, dx, 1);
-                ++pattern_phase;
+            // === DOUBLE TAP ===
+            // Two fast bullets with slight delay
+            if ((bullet_timer & 0x3F) == 0) {
+                spawn_bullet(cx, cy, aim_dx, 3);
+            }
+            if ((bullet_timer & 0x3F) == 8) {
+                spawn_bullet(cx, cy, aim_dx, 4);
             }
             break;
 
         case 3:
-            // === SACRED GEOMETRY - Hexagon ===
-            // Expanding hexagonal pattern
-            if ((bullet_timer & 0x3F) == 0) {
-                // 6 points of hexagon
-                spawn_bullet(cx, cy, 0, 2);       // Down
-                spawn_bullet(cx, cy, 2, 1);       // Down-right
-                spawn_bullet(cx, cy, 2, -1);      // Up-right (but still moves down overall)
-                spawn_bullet(cx, cy, -2, 1);      // Down-left
-                spawn_bullet(cx, cy, -2, -1);     // Up-left
-                spawn_bullet(cx, cy, 0, 1);       // Slow down
+            // === SIDE SWEEP ===
+            // Alternating left-right fast shots
+            if ((bullet_timer & 0x1F) == 0) {
+                dx = (pattern_phase & 1) ? 2 : -2;
+                spawn_bullet(cx, cy, dx, 3);
+                ++pattern_phase;
             }
             break;
 
         case 4:
-            // === WAVE INTERFERENCE ===
-            // Sine wave bullets from two sources
-            if ((bullet_timer & 0x0F) == 0) {
-                angle_idx = pattern_phase & 0x07;
-                // Left wave source
-                dx = sin_table[angle_idx];
-                spawn_bullet(cx - 16, cy, dx, 1);
-                // Right wave source (opposite phase)
-                dx = sin_table[(angle_idx + 4) & 0x07];
-                spawn_bullet(cx + 16, cy, dx, 1);
-                ++pattern_phase;
+            // === RAIN ===
+            // Random fast drops
+            if ((bullet_timer & 0x1F) == 0) {
+                dx = (rnd() & 0x03) - 1;  // -1 to 2
+                spawn_bullet(cx + dx * 8, cy, 0, 4);
             }
             break;
 
         case 5:
-            // === MANDALA BURST ===
-            // Circular burst that rotates
-            if ((bullet_timer & 0x3F) == 0) {
-                for (i = 0; i < 8; ++i) {
-                    angle_idx = (i + pattern_phase) & 0x07;
-                    dx = cos_table[angle_idx];
-                    dy = (sin_table[angle_idx] >> 1) + 1;  // Mostly downward
-                    spawn_bullet(cx, cy, dx, dy);
-                }
-                pattern_phase += 1;
+            // === PREDICTION ===
+            // Aimed at where player is heading
+            if ((bullet_timer & 0x2F) == 0) {
+                // Lead the target slightly
+                dx = aim_dx;
+                if (aim_dx > 0) dx = 2;
+                if (aim_dx < 0) dx = -2;
+                spawn_bullet(cx, cy, dx, 4);
             }
             break;
 
         case 6:
-            // === FIBONACCI SPIRAL ===
-            // Approximation of golden ratio spiral
-            if ((bullet_timer & 0x0B) == 0) {  // Prime-ish interval
-                angle_idx = (pattern_phase * 5) & 0x07;  // Golden angle approx
-                dx = cos_table[angle_idx];
-                dy = 1;
-                spawn_bullet(cx, cy, dx, dy);
-                ++pattern_phase;
+            // === BURST ===
+            // Quick 2-shot burst straight down
+            if ((bullet_timer & 0x3F) == 0) {
+                spawn_bullet(cx - 6, cy, 0, 4);
+                spawn_bullet(cx + 6, cy, 0, 4);
             }
             break;
 
         case 7:
-            // === CROSS ROTATION ===
-            // Rotating cross/plus pattern
-            if ((bullet_timer & 0x1F) == 0) {
-                // Vertical line
-                spawn_bullet(cx, cy, 0, 2);
-                spawn_bullet(cx, cy, 0, 1);
-                // Horizontal line (rotated by phase)
+            // === CROSS ===
+            // Fast cross pattern
+            if ((bullet_timer & 0x2F) == 0) {
+                spawn_bullet(cx, cy, 0, 4);   // Down
+                dy = 2;
                 if (pattern_phase & 1) {
-                    spawn_bullet(cx, cy, 2, 1);
-                    spawn_bullet(cx, cy, -2, 1);
-                } else {
-                    spawn_bullet(cx, cy, 1, 1);
-                    spawn_bullet(cx, cy, -1, 1);
+                    spawn_bullet(cx, cy, 2, dy);
+                    spawn_bullet(cx, cy, -2, dy);
                 }
                 ++pattern_phase;
             }
