@@ -130,6 +130,7 @@ static signed char bullet_dx[MAX_BULLETS];  // X velocity
 static signed char bullet_dy[MAX_BULLETS];  // Y velocity
 static unsigned char bullet_on[MAX_BULLETS];
 static unsigned char bullet_timer;  // Timer for shooting patterns
+static unsigned char bullet_next;   // Next bullet slot (circular buffer)
 
 static unsigned char rnd_seed;
 static unsigned char win_timer;  // Animation timer for win screen
@@ -849,18 +850,17 @@ static unsigned char abs_diff(unsigned char a, unsigned char b) {
     return b - a;
 }
 
-// Spawn a single bullet
+// Spawn a single bullet (circular buffer - overwrites oldest)
 static void spawn_bullet(unsigned char x, unsigned char y, signed char dx, signed char dy) {
-    unsigned char i;
-    for (i = 0; i < MAX_BULLETS; ++i) {
-        if (!bullet_on[i]) {
-            bullet_x[i] = x;
-            bullet_y[i] = y;
-            bullet_dx[i] = dx;
-            bullet_dy[i] = dy;
-            bullet_on[i] = 1;
-            break;
-        }
+    // Use circular buffer - always use next slot, overwriting old bullets
+    bullet_x[bullet_next] = x;
+    bullet_y[bullet_next] = y;
+    bullet_dx[bullet_next] = dx;
+    bullet_dy[bullet_next] = dy;
+    bullet_on[bullet_next] = 1;
+    ++bullet_next;
+    if (bullet_next >= MAX_BULLETS) {
+        bullet_next = 0;
     }
 }
 
@@ -1105,6 +1105,7 @@ static void init_game(void) {
         bullet_on[i] = 0;
     }
     bullet_timer = 0;
+    bullet_next = 0;
     pattern_phase = 0;
     pattern_type = 0;
 
@@ -1395,37 +1396,21 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - Progress bar at bottom of screen
+    // HUD - Simple progress indicator (car icon moving toward GOAL)
     {
         unsigned char progress;
-        unsigned char bar_x;
-        unsigned char bar_filled;
         unsigned char car_pos;
 
         // Calculate progress (0-100)
         progress = (unsigned char)(distance / 10);
         if (progress > 100) progress = 100;
 
-        // Draw progress bar background (empty boxes)
-        for (bar_x = 0; bar_x < 8 && id < 58; ++bar_x) {
-            id = set_sprite(id, 64 + bar_x * 10, 224, SPR_BAR_EMPTY, 3);
-        }
+        // Draw car icon moving right (position 80-160)
+        car_pos = 80 + ((progress * 80) / 100);
+        id = set_sprite(id, car_pos, 224, SPR_CAR_ICON, 0);
 
-        // Draw filled portion
-        bar_filled = progress / 13;  // 0-7 segments
-        for (bar_x = 0; bar_x < bar_filled && bar_x < 8 && id < 60; ++bar_x) {
-            id = set_sprite(id, 64 + bar_x * 10, 224, SPR_BAR_FILL, 3);
-        }
-
-        // Draw car icon at current position
-        car_pos = 64 + ((progress * 70) / 100);
-        id = set_sprite(id, car_pos, 216, SPR_CAR_ICON, 0);
-
-        // Draw "GOAL" at end
-        id = set_sprite(id, 152, 224, SPR_LETTER + 6, 3);  // G
-        id = set_sprite(id, 160, 224, SPR_LETTER + 14, 3); // O
-        id = set_sprite(id, 168, 224, SPR_LETTER + 0, 3);  // A
-        id = set_sprite(id, 176, 224, SPR_LETTER + 11, 3); // L
+        // Draw "G" at end (goal marker) - just 1 sprite
+        id = set_sprite(id, 168, 224, SPR_LETTER + 6, 3);  // G
     }
 
     // Hide remaining sprites
