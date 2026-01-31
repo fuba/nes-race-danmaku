@@ -1,0 +1,15 @@
+services:
+  nes-dev:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["make"]
+
+  web:
+    image: nginx:alpine
+    ports:
+      - "8888:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    restart: unless-stopped
