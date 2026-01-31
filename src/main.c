@@ -116,6 +116,10 @@ static unsigned char explode_x;
 static unsigned char explode_y;
 static unsigned char explode_timer;    // Explosion animation timer
 
+// Goal line effect
+static unsigned char goal_line_y;      // Y position of goal line (scrolls down)
+static unsigned char goal_line_timer;  // Timer for goal line animation
+
 static unsigned char position;
 static unsigned char lap_count;
 static unsigned int score;
@@ -1095,6 +1099,7 @@ static void init_game(void) {
     no_damage_timer = 0;
     graze_timer = 0;
     explode_timer = 0;
+    goal_line_timer = 0;
 
     for (i = 0; i < 4; ++i) {
         obs_on[i] = 0;
@@ -1282,10 +1287,20 @@ static void update_game(void) {
         explode_y += SCROLL_SPEED;  // Explosion scrolls down with road
     }
 
+    // Goal line animation update
+    if (goal_line_timer > 0) {
+        --goal_line_timer;
+        goal_line_y += SCROLL_SPEED;  // Goal line scrolls down
+    }
+
     ++distance;
     if (distance >= 1000) {
         distance = 0;
         ++lap_count;
+
+        // Trigger goal line effect
+        goal_line_y = 0;
+        goal_line_timer = 60;  // Show for 60 frames
 
         // Recover 3 HP on lap completion
         player_hp += 3;
@@ -1394,6 +1409,15 @@ static void draw_game(void) {
     }
 
     // === Game objects (may be culled if too many) ===
+
+    // Goal line (checkered pattern scrolling down)
+    if (goal_line_timer > 0 && goal_line_y < 240) {
+        for (i = 0; i < 6 && id < 56; ++i) {
+            // Alternating pattern
+            id = set_sprite(id, ROAD_LEFT + i * 16, goal_line_y,
+                           (i & 1) ? SPR_BAR_FILL : SPR_BAR_EMPTY, 3);
+        }
+    }
 
     // Warning marker for next enemy (2 sprites)
     if (!enemy_on && enemy_warn_timer > 0 && (frame_count & 8)) {
