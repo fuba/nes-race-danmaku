@@ -1634,17 +1634,17 @@ static void draw_win(void) {
     id = set_sprite(id, x + 52, y, SPR_LETTER + 19, 3);  // T (PTS)
     id = set_sprite(id, x + 60, y, SPR_LETTER + 18, 3);  // S
 
-    // === "PRESS START" blinking prompt ===
+    // === "PRESS" / "START" blinking prompt (2 lines to avoid sprite limit) ===
     if (win_timer > 90 && (frame_count & 0x20)) {
-        y = 200;
-        x = 72;
+        x = 96;
+        y = 192;
         id = set_sprite(id, x,      y, SPR_LETTER + 15, 3);  // P
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 17, 3);  // R
         id = set_sprite(id, x + 16, y, SPR_LETTER + 4,  3);  // E
         id = set_sprite(id, x + 24, y, SPR_LETTER + 18, 3);  // S
         id = set_sprite(id, x + 32, y, SPR_LETTER + 18, 3);  // S
 
-        x = 128;
+        y = 204;
         id = set_sprite(id, x,      y, SPR_LETTER + 18, 3);  // S
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 3);  // T
         id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  3);  // A
