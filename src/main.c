@@ -992,14 +992,17 @@ static void update_enemy(void) {
     // Warning phase - countdown before spawn
     if (!enemy_on && enemy_warn_timer > 0) {
         --enemy_warn_timer;
+        position = 1;  // Still 1st until enemy spawns
         if (enemy_warn_timer == 0) {
             spawn_enemy();
+            position = 2;  // Enemy spawns ahead
         }
         return;
     }
 
     // No enemy and no warning - prepare next one
     if (!enemy_on) {
+        position = 1;  // No enemy = 1st place
         prepare_enemy();
         return;
     }
@@ -1016,14 +1019,20 @@ static void update_enemy(void) {
         }
     }
 
-    // Overtaken
+    // Update position based on relative Y position
+    // If player is ahead of enemy (lower Y = higher on screen = ahead)
+    if (player_y < enemy_y) {
+        position = 1;  // Player is in 1st place
+    } else {
+        position = 2;  // Enemy is ahead
+    }
+
+    // Enemy passed off screen - prepare next one
     if (enemy_y > SCREEN_HEIGHT) {
         enemy_on = 0;
         score += 50;
-        position = 1;
         if (lap_count < 3) {
             prepare_enemy();  // Show warning for next enemy
-            position = 2;
         }
     }
 }
