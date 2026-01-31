@@ -85,7 +85,8 @@
 #define SPR_BAR_FILL    0x06
 #define SPR_BAR_EMPTY   0x07
 #define SPR_CAR_ICON    0x08
-#define SPR_OBSTACLE    0x08
+#define SPR_OBSTACLE    0x09
+#define SPR_EXPLOSION   0x0E
 #define SPR_BULLET      0x0B  // Diamond bullet sprite
 #define SPR_DIGIT       0x10
 #define SPR_LETTER      0x30
@@ -109,6 +110,11 @@ static unsigned char enemy_speed;
 static unsigned char enemy_on;
 static unsigned char enemy_next_x;     // Next enemy spawn X position
 static unsigned char enemy_warn_timer; // Warning countdown before spawn
+
+// Explosion effect
+static unsigned char explode_x;
+static unsigned char explode_y;
+static unsigned char explode_timer;    // Explosion animation timer
 
 static unsigned char position;
 static unsigned char lap_count;
@@ -929,7 +935,7 @@ static void spawn_danmaku(void) {
         case 0:
             // === SNIPER ===
             // Single fast aimed shot
-            if ((bullet_timer & 0x3F) == 0) {
+            if ((bullet_timer & 0x1F) == 0) {
                 spawn_bullet(cx, cy, aim_dx, 4);
             }
             break;
@@ -937,7 +943,7 @@ static void spawn_danmaku(void) {
         case 1:
             // === SPREAD SHOT ===
             // 3-way fast spread
-            if ((bullet_timer & 0x2F) == 0) {
+            if ((bullet_timer & 0x17) == 0) {
                 spawn_bullet(cx, cy, -1, 3);
                 spawn_bullet(cx, cy, 0, 4);
                 spawn_bullet(cx, cy, 1, 3);
@@ -947,10 +953,10 @@ static void spawn_danmaku(void) {
         case 2:
             // === DOUBLE TAP ===
             // Two fast bullets with slight delay
-            if ((bullet_timer & 0x3F) == 0) {
+            if ((bullet_timer & 0x1F) == 0) {
                 spawn_bullet(cx, cy, aim_dx, 3);
             }
-            if ((bullet_timer & 0x3F) == 8) {
+            if ((bullet_timer & 0x1F) == 4) {
                 spawn_bullet(cx, cy, aim_dx, 4);
             }
             break;
@@ -958,7 +964,7 @@ static void spawn_danmaku(void) {
         case 3:
             // === SIDE SWEEP ===
             // Alternating left-right fast shots
-            if ((bullet_timer & 0x1F) == 0) {
+            if ((bullet_timer & 0x0F) == 0) {
                 dx = (pattern_phase & 1) ? 2 : -2;
                 spawn_bullet(cx, cy, dx, 3);
                 ++pattern_phase;
@@ -968,7 +974,7 @@ static void spawn_danmaku(void) {
         case 4:
             // === RAIN ===
             // Random fast drops
-            if ((bullet_timer & 0x1F) == 0) {
+            if ((bullet_timer & 0x0F) == 0) {
                 dx = (rnd() & 0x03) - 1;  // -1 to 2
                 spawn_bullet(cx + dx * 8, cy, 0, 4);
             }
@@ -977,7 +983,7 @@ static void spawn_danmaku(void) {
         case 5:
             // === PREDICTION ===
             // Aimed at where player is heading
-            if ((bullet_timer & 0x2F) == 0) {
+            if ((bullet_timer & 0x17) == 0) {
                 // Lead the target slightly
                 dx = aim_dx;
                 if (aim_dx > 0) dx = 2;
@@ -989,7 +995,7 @@ static void spawn_danmaku(void) {
         case 6:
             // === BURST ===
             // Quick 2-shot burst straight down
-            if ((bullet_timer & 0x3F) == 0) {
+            if ((bullet_timer & 0x1F) == 0) {
                 spawn_bullet(cx - 6, cy, 0, 4);
                 spawn_bullet(cx + 6, cy, 0, 4);
             }
@@ -998,7 +1004,7 @@ static void spawn_danmaku(void) {
         case 7:
             // === CROSS ===
             // Fast cross pattern
-            if ((bullet_timer & 0x2F) == 0) {
+            if ((bullet_timer & 0x17) == 0) {
                 spawn_bullet(cx, cy, 0, 4);   // Down
                 dy = 2;
                 if (pattern_phase & 1) {
@@ -1088,6 +1094,7 @@ static void init_game(void) {
     score_multiplier = 1;  // Start with 1x multiplier
     no_damage_timer = 0;
     graze_timer = 0;
+    explode_timer = 0;
 
     for (i = 0; i < 4; ++i) {
         obs_on[i] = 0;
@@ -1168,6 +1175,11 @@ static void update_enemy(void) {
 
     // Overtaken when player Y is above enemy Y (lower Y = higher on screen)
     if (player_y < enemy_y) {
+        // Trigger explosion at enemy position
+        explode_x = enemy_x;
+        explode_y = enemy_y;
+        explode_timer = 20;  // Show explosion for 20 frames
+
         enemy_on = 0;
         score += 20 * score_multiplier;  // +20 points * multiplier
 
@@ -1264,6 +1276,12 @@ static void update_game(void) {
         --graze_timer;
     }
 
+    // Update explosion animation
+    if (explode_timer > 0) {
+        --explode_timer;
+        explode_y += SCROLL_SPEED;  // Explosion scrolls down with road
+    }
+
     ++distance;
     if (distance >= 1000) {
         distance = 0;
@@ -1293,7 +1311,7 @@ static void update_game(void) {
         }
     }
 
-    if ((frame_count & 0x3F) == 0) {
+    if ((frame_count & 0x7F) == 0) {  // Less frequent obstacles
         spawn_obstacle();
     }
 
@@ -1313,6 +1331,11 @@ static void draw_game(void) {
     // Enemy car (4 sprites)
     if (enemy_on) {
         id = set_car(id, enemy_x, enemy_y, SPR_CAR + 4, 1);
+    }
+
+    // Explosion effect (1 sprite, blinking)
+    if (explode_timer > 0 && (frame_count & 2)) {
+        id = set_sprite(id, explode_x + 4, explode_y + 4, SPR_EXPLOSION, 1);
     }
 
     // === Critical HUD first (always visible) ===
@@ -1359,13 +1382,9 @@ static void draw_game(void) {
         id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(s % 10), 3);
     }
 
-    // HUD - Lap counter "LAP X/3" (6 sprites)
-    id = set_sprite(id, 100, 8, SPR_LETTER + 11, 3);  // L
-    id = set_sprite(id, 108, 8, SPR_LETTER + 0, 3);   // A
-    id = set_sprite(id, 116, 8, SPR_LETTER + 15, 3);  // P
-    id = set_sprite(id, 128, 8, SPR_DIGIT + lap_count + 1, 3);  // Current lap
-    id = set_sprite(id, 136, 8, SPR_SLASH, 3);        // "/"
-    id = set_sprite(id, 144, 8, SPR_DIGIT + 3, 3);    // 3 (total laps)
+    // HUD - Lap counter "LX" at center-top (2 sprites, different Y to avoid scanline limit)
+    id = set_sprite(id, 120, 16, SPR_LETTER + 11, 3);  // L
+    id = set_sprite(id, 128, 16, SPR_DIGIT + lap_count + 1, 3);  // Current lap (1-3)
 
     // "BUZ" display when grazing (3 sprites)
     if (graze_timer > 0) {

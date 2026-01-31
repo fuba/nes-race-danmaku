@@ -692,12 +692,13 @@ def main():
         (0x05, ENEMY_CAR_TR),
         (0x06, ENEMY_CAR_BL),
         (0x07, ENEMY_CAR_BR),
-        (0x08, EXPLOSION),
-        (0x09, ROAD_EDGE),
+        (0x08, TILE_CAR_ICON),   # Car icon for progress bar
+        (0x09, TILE_OBSTACLE),   # Obstacle
         (0x0A, ARROW_LEFT),
         (0x0B, BULLET),
         (0x0C, BULLET2),
         (0x0D, BULLET3),
+        (0x0E, EXPLOSION),       # Explosion effect
     ]
 
     # Also copy some tiles to sprite pattern table for HUD
@@ -706,11 +707,7 @@ def main():
     for i, letter in enumerate(LETTERS):
         sprites.append((0x30 + i, letter))  # Changed to 0x30 for SPR_LETTER
 
-    # HUD tiles as sprites
-    sprites.append((0x05, TILE_SLASH))      # "/" for LAP display
-    sprites.append((0x06, TILE_BAR_FILL))   # Progress bar filled
-    sprites.append((0x07, TILE_BAR_EMPTY))  # Progress bar empty
-    sprites.append((0x08, TILE_CAR_ICON))   # Car icon
+    # Note: LAP display simplified to "LX" format, slash not needed
 
     # Write sprite tiles
     for tile_idx, tile_data in sprites:
