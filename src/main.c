@@ -351,17 +351,33 @@ const unsigned char palette[32] = {
 
 // Initialize APU
 static void init_apu(void) {
-    // Enable all channels
-    APU_STATUS = 0x0F;  // Enable pulse1, pulse2, triangle, noise
+    // Disable all channels first
+    APU_STATUS = 0x00;
 
-    // Set frame counter mode (4-step, no IRQ)
+    // Initialize all channel registers to known state
+    APU_PL1_VOL = 0x30;  // Silence pulse 1
+    APU_PL1_SWP = 0x00;
+    APU_PL1_LO = 0x00;
+    APU_PL1_HI = 0x00;
+
+    APU_PL2_VOL = 0x30;  // Silence pulse 2
+    APU_PL2_SWP = 0x00;
+    APU_PL2_LO = 0x00;
+    APU_PL2_HI = 0x00;
+
+    APU_TRI_LIN = 0x80;  // Halt triangle linear counter
+    APU_TRI_LO = 0x00;
+    APU_TRI_HI = 0x00;
+
+    APU_NOI_VOL = 0x30;  // Silence noise
+    APU_NOI_LO = 0x00;
+    APU_NOI_HI = 0x00;
+
+    // Set frame counter mode (4-step sequence, disable IRQ)
     APU_FRAME = 0x40;
 
-    // Initialize channels to silence
-    APU_PL1_VOL = 0x30;  // Silence, constant volume
-    APU_PL2_VOL = 0x30;
-    APU_TRI_LIN = 0x80;  // Silence triangle
-    APU_NOI_VOL = 0x30;
+    // Now enable all channels
+    APU_STATUS = 0x0F;  // Enable pulse1, pulse2, triangle, noise
 
     music_enabled = 1;
     music_frame = 0;
@@ -374,12 +390,19 @@ static void init_apu(void) {
 static void play_triangle(unsigned char note) {
     unsigned int period;
     if (note == NOTE_REST || note >= 48) {
-        APU_TRI_LIN = 0x00;  // Silence
+        // Silence: set linear counter to 0, halt flag clear
+        APU_TRI_LIN = 0x00;
+        APU_TRI_HI = 0x00;  // Trigger reload with 0 counter
         return;
     }
     period = note_table[note];
-    APU_TRI_LIN = 0xFF;  // Max linear counter (sustain)
+    // Bit 7 = 1: halt length counter (so it plays continuously)
+    // Bits 6-0 = 127: max linear counter value
+    APU_TRI_LIN = 0xFF;
     APU_TRI_LO = (unsigned char)(period & 0xFF);
+    // Bits 7-3: length counter load (0x1F = longest)
+    // Bits 2-0: timer high 3 bits
+    // Writing to $400B also reloads the linear counter
     APU_TRI_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
 }
 

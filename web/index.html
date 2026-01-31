@@ -293,24 +293,43 @@
 
         // Initialize audio
         function initAudio() {
-            if (audioCtx) return;
-
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            scriptNode = audioCtx.createScriptProcessor(1024, 0, 2);
-            scriptNode.onaudioprocess = function(e) {
-                const left = e.outputBuffer.getChannelData(0);
-                const right = e.outputBuffer.getChannelData(1);
-                for (let i = 0; i < left.length; i++) {
-                    if (audioBuffer.length >= 2) {
-                        left[i] = audioBuffer.shift();
-                        right[i] = audioBuffer.shift();
-                    } else {
-                        left[i] = 0;
-                        right[i] = 0;
-                    }
+            if (audioCtx) {
+                // Resume if suspended (browser autoplay policy)
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
                 }
-            };
-            scriptNode.connect(audioCtx.destination);
+                return;
+            }
+
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 44100
+                });
+
+                // Resume immediately (for browsers that start suspended)
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                scriptNode = audioCtx.createScriptProcessor(2048, 0, 2);
+                scriptNode.onaudioprocess = function(e) {
+                    const left = e.outputBuffer.getChannelData(0);
+                    const right = e.outputBuffer.getChannelData(1);
+                    for (let i = 0; i < left.length; i++) {
+                        if (audioBuffer.length >= 2) {
+                            left[i] = audioBuffer.shift();
+                            right[i] = audioBuffer.shift();
+                        } else {
+                            left[i] = 0;
+                            right[i] = 0;
+                        }
+                    }
+                };
+                scriptNode.connect(audioCtx.destination);
+                console.log('Audio initialized, state:', audioCtx.state);
+            } catch (err) {
+                console.error('Audio init error:', err);
+            }
         }
 
         // Key mapping
