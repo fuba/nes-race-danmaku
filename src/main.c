@@ -947,7 +947,7 @@ static void init_game(void) {
     player_inv = 0;
 
     enemy_on = 0;
-    position = 2;
+    position = 12;  // Start in 12th place (last of 12 cars)
     lap_count = 0;
     score = 0;
     distance = 0;
@@ -992,17 +992,14 @@ static void update_enemy(void) {
     // Warning phase - countdown before spawn
     if (!enemy_on && enemy_warn_timer > 0) {
         --enemy_warn_timer;
-        position = 1;  // Still 1st until enemy spawns
         if (enemy_warn_timer == 0) {
             spawn_enemy();
-            position = 2;  // Enemy spawns ahead
         }
         return;
     }
 
     // No enemy and no warning - prepare next one
     if (!enemy_on) {
-        position = 1;  // No enemy = 1st place
         prepare_enemy();
         return;
     }
@@ -1019,20 +1016,23 @@ static void update_enemy(void) {
         }
     }
 
-    // Update position based on relative Y position
-    // If player is ahead of enemy (lower Y = higher on screen = ahead)
-    if (player_y < enemy_y) {
-        position = 1;  // Player is in 1st place
-    } else {
-        position = 2;  // Enemy is ahead
-    }
-
-    // Enemy passed off screen - prepare next one
+    // Enemy passed off screen - overtaken!
     if (enemy_y > SCREEN_HEIGHT) {
         enemy_on = 0;
         score += 50;
+
+        // Improve position (overtook one car)
+        if (position > 1) {
+            --position;
+        }
+
         if (lap_count < 3) {
-            prepare_enemy();  // Show warning for next enemy
+            // Spawn next enemy immediately
+            enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
+            if (enemy_next_x > ROAD_RIGHT - 24) {
+                enemy_next_x = ROAD_RIGHT - 24;
+            }
+            spawn_enemy();
         }
     }
 }
@@ -1169,9 +1169,28 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - Position (P1 or P2)
-    id = set_sprite(id, 8, 8, SPR_LETTER + 15, 3);  // P
-    id = set_sprite(id, 16, 8, SPR_DIGIT + position, 3);
+    // HUD - Position (1ST to 12TH)
+    if (position >= 10) {
+        id = set_sprite(id, 8, 8, SPR_DIGIT + 1, 3);              // "1"
+        id = set_sprite(id, 16, 8, SPR_DIGIT + (position - 10), 3); // 0,1,2
+        id = set_sprite(id, 24, 8, SPR_LETTER + 19, 3);  // T
+        id = set_sprite(id, 32, 8, SPR_LETTER + 7, 3);   // H
+    } else {
+        id = set_sprite(id, 8, 8, SPR_DIGIT + position, 3);
+        if (position == 1) {
+            id = set_sprite(id, 16, 8, SPR_LETTER + 18, 3);  // S
+            id = set_sprite(id, 24, 8, SPR_LETTER + 19, 3);  // T
+        } else if (position == 2) {
+            id = set_sprite(id, 16, 8, SPR_LETTER + 13, 3);  // N
+            id = set_sprite(id, 24, 8, SPR_LETTER + 3, 3);   // D
+        } else if (position == 3) {
+            id = set_sprite(id, 16, 8, SPR_LETTER + 17, 3);  // R
+            id = set_sprite(id, 24, 8, SPR_LETTER + 3, 3);   // D
+        } else {
+            id = set_sprite(id, 16, 8, SPR_LETTER + 19, 3);  // T
+            id = set_sprite(id, 24, 8, SPR_LETTER + 7, 3);   // H
+        }
+    }
 
     // HUD - HP (hearts or number)
     id = set_sprite(id, 8, 20, SPR_LETTER + 7, 3);  // H
