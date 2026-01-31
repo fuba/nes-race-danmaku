@@ -1022,8 +1022,8 @@ static void update_enemy(void) {
         }
     }
 
-    // Enemy passed off screen - overtaken!
-    if (enemy_y > SCREEN_HEIGHT) {
+    // Overtaken when player Y is above enemy Y (lower Y = higher on screen)
+    if (player_y < enemy_y) {
         enemy_on = 0;
         score += 50;
 
