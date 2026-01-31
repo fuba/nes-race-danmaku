@@ -462,12 +462,22 @@
                 status.textContent = 'Ready! Press START to play';
                 status.className = 'ready';
 
-                // Start emulation loop
-                function frame() {
-                    nes.frame();
+                // Start emulation loop (locked to 60 FPS like real NES)
+                const FRAME_TIME = 1000 / 60;  // ~16.67ms per frame
+                let lastFrameTime = 0;
+
+                function frame(currentTime) {
                     requestAnimationFrame(frame);
+
+                    // Limit to 60 FPS
+                    if (currentTime - lastFrameTime < FRAME_TIME) {
+                        return;
+                    }
+                    lastFrameTime = currentTime - ((currentTime - lastFrameTime) % FRAME_TIME);
+
+                    nes.frame();
                 }
-                frame();
+                requestAnimationFrame(frame);
 
             } catch (err) {
                 status.textContent = 'Error loading ROM: ' + err.message;
