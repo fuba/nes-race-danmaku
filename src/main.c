@@ -1067,10 +1067,10 @@ static void check_bullet_collisions(void) {
             }
             // Graze zone: dx < 14 && dy < 14 but outside damage zone
             else if (dx < 14 && dy < 14) {
-                // Graze! +1 point * multiplier
+                // Graze! +1 point * multiplier (bullet keeps moving)
                 score += score_multiplier;
                 graze_timer = 15;  // Show "BUZ" for 15 frames
-                bullet_on[i] = 0;  // Remove bullet after graze
+                // Don't remove bullet - player can still get hit!
             }
         }
     }
