@@ -443,7 +443,7 @@
                 status.textContent = 'Loading ROM...';
                 status.className = 'loading';
 
-                const response = await fetch('/race.nes');
+                const response = await fetch('./race.nes');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
