@@ -874,13 +874,41 @@ static void spawn_danmaku(void) {
     signed char dx, dy;
     signed char aim_dx;
 
+    ++bullet_timer;
+
+    // When in 1st place, bullets come from behind (bottom of screen)
+    if (position == 1) {
+        // Spawn bullets from bottom, moving upward
+        if ((bullet_timer & 0x1F) == 0) {
+            cx = ROAD_LEFT + 16 + (rnd() & 0x7F);
+            if (cx > ROAD_RIGHT - 16) cx = ROAD_RIGHT - 16;
+
+            // Aim toward player
+            if (player_x + 8 > cx) {
+                aim_dx = 1;
+            } else if (player_x + 8 < cx) {
+                aim_dx = -1;
+            } else {
+                aim_dx = 0;
+            }
+
+            // Bullet from bottom moving up (negative dy)
+            spawn_bullet(cx, 232, aim_dx, -3);
+        }
+        // Additional random shot
+        if ((bullet_timer & 0x3F) == 16) {
+            cx = ROAD_LEFT + 24 + (rnd() & 0x7F);
+            if (cx > ROAD_RIGHT - 24) cx = ROAD_RIGHT - 24;
+            spawn_bullet(cx, 236, 0, -4);
+        }
+        return;
+    }
+
     if (!enemy_on) return;
     if (enemy_y < 24) return;  // Don't shoot while entering screen
 
     cx = enemy_x + 8;  // Center X
     cy = enemy_y + 16; // Bullet spawn Y
-
-    ++bullet_timer;
 
     // Change pattern every 256 frames
     if (bullet_timer == 0) {
@@ -1104,6 +1132,13 @@ static void update_player(void) {
 
 // Update enemy
 static void update_enemy(void) {
+    // When in 1st place, no enemies spawn (bullets come from behind instead)
+    if (position == 1) {
+        enemy_on = 0;
+        enemy_warn_timer = 0;
+        return;
+    }
+
     // Warning phase - countdown before spawn
     if (!enemy_on && enemy_warn_timer > 0) {
         --enemy_warn_timer;
