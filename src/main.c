@@ -146,7 +146,8 @@ static unsigned char music_enabled;
 static unsigned char music_frame;      // Frame counter for timing
 static unsigned char music_pos;        // Current position in sequence
 static unsigned char music_tempo;      // Frames per beat (lower = faster)
-static unsigned char current_track;    // 0=title, 1=racing, 2=win
+static unsigned char current_track;    // 0=title, 1=racing, 2=win, 3=gameover
+static unsigned char music_intensity;  // 0=normal, 1=intense, 2=chaos (distortion level)
 
 // Channel states
 static unsigned char tri_note;         // Current triangle note
@@ -251,6 +252,76 @@ static const unsigned char racing_noise[RACING_LEN] = {
     1, 3, 0, 3,  2, 3, 0, 3,
     1, 3, 0, 3,  2, 3, 0, 3,
     1, 3, 2, 3,  1, 2, 1, 2,
+};
+
+// ============================================
+// RACING BGM LAP 2 - More intense! (A minor, faster)
+// ============================================
+// Triangle bass - driving harder
+static const unsigned char racing2_tri[RACING_LEN] = {
+    A2, A2, A3, A2,  C3, C3, C3, C3,
+    D3, D3, D3, D3,  E3, E3, E3, E2,
+    A2, A2, A3, A2,  C3, C3, C3, C3,
+    D3, D3, E3, E3,  A2, A2, A3, A2,
+};
+
+// Pulse 1 - more aggressive melody
+static const unsigned char racing2_pl1[RACING_LEN] = {
+    A4, C5, E5, G5,  G5, E5, C5, E5,
+    D5, F5, G5, F5,  E5, G5, B4, E5,
+    A4, C5, E5, G5,  G5, E5, C5, E5,
+    D5, E5, F5, E5,  A4, A4, G5, A4,
+};
+
+// Pulse 2 - intense arpeggios
+static const unsigned char racing2_pl2[RACING_LEN] = {
+    E4, A4, C5, E4,  C4, E4, G4, C4,
+    F4, A4, D5, F4,  E4, G4, B4, E4,
+    E4, A4, C5, E4,  C4, E4, G4, C4,
+    F4, G4, A4, G4,  E4, E4, A4, E4,
+};
+
+// More aggressive drums
+static const unsigned char racing2_noise[RACING_LEN] = {
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 2, 1, 2,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 2, 1, 2,  1, 2, 1, 2,
+};
+
+// ============================================
+// RACING BGM LAP 3 - Maximum chaos! (E minor, fastest)
+// ============================================
+// Triangle bass - relentless
+static const unsigned char racing3_tri[RACING_LEN] = {
+    E3, E3, E3, E2,  E3, E3, E3, E2,
+    G3, G3, G3, G2,  A3, A3, B3, B3,
+    E3, E3, E3, E2,  G3, G3, G3, G2,
+    A3, B3, C4, B3,  E3, E3, E2, E3,
+};
+
+// Pulse 1 - frantic melody
+static const unsigned char racing3_pl1[RACING_LEN] = {
+    E5, G5, E5, E5,  G5, E5, E5, G5,
+    G5, E5, D5, G5,  G5, E5, C5, E5,
+    E5, G5, E5, E5,  G5, E5, E5, G5,
+    G5, E5, C5, E5,  E5, E5, E5, E5,
+};
+
+// Pulse 2 - chaotic harmonies
+static const unsigned char racing3_pl2[RACING_LEN] = {
+    B4, E5, G4, B4,  D5, G4, B4, D5,
+    D5, G5, B4, D5,  E5, FS4, G4, FS4,
+    B4, E5, G4, B4,  D5, G4, B4, D5,
+    E5, FS4, G4, FS4, B4, B4, B4, B4,
+};
+
+// Frantic drums
+static const unsigned char racing3_noise[RACING_LEN] = {
+    1, 2, 1, 2,  1, 2, 1, 2,
+    1, 2, 1, 2,  1, 2, 1, 2,
+    1, 2, 1, 2,  1, 2, 1, 2,
+    1, 2, 1, 2,  1, 2, 1, 2,
 };
 
 // ============================================
@@ -406,30 +477,45 @@ static void play_triangle(unsigned char note) {
     APU_TRI_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
 }
 
-// Play a note on pulse 1 channel
+// Play a note on pulse 1 channel (duty changes with intensity)
 static void play_pulse1(unsigned char note) {
     unsigned int period;
+    unsigned char vol;
     if (note == NOTE_REST || note >= 48) {
         APU_PL1_VOL = 0x30;  // Silence
         return;
     }
     period = note_table[note];
-    APU_PL1_VOL = 0xBF;  // 50% duty, constant volume, max volume
-    APU_PL1_SWP = 0x00;  // No sweep
+    // Duty cycle: 0=12.5%, 1=25%, 2=50%, 3=25%neg
+    // Intensity 0: 50% (clean), 1: 25% (edgy), 2: 12.5% (harsh)
+    switch (music_intensity) {
+        case 0:  vol = 0xBF; break;  // 50% duty, max vol
+        case 1:  vol = 0x7F; break;  // 25% duty, max vol
+        default: vol = 0x3F; break;  // 12.5% duty, max vol (distorted!)
+    }
+    APU_PL1_VOL = vol;
+    APU_PL1_SWP = 0x00;
     APU_PL1_LO = (unsigned char)(period & 0xFF);
     APU_PL1_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
 }
 
-// Play a note on pulse 2 channel
+// Play a note on pulse 2 channel (duty changes with intensity)
 static void play_pulse2(unsigned char note) {
     unsigned int period;
+    unsigned char vol;
     if (note == NOTE_REST || note >= 48) {
         APU_PL2_VOL = 0x30;  // Silence
         return;
     }
     period = note_table[note];
-    APU_PL2_VOL = 0x7A;  // 25% duty, constant volume, medium volume
-    APU_PL2_SWP = 0x00;  // No sweep
+    // More aggressive duty cycle changes for pulse 2
+    switch (music_intensity) {
+        case 0:  vol = 0x7A; break;  // 25% duty, med vol (clean)
+        case 1:  vol = 0x3C; break;  // 12.5% duty, med vol (harsh)
+        default: vol = 0x3F; break;  // 12.5% duty, max vol (chaos!)
+    }
+    APU_PL2_VOL = vol;
+    APU_PL2_SWP = 0x00;
     APU_PL2_LO = (unsigned char)(period & 0xFF);
     APU_PL2_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
 }
@@ -466,17 +552,38 @@ static void music_play(unsigned char track) {
 
     switch (track) {
         case 0:  // Title - Heroic march
-            music_tempo = 8;   // Strong, steady tempo
+            music_tempo = 8;
+            music_intensity = 0;
             break;
-        case 1:  // Racing
-            music_tempo = 6;   // Fast!
+        case 1:  // Racing - tempo varies with intensity
+            switch (music_intensity) {
+                case 0:  music_tempo = 6; break;   // Lap 1: Normal
+                case 1:  music_tempo = 5; break;   // Lap 2: Faster
+                default: music_tempo = 4; break;   // Lap 3: Fastest!
+            }
             break;
         case 2:  // Win
-            music_tempo = 10;  // Medium
+            music_tempo = 10;
+            music_intensity = 0;
             break;
         case 3:  // Game Over
-            music_tempo = 16;  // Very slow, sad
+            music_tempo = 16;
+            music_intensity = 0;
             break;
+    }
+}
+
+// Set music intensity (for lap-based changes)
+static void music_set_intensity(unsigned char intensity) {
+    music_intensity = intensity;
+    // Update tempo if currently playing racing music
+    if (current_track == 1) {
+        switch (intensity) {
+            case 0:  music_tempo = 6; break;   // Lap 1
+            case 1:  music_tempo = 5; break;   // Lap 2
+            default: music_tempo = 4; break;   // Lap 3
+        }
+        music_pos = 0;  // Reset to sync with new track
     }
 }
 
@@ -512,12 +619,28 @@ static void music_update(void) {
             pl2_data = title_pl2;
             noise_data = 0;
             break;
-        case 1:  // Racing
+        case 1:  // Racing - different music per lap
             len = RACING_LEN;
-            tri_data = racing_tri;
-            pl1_data = racing_pl1;
-            pl2_data = racing_pl2;
-            noise_data = racing_noise;
+            switch (music_intensity) {
+                case 0:  // Lap 1 - Normal
+                    tri_data = racing_tri;
+                    pl1_data = racing_pl1;
+                    pl2_data = racing_pl2;
+                    noise_data = racing_noise;
+                    break;
+                case 1:  // Lap 2 - Intense
+                    tri_data = racing2_tri;
+                    pl1_data = racing2_pl1;
+                    pl2_data = racing2_pl2;
+                    noise_data = racing2_noise;
+                    break;
+                default: // Lap 3 - Chaos
+                    tri_data = racing3_tri;
+                    pl1_data = racing3_pl1;
+                    pl2_data = racing3_pl2;
+                    noise_data = racing3_noise;
+                    break;
+            }
             break;
         case 2:  // Win
             len = WIN_LEN;
@@ -952,6 +1075,7 @@ static void init_game(void) {
     score = 0;
     distance = 0;
     scroll_y = 0;
+    music_intensity = 0;  // Reset music intensity for lap 1
 
     for (i = 0; i < 4; ++i) {
         obs_on[i] = 0;
@@ -1117,6 +1241,11 @@ static void update_game(void) {
         player_hp += 3;
         if (player_hp > PLAYER_MAX_HP) {
             player_hp = PLAYER_MAX_HP;
+        }
+
+        // Change music intensity for each lap (more distorted!)
+        if (lap_count < 3) {
+            music_set_intensity(lap_count);
         }
 
         if (lap_count >= 3) {
