@@ -1104,10 +1104,16 @@ static void update_game(void) {
             player_hp = PLAYER_MAX_HP;
         }
 
-        if (lap_count >= 3 && position == 1) {
-            game_state = STATE_WIN;
-            init_win_animation();
-            music_play(2);  // Victory fanfare!
+        if (lap_count >= 3) {
+            if (position == 1) {
+                game_state = STATE_WIN;
+                init_win_animation();
+                music_play(2);  // Victory fanfare!
+            } else {
+                // Finished 3 laps but not in 1st place - lose
+                game_state = STATE_GAMEOVER;
+                music_play(3);  // Sad music
+            }
         }
     }
 
