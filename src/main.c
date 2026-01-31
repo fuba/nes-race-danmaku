@@ -966,7 +966,13 @@ static void init_game(void) {
     pattern_type = 0;
 
     draw_road();
-    prepare_enemy();  // Start with warning marker
+
+    // Spawn first enemy immediately (no warning delay)
+    enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
+    if (enemy_next_x > ROAD_RIGHT - 24) {
+        enemy_next_x = ROAD_RIGHT - 24;
+    }
+    spawn_enemy();
 }
 
 // Update player
