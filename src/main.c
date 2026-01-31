@@ -114,6 +114,9 @@ static unsigned char position;
 static unsigned char lap_count;
 static unsigned int score;
 static unsigned int distance;
+static unsigned char score_multiplier;  // Score multiplier (1-9)
+static unsigned int no_damage_timer;    // Frames since last damage
+static unsigned char graze_timer;       // Timer for showing "BUZ" display
 
 static unsigned char obs_x[4];
 static unsigned char obs_y[4];
@@ -1048,13 +1051,26 @@ static void check_bullet_collisions(void) {
             dx = abs_diff(player_x + 8, bullet_x[i]);
             dy = abs_diff(player_y + 8, bullet_y[i]);
 
+            // Damage zone: dx < 10 && dy < 10
             if (dx < 10 && dy < 10) {
                 --player_hp;
                 player_inv = 60;
                 bullet_on[i] = 0;
+                // Penalty: -1 point (but don't go negative)
+                if (score > 0) --score;
+                // Reset multiplier and no-damage timer
+                score_multiplier = 1;
+                no_damage_timer = 0;
                 if (player_hp == 0) {
                     game_state = STATE_GAMEOVER; music_play(3);
                 }
+            }
+            // Graze zone: dx < 14 && dy < 14 but outside damage zone
+            else if (dx < 14 && dy < 14) {
+                // Graze! +1 point * multiplier
+                score += score_multiplier;
+                graze_timer = 15;  // Show "BUZ" for 15 frames
+                bullet_on[i] = 0;  // Remove bullet after graze
             }
         }
     }
@@ -1076,6 +1092,9 @@ static void init_game(void) {
     distance = 0;
     scroll_y = 0;
     music_intensity = 0;  // Reset music intensity for lap 1
+    score_multiplier = 1;  // Start with 1x multiplier
+    no_damage_timer = 0;
+    graze_timer = 0;
 
     for (i = 0; i < 4; ++i) {
         obs_on[i] = 0;
@@ -1149,7 +1168,7 @@ static void update_enemy(void) {
     // Overtaken when player Y is above enemy Y (lower Y = higher on screen)
     if (player_y < enemy_y) {
         enemy_on = 0;
-        score += 50;
+        score += 20 * score_multiplier;  // +20 points * multiplier
 
         // Improve position (overtook one car)
         if (position > 1) {
@@ -1230,12 +1249,24 @@ static void update_game(void) {
     update_bullets();
     check_bullet_collisions();
 
+    // No-damage timer: +1x multiplier every 10 seconds (600 frames)
+    ++no_damage_timer;
+    if (no_damage_timer >= 600) {
+        no_damage_timer = 0;
+        if (score_multiplier < 9) {
+            ++score_multiplier;
+        }
+    }
+
+    // Decrease graze display timer
+    if (graze_timer > 0) {
+        --graze_timer;
+    }
+
     ++distance;
     if (distance >= 1000) {
         distance = 0;
         ++lap_count;
-        score += 100;
-        if (position == 1) score += 100;
 
         // Recover 3 HP on lap completion
         player_hp += 3;
@@ -1338,6 +1369,28 @@ static void draw_game(void) {
     id = set_sprite(id, 128, 8, SPR_DIGIT + lap_count + 1, 3);  // Current lap
     id = set_sprite(id, 136, 8, SPR_SLASH, 3);        // "/"
     id = set_sprite(id, 144, 8, SPR_DIGIT + 3, 3);    // 3 (total laps)
+
+    // HUD - Multiplier "xN" at top right
+    id = set_sprite(id, 216, 8, SPR_LETTER + 23, 3);  // x
+    id = set_sprite(id, 224, 8, SPR_DIGIT + score_multiplier, 3);
+
+    // HUD - Score at right side (5 digits)
+    {
+        unsigned int s = score;
+        if (s > 99999) s = 99999;
+        id = set_sprite(id, 200, 20, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+        id = set_sprite(id, 208, 20, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+        id = set_sprite(id, 216, 20, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+        id = set_sprite(id, 224, 20, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+        id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(s % 10), 3);
+    }
+
+    // "BUZ" display when grazing (near player)
+    if (graze_timer > 0) {
+        id = set_sprite(id, player_x - 8, player_y - 16, SPR_LETTER + 1, 1);  // B
+        id = set_sprite(id, player_x,     player_y - 16, SPR_LETTER + 20, 1); // U
+        id = set_sprite(id, player_x + 8, player_y - 16, SPR_LETTER + 25, 1); // Z
+    }
 
     // HUD - Progress bar at bottom of screen
     {
@@ -1536,17 +1589,19 @@ static void draw_win(void) {
     id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 3);  // R
     id = set_sprite(id, x + 32, y, SPR_LETTER + 4,  3);  // E
 
-    // Score value
+    // Score value (5 digits)
     y = 165;
-    x = 96;
+    x = 80;
     s = score;
-    if (s > 999) s = 999;  // Cap display
-    id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 100), 3);
-    id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
-    id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
-    id = set_sprite(id, x + 24, y, SPR_LETTER + 15, 3);  // P
-    id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 3);  // T (PTS)
-    id = set_sprite(id, x + 40, y, SPR_LETTER + 18, 3);  // S
+    if (s > 99999) s = 99999;  // Cap at 5 digits
+    id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+    id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+    id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+    id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+    id = set_sprite(id, x + 44, y, SPR_LETTER + 15, 3);  // P
+    id = set_sprite(id, x + 52, y, SPR_LETTER + 19, 3);  // T (PTS)
+    id = set_sprite(id, x + 60, y, SPR_LETTER + 18, 3);  // S
 
     // === "PRESS START" blinking prompt ===
     if (win_timer > 90 && (frame_count & 0x20)) {
