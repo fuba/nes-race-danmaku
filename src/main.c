@@ -256,29 +256,32 @@ static const unsigned char racing_noise[RACING_LEN] = {
 };
 
 // ============================================
-// TITLE BGM - Chill but anticipating
+// TITLE BGM - Heroic and majestic!
 // ============================================
-#define TITLE_LEN 16
+#define TITLE_LEN 32
 
+// Powerful triangle bass - driving rhythm
 static const unsigned char title_tri[TITLE_LEN] = {
-    C3, NOTE_REST, G2, NOTE_REST,
-    A2, NOTE_REST, E2, NOTE_REST,
-    F2, NOTE_REST, C3, NOTE_REST,
-    G2, NOTE_REST, G2, A2,
+    C3, C3, C2, C3,  G2, G2, G2, G3,
+    A2, A2, A2, A3,  G2, G2, G2, G3,
+    F2, F2, F2, F3,  G2, G2, G2, G3,
+    A2, A2, G2, G2,  C3, C3, C3, C3,
 };
 
+// Heroic fanfare melody
 static const unsigned char title_pl1[TITLE_LEN] = {
-    E4, G4, C5, G4,
-    A4, C5, E5, C5,
-    F4, A4, C5, A4,
-    G4, B4, D5, B4,
+    C5, C5, G4, C5,  E5, E5, D5, C5,
+    A4, A4, C5, A4,  G4, G4, E4, G4,
+    F4, F4, A4, C5,  G4, G4, B4, D5,
+    E5, E5, D5, C5,  C5, NOTE_REST, C5, NOTE_REST,
 };
 
+// Power chord harmony
 static const unsigned char title_pl2[TITLE_LEN] = {
-    C4, E4, G4, E4,
-    E4, A4, C5, A4,
-    C4, F4, A4, F4,
-    D4, G4, B4, G4,
+    E4, E4, C4, E4,  G4, G4, F4, E4,
+    C4, C4, E4, C4,  D4, D4, C4, D4,
+    A3, A3, C4, E4,  D4, D4, F4, G4,
+    G4, G4, F4, E4,  E4, NOTE_REST, E4, NOTE_REST,
 };
 
 // ============================================
@@ -299,6 +302,35 @@ static const unsigned char win_pl1[WIN_LEN] = {
 static const unsigned char win_pl2[WIN_LEN] = {
     E4, G4, C5, C5,  G4, E4, G4, C5,
     A4, A4, G4, G4,  F4, F4, E4, E4,
+};
+
+// ============================================
+// GAME OVER BGM - Sad, descending melody
+// ============================================
+#define GAMEOVER_LEN 16
+
+// Slow, mournful triangle bass
+static const unsigned char gameover_tri[GAMEOVER_LEN] = {
+    A2, NOTE_REST, E2, NOTE_REST,
+    F2, NOTE_REST, E2, NOTE_REST,
+    D2, NOTE_REST, A2, NOTE_REST,
+    E2, NOTE_REST, E2, NOTE_REST,
+};
+
+// Descending sad melody
+static const unsigned char gameover_pl1[GAMEOVER_LEN] = {
+    E4, D4, C4, B3,
+    A3, NOTE_REST, GS3, NOTE_REST,
+    A3, B3, C4, NOTE_REST,
+    B3, A3, NOTE_REST, NOTE_REST,
+};
+
+// Minor harmony
+static const unsigned char gameover_pl2[GAMEOVER_LEN] = {
+    C4, B3, A3, GS3,
+    F3, NOTE_REST, E3, NOTE_REST,
+    F3, GS3, A3, NOTE_REST,
+    GS3, E3, NOTE_REST, NOTE_REST,
 };
 
 // Palette data
@@ -412,14 +444,17 @@ static void music_play(unsigned char track) {
     music_frame = 0;
 
     switch (track) {
-        case 0:  // Title
-            music_tempo = 12;  // Slower
+        case 0:  // Title - Heroic march
+            music_tempo = 8;   // Strong, steady tempo
             break;
         case 1:  // Racing
             music_tempo = 6;   // Fast!
             break;
         case 2:  // Win
             music_tempo = 10;  // Medium
+            break;
+        case 3:  // Game Over
+            music_tempo = 16;  // Very slow, sad
             break;
     }
 }
@@ -468,6 +503,13 @@ static void music_update(void) {
             tri_data = win_tri;
             pl1_data = win_pl1;
             pl2_data = win_pl2;
+            noise_data = 0;
+            break;
+        case 3:  // Game Over
+            len = GAMEOVER_LEN;
+            tri_data = gameover_tri;
+            pl1_data = gameover_pl1;
+            pl2_data = gameover_pl2;
             noise_data = 0;
             break;
         default:
@@ -867,7 +909,7 @@ static void check_bullet_collisions(void) {
                 player_inv = 60;
                 bullet_on[i] = 0;
                 if (player_hp == 0) {
-                    game_state = STATE_GAMEOVER; music_stop();
+                    game_state = STATE_GAMEOVER; music_play(3);
                 }
             }
         }
@@ -1001,7 +1043,7 @@ static void check_collisions(void) {
             --player_hp;
             player_inv = 60;
             if (player_hp == 0) {
-                game_state = STATE_GAMEOVER; music_stop();
+                game_state = STATE_GAMEOVER; music_play(3);
             }
         }
     }
@@ -1017,7 +1059,7 @@ static void check_collisions(void) {
                 player_inv = 60;
                 obs_on[i] = 0;
                 if (player_hp == 0) {
-                    game_state = STATE_GAMEOVER; music_stop();
+                    game_state = STATE_GAMEOVER; music_play(3);
                 }
             }
         }
