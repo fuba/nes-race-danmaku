@@ -55,10 +55,9 @@
 // Game states
 #define STATE_TITLE     0
 #define STATE_RACING    1
-#define STATE_PITSTOP   2
-#define STATE_GAMEOVER  3
-#define STATE_WIN       4
-#define STATE_PAUSED    5
+#define STATE_GAMEOVER  2
+#define STATE_WIN       3
+#define STATE_PAUSED    4
 
 // Screen constants
 #define ROAD_LEFT       64
@@ -129,7 +128,6 @@ static signed char bullet_dy[MAX_BULLETS];  // Y velocity
 static unsigned char bullet_on[MAX_BULLETS];
 static unsigned char bullet_timer;  // Timer for shooting patterns
 
-static unsigned char pit_timer;
 static unsigned char rnd_seed;
 static unsigned char win_timer;  // Animation timer for win screen
 
@@ -963,14 +961,6 @@ static void update_player(void) {
         if (player_y < SCREEN_HEIGHT - 32) player_y += PLAYER_SPEED;
     }
 
-    // Pit stop check (left edge of road)
-    if (player_x <= ROAD_LEFT + 8 && player_hp < PLAYER_MAX_HP) {
-        if ((frame_count & 0x3F) == 0) {
-            game_state = STATE_PITSTOP;
-            pit_timer = 0;
-        }
-    }
-
     if (player_inv > 0) --player_inv;
 }
 
@@ -1479,7 +1469,10 @@ void main(void) {
                     game_state = STATE_PAUSED;
                 } else {
                     update_game();
-                    draw_game();
+                    // Only draw game if still racing (not transitioned to WIN/GAMEOVER)
+                    if (game_state == STATE_RACING) {
+                        draw_game();
+                    }
                 }
                 break;
 
@@ -1488,15 +1481,6 @@ void main(void) {
                 if (pad_new & BTN_START) {
                     game_state = STATE_RACING;
                 }
-                break;
-
-            case STATE_PITSTOP:
-                ++pit_timer;
-                if (pit_timer >= 60) {
-                    player_hp = PLAYER_MAX_HP;
-                    game_state = STATE_RACING;
-                }
-                draw_game();
                 break;
 
             case STATE_GAMEOVER:
