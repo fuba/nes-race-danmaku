@@ -1304,38 +1304,19 @@ static void draw_game(void) {
     unsigned char id = 0;
     unsigned char i;
 
-    // Player car
+    // Player car (4 sprites)
     if (player_inv == 0 || (frame_count & 4)) {
         id = set_car(id, player_x, player_y, SPR_CAR, 0);
     }
 
-    // Warning marker for next enemy (blinking)
-    if (!enemy_on && enemy_warn_timer > 0 && (frame_count & 8)) {
-        // Draw arrow pointing down at spawn position
-        id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1 | 0x80);  // Arrow, flipped vertically
-        id = set_sprite(id, enemy_next_x + 4, 16, 0x0A, 1 | 0x80);
-    }
-
-    // Enemy car
+    // Enemy car (4 sprites)
     if (enemy_on) {
         id = set_car(id, enemy_x, enemy_y, SPR_CAR + 4, 1);
     }
 
-    // Obstacles
-    for (i = 0; i < 4; ++i) {
-        if (obs_on[i]) {
-            id = set_sprite(id, obs_x[i], obs_y[i], SPR_OBSTACLE, 2);
-        }
-    }
+    // === Critical HUD first (always visible) ===
 
-    // Bullets (danmaku)
-    for (i = 0; i < MAX_BULLETS; ++i) {
-        if (bullet_on[i] && id < 60) {  // Leave room for HUD
-            id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 1);
-        }
-    }
-
-    // HUD - Position (1ST to 12TH)
+    // HUD - Position (3-4 sprites)
     if (position >= 10) {
         id = set_sprite(id, 8, 8, SPR_DIGIT + 1, 3);              // "1"
         id = set_sprite(id, 16, 8, SPR_DIGIT + (position - 10), 3); // 0,1,2
@@ -1358,23 +1339,15 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - HP (hearts or number)
+    // HUD - HP (2 sprites)
     id = set_sprite(id, 8, 20, SPR_LETTER + 7, 3);  // H
     id = set_sprite(id, 16, 20, SPR_DIGIT + player_hp, 3);
 
-    // HUD - Lap counter "LAP X/3" at top center
-    id = set_sprite(id, 100, 8, SPR_LETTER + 11, 3);  // L
-    id = set_sprite(id, 108, 8, SPR_LETTER + 0, 3);   // A
-    id = set_sprite(id, 116, 8, SPR_LETTER + 15, 3);  // P
-    id = set_sprite(id, 128, 8, SPR_DIGIT + lap_count + 1, 3);  // Current lap
-    id = set_sprite(id, 136, 8, SPR_SLASH, 3);        // "/"
-    id = set_sprite(id, 144, 8, SPR_DIGIT + 3, 3);    // 3 (total laps)
-
-    // HUD - Multiplier "xN" at top right
-    id = set_sprite(id, 216, 8, SPR_LETTER + 23, 3);  // x
+    // HUD - Multiplier "xN" (2 sprites)
+    id = set_sprite(id, 216, 8, SPR_LETTER + 23, 3);  // X
     id = set_sprite(id, 224, 8, SPR_DIGIT + score_multiplier, 3);
 
-    // HUD - Score at right side (5 digits)
+    // HUD - Score (5 sprites)
     {
         unsigned int s = score;
         if (s > 99999) s = 99999;
@@ -1385,11 +1358,41 @@ static void draw_game(void) {
         id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(s % 10), 3);
     }
 
-    // "BUZ" display when grazing (near player)
+    // HUD - Lap counter "LAP X/3" (6 sprites)
+    id = set_sprite(id, 100, 8, SPR_LETTER + 11, 3);  // L
+    id = set_sprite(id, 108, 8, SPR_LETTER + 0, 3);   // A
+    id = set_sprite(id, 116, 8, SPR_LETTER + 15, 3);  // P
+    id = set_sprite(id, 128, 8, SPR_DIGIT + lap_count + 1, 3);  // Current lap
+    id = set_sprite(id, 136, 8, SPR_SLASH, 3);        // "/"
+    id = set_sprite(id, 144, 8, SPR_DIGIT + 3, 3);    // 3 (total laps)
+
+    // "BUZ" display when grazing (3 sprites)
     if (graze_timer > 0) {
         id = set_sprite(id, player_x - 8, player_y - 16, SPR_LETTER + 1, 1);  // B
         id = set_sprite(id, player_x,     player_y - 16, SPR_LETTER + 20, 1); // U
         id = set_sprite(id, player_x + 8, player_y - 16, SPR_LETTER + 25, 1); // Z
+    }
+
+    // === Game objects (may be culled if too many) ===
+
+    // Warning marker for next enemy (2 sprites)
+    if (!enemy_on && enemy_warn_timer > 0 && (frame_count & 8)) {
+        id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1 | 0x80);  // Arrow, flipped vertically
+        id = set_sprite(id, enemy_next_x + 4, 16, 0x0A, 1 | 0x80);
+    }
+
+    // Obstacles (up to 4 sprites)
+    for (i = 0; i < 4; ++i) {
+        if (obs_on[i] && id < 60) {
+            id = set_sprite(id, obs_x[i], obs_y[i], SPR_OBSTACLE, 2);
+        }
+    }
+
+    // Bullets - danmaku (use remaining sprite slots)
+    for (i = 0; i < MAX_BULLETS; ++i) {
+        if (bullet_on[i] && id < 62) {  // Leave room for progress bar
+            id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 1);
+        }
     }
 
     // HUD - Progress bar at bottom of screen
