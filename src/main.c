@@ -168,8 +168,9 @@ static unsigned char confetti_color[MAX_CONFETTI];
 // Use volatile to ensure compiler doesn't optimize away SRAM writes
 #pragma bss-name(push, "SAVE")
 static volatile unsigned char save_magic;           // Magic byte to validate save
-static volatile unsigned int  high_scores[NUM_HIGH_SCORES];  // Top 3 scores
-static volatile unsigned char high_names[NUM_HIGH_SCORES][3]; // 3-letter names
+static volatile unsigned int  high_scores[NUM_HIGH_SCORES];      // Top 3 scores (low 16-bit)
+static volatile unsigned int  high_scores_high[NUM_HIGH_SCORES]; // Top 3 scores (high 16-bit)
+static volatile unsigned char high_names[NUM_HIGH_SCORES][3];    // 3-letter names
 static volatile unsigned char max_loop;             // Maximum loop reached (for loop select)
 #pragma bss-name(pop)
 
@@ -489,7 +490,8 @@ const unsigned char palette[32] = {
 // ============================================
 static void do_game_over(void);
 static void finish_game_over(void);
-static unsigned char check_high_score(unsigned int new_score);
+static unsigned char check_high_score(unsigned int new_score_high, unsigned int new_score_low);
+static void insert_high_score(unsigned char rank, unsigned int new_score_high, unsigned int new_score_low);
 static void init_name_entry(unsigned char rank);
 static void music_play(unsigned char track);
 static void music_stop(void);
@@ -1246,6 +1248,7 @@ static void init_save(void) {
         save_magic = SAVE_MAGIC;
         for (i = 0; i < NUM_HIGH_SCORES; ++i) {
             high_scores[i] = 0;
+            high_scores_high[i] = 0;
             high_names[i][0] = 0;  // A
             high_names[i][1] = 0;  // A
             high_names[i][2] = 0;  // A
@@ -1260,11 +1263,21 @@ static void init_save(void) {
     title_select_loop = 0;  // Default to starting from loop 1
 }
 
+// Compare two 32-bit scores: returns 1 if (a_high:a_low) > (b_high:b_low)
+static unsigned char score_greater(
+    unsigned int a_high, unsigned int a_low,
+    unsigned int b_high, unsigned int b_low) {
+    if (a_high > b_high) return 1;
+    if (a_high < b_high) return 0;
+    return a_low > b_low;
+}
+
 // Check if score qualifies for high score, return rank (0-2) or 255 if not
-static unsigned char check_high_score(unsigned int new_score) {
+static unsigned char check_high_score(unsigned int new_score_high, unsigned int new_score_low) {
     unsigned char i;
     for (i = 0; i < NUM_HIGH_SCORES; ++i) {
-        if (new_score > high_scores[i]) {
+        if (score_greater(new_score_high, new_score_low,
+                          high_scores_high[i], high_scores[i])) {
             return i;
         }
     }
@@ -1272,17 +1285,21 @@ static unsigned char check_high_score(unsigned int new_score) {
 }
 
 // Insert a new high score at given rank
-static void insert_high_score(unsigned char rank, unsigned int new_score) {
+static void insert_high_score(unsigned char rank,
+                               unsigned int new_score_high,
+                               unsigned int new_score_low) {
     unsigned char i;
     // Shift lower scores down
     for (i = NUM_HIGH_SCORES - 1; i > rank; --i) {
         high_scores[i] = high_scores[i - 1];
+        high_scores_high[i] = high_scores_high[i - 1];
         high_names[i][0] = high_names[i - 1][0];
         high_names[i][1] = high_names[i - 1][1];
         high_names[i][2] = high_names[i - 1][2];
     }
     // Insert new score
-    high_scores[rank] = new_score;
+    high_scores[rank] = new_score_low;
+    high_scores_high[rank] = new_score_high;
     high_names[rank][0] = entry_name[0];
     high_names[rank][1] = entry_name[1];
     high_names[rank][2] = entry_name[2];
@@ -1312,7 +1329,7 @@ static void do_game_over(void) {
 
 // Finish game over after explosion - check for high score
 static void finish_game_over(void) {
-    new_score_rank = check_high_score(score);
+    new_score_rank = check_high_score(score_high, score);
     if (new_score_rank < NUM_HIGH_SCORES) {
         // Got a high score! Go to name entry
         game_state = STATE_HIGHSCORE;
@@ -1673,25 +1690,31 @@ static void draw_game(void) {
         id = set_sprite(id, 232, 8, SPR_DIGIT + (m % 10), 3);
     }
 
-    // HUD - Score: show score_high with "H" prefix if > 0, else show score
+    // HUD - Score: 6 digits, 32-bit support (max 999,999)
     {
-        unsigned int s;
         if (score_high > 0) {
-            // Show "H" + score_high value
-            s = score_high;
-            id = set_sprite(id, 192, 20, SPR_LETTER + 7, 1);  // H in red
+            // 32-bit score: use unsigned long for calculation
+            unsigned long full_score = ((unsigned long)score_high << 16) | score;
+            if (full_score > 999999UL) full_score = 999999UL;
+            id = set_sprite(id, 192, 20, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
+            id = set_sprite(id, 200, 20, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
+            id = set_sprite(id, 208, 20, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
+            id = set_sprite(id, 216, 20, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
+            id = set_sprite(id, 224, 20, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
+            id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
         } else {
-            s = score;
-            id = set_sprite(id, 192, 20, SPR_DIGIT + 0, 3);   // Leading 0
+            // 16-bit score: fast path without unsigned long
+            unsigned int s = score;
+            id = set_sprite(id, 192, 20, SPR_DIGIT + 0, 3);  // Leading zero
+            id = set_sprite(id, 200, 20, SPR_DIGIT + (s / 10000), 3);
+            s %= 10000;
+            id = set_sprite(id, 208, 20, SPR_DIGIT + (s / 1000), 3);
+            s %= 1000;
+            id = set_sprite(id, 216, 20, SPR_DIGIT + (s / 100), 3);
+            s %= 100;
+            id = set_sprite(id, 224, 20, SPR_DIGIT + (s / 10), 3);
+            id = set_sprite(id, 232, 20, SPR_DIGIT + (s % 10), 3);
         }
-        id = set_sprite(id, 200, 20, SPR_DIGIT + (s / 10000), 3);
-        s %= 10000;
-        id = set_sprite(id, 208, 20, SPR_DIGIT + (s / 1000), 3);
-        s %= 1000;
-        id = set_sprite(id, 216, 20, SPR_DIGIT + (s / 100), 3);
-        s %= 100;
-        id = set_sprite(id, 224, 20, SPR_DIGIT + (s / 10), 3);
-        id = set_sprite(id, 232, 20, SPR_DIGIT + (s % 10), 3);
     }
 
     // HUD - Lap counter "LX" at center-top (2 sprites, different Y to avoid scanline limit)
@@ -1775,15 +1798,28 @@ static void draw_title(void) {
         id = set_sprite(id, 88, y, SPR_LETTER + high_names[i][1], 3);
         id = set_sprite(id, 96, y, SPR_LETTER + high_names[i][2], 3);
 
-        // Score (5 digits)
-        s = high_scores[i];
-        if (s > 99999) s = 99999;
+        // Score (6 digits, 32-bit support)
         x = 112;
-        id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
-        id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
-        id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
-        id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
-        id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+        if (high_scores_high[i] > 0) {
+            // 32-bit score: use unsigned long for calculation
+            unsigned long full_score = ((unsigned long)high_scores_high[i] << 16) | high_scores[i];
+            if (full_score > 999999UL) full_score = 999999UL;
+            id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
+            id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
+            id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
+            id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
+            id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
+            id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
+        } else {
+            // 16-bit score: display 6 digits (leading zero for consistency)
+            s = high_scores[i];
+            id = set_sprite(id, x,      y, SPR_DIGIT + 0, 3);  // Leading zero for alignment
+            id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+            id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+            id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+            id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+            id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+        }
     }
 
     // Loop selection (only show if player has completed at least 1 loop)
@@ -2346,21 +2382,8 @@ void main(void) {
                 if (pad_new & BTN_A) {
                     ++name_entry_pos;
                     if (name_entry_pos >= 3) {
-                        // Done entering name - save score
-                        // Direct write to SRAM at $6000
-                        {
-                            volatile unsigned char *sram = (volatile unsigned char *)0x6000;
-                            unsigned int s = score;
-                            // Write magic byte
-                            sram[0] = SAVE_MAGIC;
-                            // Write score at offset 1 (high_scores[0])
-                            sram[1] = (unsigned char)(s & 0xFF);
-                            sram[2] = (unsigned char)(s >> 8);
-                            // Write name at offset 7 (high_names[0])
-                            sram[7] = entry_name[0];
-                            sram[8] = entry_name[1];
-                            sram[9] = entry_name[2];
-                        }
+                        // Done entering name - save score (32-bit)
+                        insert_high_score(new_score_rank, score_high, score);
                         game_state = STATE_GAMEOVER;
                     } else {
                         // Move to next letter
@@ -2369,10 +2392,7 @@ void main(void) {
                 }
                 // START button to finish name entry immediately
                 if (pad_new & BTN_START) {
-                    high_scores[new_score_rank] = score;
-                    high_names[new_score_rank][0] = entry_name[0];
-                    high_names[new_score_rank][1] = entry_name[1];
-                    high_names[new_score_rank][2] = entry_name[2];
+                    insert_high_score(new_score_rank, score_high, score);
                     game_state = STATE_GAMEOVER;
                 }
                 break;

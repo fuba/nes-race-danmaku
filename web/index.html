@@ -519,7 +519,8 @@
         const SRAM_START = 0x6000;
         const SRAM_SIZE = 0x2000;  // 8KB
         const SAVE_MAGIC = 0x52;
-        const HIGH_SCORE_OFFSET = 1;
+        const HIGH_SCORE_LOW_OFFSET = 1;   // high_scores[0] low 16-bit
+        const HIGH_SCORE_HIGH_OFFSET = 7;  // high_scores_high[0] high 16-bit
         const GAME_NAME = 'EDGERACE';
         const SHARE_HASHTAGS = 'EDGERACE';
 
@@ -595,7 +596,10 @@
             if (magic !== SAVE_MAGIC) {
                 return 0;
             }
-            return readUint16LE(SRAM_START + HIGH_SCORE_OFFSET);
+            // Read 32-bit score (low 16-bit + high 16-bit)
+            const low = readUint16LE(SRAM_START + HIGH_SCORE_LOW_OFFSET);
+            const high = readUint16LE(SRAM_START + HIGH_SCORE_HIGH_OFFSET);
+            return (high * 65536) + low;
         }
 
         function openShareIntent() {
