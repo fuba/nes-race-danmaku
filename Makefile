@@ -1,8 +1,8 @@
-# NES Racing Game Makefile
+# EDGERACE - NES Racing Game Makefile
 # Minimal build without external libraries
 
 # Output
-ROM = build/race.nes
+ROM = build/edgerace.nes
 
 # Source files
 C_SOURCE = src/main.c

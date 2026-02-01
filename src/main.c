@@ -63,8 +63,8 @@
 #define STATE_EXPLODE    7  // Player explosion before game over
 
 // Screen constants
-#define ROAD_LEFT       64
-#define ROAD_RIGHT      192
+#define ROAD_LEFT       40
+#define ROAD_RIGHT      216
 #define SCREEN_HEIGHT   240
 
 // Player constants
@@ -91,9 +91,8 @@
 #define SPR_BAR_FILL    0x06
 #define SPR_BAR_EMPTY   0x07
 #define SPR_CAR_ICON    0x08
-#define SPR_OBSTACLE    0x09
 #define SPR_EXPLOSION   0x0E
-#define SPR_BULLET      0x0B  // Diamond bullet sprite
+#define SPR_BULLET      0x0B    // Diamond bullet sprite
 #define SPR_DIGIT       0x10
 #define SPR_LETTER      0x30
 
@@ -124,22 +123,19 @@ static unsigned char explode_x;
 static unsigned char explode_y;
 static unsigned char explode_timer;    // Explosion animation timer
 
-// Goal line effect
-static unsigned char goal_line_y;      // Y position of goal line (scrolls down)
-static unsigned char goal_line_timer;  // Timer for goal line animation
 
 static unsigned char position;
 static unsigned char lap_count;
 static unsigned char loop_count;  // Current loop (2周目, 3周目...)
-static unsigned int score;
+static unsigned int score;        // Score lower 16 bits (0-65535)
+static unsigned int score_high;   // Score upper (increments when score overflows)
 static unsigned int distance;
-static unsigned char score_multiplier;  // Score multiplier (1-9)
-static unsigned int no_damage_timer;    // Frames since last damage
-static unsigned char graze_timer;       // Timer for showing "BUZ" display
+static unsigned int score_multiplier;  // Score multiplier (1-65535)
+static unsigned char graze_count;       // Graze counter for HP recovery (every 10)
+static unsigned char car_graze_cooldown; // Cooldown for enemy car graze
+static unsigned char boost_remaining;   // Boosts remaining this loop (max 2)
+static unsigned char boost_active;      // Currently boosting flag
 
-static unsigned char obs_x[4];
-static unsigned char obs_y[4];
-static unsigned char obs_on[4];
 
 // Bullet system (danmaku)
 #define MAX_BULLETS 16
@@ -482,10 +478,10 @@ const unsigned char palette[32] = {
     0x0F, 0x01, 0x21, 0x31,  // Blue
     0x0F, 0x16, 0x27, 0x37,  // Red
     // Sprite palettes
-    0x0F, 0x11, 0x21, 0x31,  // Player (blue)
-    0x0F, 0x06, 0x16, 0x26,  // Enemy (red)
-    0x0F, 0x07, 0x17, 0x27,  // Obstacle (orange)
-    0x0F, 0x30, 0x30, 0x30   // HUD (white)
+    0x0F, 0x11, 0x21, 0x31,  // Palette 0: Player (blue)
+    0x0F, 0x06, 0x16, 0x26,  // Palette 1: Enemy (red)
+    0x0F, 0x28, 0x38, 0x30,  // Palette 2: Bullet (bright yellow)
+    0x0F, 0x30, 0x30, 0x30   // Palette 3: HUD (white)
 };
 
 // ============================================
@@ -538,6 +534,52 @@ static void init_apu(void) {
     music_pos = 0;
     music_tempo = 8;  // 8 frames per beat = ~7.5 BPS at 60fps
     current_track = 0;
+}
+
+// Graze SFX timer (counts down, plays sound while > 0)
+static unsigned char sfx_graze_timer;
+// Damage SFX timer and pitch
+static unsigned char sfx_damage_timer;
+static unsigned int sfx_damage_pitch;
+
+// Play graze sound effect (short metallic scrape)
+static void sfx_graze(void) {
+    sfx_graze_timer = 8;  // 8 frames duration
+}
+
+// Play damage sound effect (deflating/shrinking sound)
+static void sfx_damage(void) {
+    sfx_damage_timer = 20;  // 20 frames duration
+    sfx_damage_pitch = 200; // Start at mid-high pitch
+}
+
+// Stop all SFX (call on scene transitions)
+static void sfx_stop(void) {
+    sfx_graze_timer = 0;
+    sfx_damage_timer = 0;
+    APU_NOI_VOL = 0x30;  // Silence noise channel
+}
+
+// Update SFX (call every frame - AFTER music_update to override BGM)
+static void update_sfx(void) {
+    // Graze SFX - noise channel
+    if (sfx_graze_timer > 0) {
+        // Re-apply noise settings every frame to override BGM
+        APU_NOI_VOL = 0x3F;
+        APU_NOI_LO = 0x82;
+        APU_NOI_HI = 0x08;
+        --sfx_graze_timer;
+    }
+    // Damage SFX - pulse 2 channel with descending pitch
+    if (sfx_damage_timer > 0) {
+        // Descending pitch "womp" sound
+        APU_PL2_VOL = 0xBF;  // Duty 50%, volume 15
+        APU_PL2_LO = (unsigned char)(sfx_damage_pitch & 0xFF);
+        APU_PL2_HI = (unsigned char)((sfx_damage_pitch >> 8) & 0x07) | 0x08;
+        // Increase period = lower pitch (deflating effect)
+        sfx_damage_pitch += 40;
+        --sfx_damage_timer;
+    }
 }
 
 // Play a note on triangle channel
@@ -682,6 +724,20 @@ static void music_stop(void) {
     APU_NOI_VOL = 0x30;
 }
 
+// Pause music (silence but keep position)
+static void music_pause(void) {
+    music_enabled = 0;
+    APU_PL1_VOL = 0x30;
+    APU_PL2_VOL = 0x30;
+    APU_TRI_LIN = 0x00;
+    APU_NOI_VOL = 0x30;
+}
+
+// Resume music from where it paused
+static void music_resume(void) {
+    music_enabled = 1;
+}
+
 // Update music (call every frame)
 static void music_update(void) {
     unsigned char len;
@@ -792,6 +848,16 @@ static void ppu_addr(unsigned int addr) {
     PPU_ADDR = (unsigned char)(addr);
 }
 
+// Add points to score with overflow handling
+static void add_score(unsigned int points) {
+    unsigned int old_score = score;
+    score += points;
+    // Check for overflow (new score is less than old score)
+    if (score < old_score) {
+        ++score_high;
+    }
+}
+
 // Read controller
 static unsigned char read_pad(void) {
     unsigned char result = 0;
@@ -896,6 +962,7 @@ static void update_loop_palette(void) {
 }
 
 // Draw the road background
+// ROAD_LEFT=40 (tile 5), ROAD_RIGHT=216 (tile 27)
 static void draw_road(void) {
     unsigned char row, col;
     unsigned char attr_row;
@@ -903,10 +970,11 @@ static void draw_road(void) {
     ppu_off();
 
     // Draw nametable (30 rows x 32 columns)
+    // Road spans tiles 5-26, grass is 0-4 and 27-31
     for (row = 0; row < 30; ++row) {
         ppu_addr(0x2000 + (unsigned int)row * 32);
         for (col = 0; col < 32; ++col) {
-            if (col < 8 || col >= 24) {
+            if (col < 5 || col >= 27) {
                 // Grass on sides
                 PPU_DATA = TILE_GRASS;
             } else if (col == 15 || col == 16) {
@@ -922,18 +990,19 @@ static void draw_road(void) {
     // Attribute table (at $23C0)
     // Each byte controls 4x4 tiles (32x32 pixels)
     // Palette 0 = road (gray), Palette 1 = grass (green)
-    // Road is columns 8-23, grass is 0-7 and 24-31
+    // Road is tiles 5-26, grass is 0-4 and 27-31
     ppu_addr(0x23C0);
     for (attr_row = 0; attr_row < 8; ++attr_row) {
-        // 0x55 = 01010101 = all 4 quadrants use palette 1 (grass)
-        // 0x00 = 00000000 = all 4 quadrants use palette 0 (road)
+        // 0x55 = all grass, 0x00 = all road
+        // 0x05 = left half grass, right half road
+        // 0x50 = left half road, right half grass
         PPU_DATA = 0x55;  // Columns 0-3: grass
-        PPU_DATA = 0x55;  // Columns 4-7: grass
+        PPU_DATA = 0x05;  // Columns 4-7: grass/road border
         PPU_DATA = 0x00;  // Columns 8-11: road
         PPU_DATA = 0x00;  // Columns 12-15: road
         PPU_DATA = 0x00;  // Columns 16-19: road
         PPU_DATA = 0x00;  // Columns 20-23: road
-        PPU_DATA = 0x55;  // Columns 24-27: grass
+        PPU_DATA = 0x50;  // Columns 24-27: road/grass border
         PPU_DATA = 0x55;  // Columns 28-31: grass
     }
 
@@ -942,7 +1011,7 @@ static void draw_road(void) {
 
 // Prepare next enemy spawn (show warning marker)
 static void prepare_enemy(void) {
-    enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
+    enemy_next_x = ROAD_LEFT + 8 + (rnd() & 0x7F);
     if (enemy_next_x > ROAD_RIGHT - 24) {
         enemy_next_x = ROAD_RIGHT - 24;
     }
@@ -960,22 +1029,6 @@ static void spawn_enemy(void) {
     // Cycle through slots (can't use bitwise AND since MAX_ENEMIES is not power of 2)
     ++enemy_slot;
     if (enemy_slot >= MAX_ENEMIES) enemy_slot = 0;
-}
-
-// Spawn obstacle
-static void spawn_obstacle(void) {
-    unsigned char i;
-    for (i = 0; i < 4; ++i) {
-        if (!obs_on[i]) {
-            obs_x[i] = ROAD_LEFT + 8 + (rnd() & 0x7F);
-            if (obs_x[i] > ROAD_RIGHT - 16) {
-                obs_x[i] = ROAD_RIGHT - 16;
-            }
-            obs_y[i] = 0;
-            obs_on[i] = 1;
-            break;
-        }
-    }
 }
 
 // Absolute value helper (needed before bullet collision check)
@@ -1028,6 +1081,7 @@ static void spawn_danmaku(void) {
     unsigned char i, cx, cy;
     signed char dx, dy;
     unsigned char mask;
+    unsigned char burst_phase;
 
     ++bullet_timer;
 
@@ -1036,8 +1090,15 @@ static void spawn_danmaku(void) {
         pattern_type = (pattern_type + 1) & 0x07;
     }
 
+    // Burst pattern: 3 bursts then 2 pauses (cycle of ~80 frames)
+    // Phase 0-47: fire, Phase 48-79: pause
+    burst_phase = bullet_timer % 80;
+
     // When in 1st place: beautiful danmaku from behind
     if (position == 1) {
+        // Only fire during burst phase
+        if (burst_phase >= 56) return;
+
         // Wave pattern from bottom - sweeping left to right
         if ((bullet_timer & 0x17) == 0) {
             // Sine-like wave using frame count
@@ -1059,6 +1120,9 @@ static void spawn_danmaku(void) {
         }
         return;
     }
+
+    // Pause phase - create gaps in bullet stream
+    if (burst_phase >= 48) return;
 
     // Each enemy shoots
     for (i = 0; i < MAX_ENEMIES; ++i) {
@@ -1122,9 +1186,11 @@ static void check_bullet_collisions(void) {
                 bullet_on[i] = 0;
                 // Penalty: -1 point (but don't go negative)
                 if (score > 0) --score;
-                // Reset multiplier and no-damage timer
+                // Reset multiplier and graze count
                 score_multiplier = 1;
-                no_damage_timer = 0;
+                graze_count = 0;
+                // Play deflating sound
+                sfx_damage();
                 if (player_hp == 0) {
                     do_game_over();
                     return;
@@ -1133,9 +1199,24 @@ static void check_bullet_collisions(void) {
             // Graze zone: dx < 10 && dy < 10 but outside damage zone
             else if (dx < 10 && dy < 10) {
                 // Graze! Points = multiplier * 2^loop_count
-                // Loop 0: x1, Loop 1: x2, Loop 2: x4, etc.
-                score += score_multiplier * (1 << loop_count);
-                graze_timer = 15;  // Show "BUZ" for 15 frames
+                add_score(score_multiplier * (1 << loop_count));
+
+                // Increase multiplier by 1 for each graze (max 65535)
+                if (score_multiplier < 65535u) {
+                    ++score_multiplier;
+                }
+
+                // Every 10 grazes, recover 1 HP
+                ++graze_count;
+                if (graze_count >= 10) {
+                    graze_count = 0;
+                    if (player_hp < PLAYER_MAX_HP) {
+                        ++player_hp;
+                    }
+                }
+
+                // Play graze sound effect
+                sfx_graze();
                 // Don't remove bullet - player can still get hit!
             }
         }
@@ -1219,6 +1300,8 @@ static void init_name_entry(unsigned char rank) {
 
 // Handle game over - start explosion first, then check high score
 static void do_game_over(void) {
+    // Stop any playing SFX
+    sfx_stop();
     // Start explosion at player position
     explode_x = player_x;
     explode_y = player_y;
@@ -1258,13 +1341,15 @@ static void init_game(void) {
     lap_count = 0;
     loop_count = title_select_loop;  // Start from selected loop
     score = 0;
+    score_high = 0;
     distance = 0;
     scroll_y = 0;
     score_multiplier = 1;  // Start with 1x multiplier
-    no_damage_timer = 0;
-    graze_timer = 0;
+    graze_count = 0;
+    car_graze_cooldown = 0;
+    boost_remaining = 2;   // 2 boosts per loop
+    boost_active = 0;
     explode_timer = 0;
-    goal_line_timer = 0;
 
     // Set music intensity based on starting loop
     // Loop 1 LAP1: calm(0), Loop 2+ LAP1: moderate(1)
@@ -1272,10 +1357,6 @@ static void init_game(void) {
         music_intensity = 1;  // Loop 2+: moderate start
     } else {
         music_intensity = 0;  // Loop 1: calm start
-    }
-
-    for (i = 0; i < 4; ++i) {
-        obs_on[i] = 0;
     }
 
     // Clear all bullets
@@ -1294,7 +1375,7 @@ static void init_game(void) {
     draw_road();
 
     // Spawn first enemy immediately (no warning delay)
-    enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
+    enemy_next_x = ROAD_LEFT + 8 + (rnd() & 0x7F);
     if (enemy_next_x > ROAD_RIGHT - 24) {
         enemy_next_x = ROAD_RIGHT - 24;
     }
@@ -1303,19 +1384,21 @@ static void init_game(void) {
 
 // Update player
 static void update_player(void) {
+    unsigned char speed = (pad_now & BTN_B) ? 4 : PLAYER_SPEED;
+
     if (pad_now & BTN_LEFT) {
-        if (player_x > ROAD_LEFT) player_x -= PLAYER_SPEED;
+        if (player_x > ROAD_LEFT) player_x -= speed;
     }
     if (pad_now & BTN_RIGHT) {
-        if (player_x < ROAD_RIGHT - 16) player_x += PLAYER_SPEED;
+        if (player_x < ROAD_RIGHT - 16) player_x += speed;
     }
     if (pad_now & BTN_UP) {
         // Keep player below HUD area (Y=60 is about 1/4 of screen height)
         // This prevents sprite overflow conflicts with HUD sprites on same scanlines
-        if (player_y > 60) player_y -= PLAYER_SPEED;
+        if (player_y > 60) player_y -= speed;
     }
     if (pad_now & BTN_DOWN) {
-        if (player_y < SCREEN_HEIGHT - 32) player_y += PLAYER_SPEED;
+        if (player_y < SCREEN_HEIGHT - 32) player_y += speed;
     }
 
     if (player_inv > 0) --player_inv;
@@ -1384,7 +1467,7 @@ static void update_enemy(void) {
         // Overtaken - award points once
         if (player_y + 16 < enemy_y[i] && !enemy_passed[i]) {
             enemy_passed[i] = 1;
-            score += 20 * score_multiplier;
+            add_score(20 * score_multiplier);
             if (position > 1) --position;
         }
 
@@ -1395,22 +1478,12 @@ static void update_enemy(void) {
     }
 }
 
-// Update obstacles
-static void update_obstacles(void) {
-    unsigned char i;
-    for (i = 0; i < 4; ++i) {
-        if (obs_on[i]) {
-            obs_y[i] += SCROLL_SPEED;
-            if (obs_y[i] > SCREEN_HEIGHT) {
-                obs_on[i] = 0;
-            }
-        }
-    }
-}
-
 // Check collisions
 static void check_collisions(void) {
     unsigned char i, dx, dy;
+
+    // Decrease car graze cooldown
+    if (car_graze_cooldown > 0) --car_graze_cooldown;
 
     if (player_inv > 0) return;
 
@@ -1420,42 +1493,41 @@ static void check_collisions(void) {
             dx = abs_diff(player_x, enemy_x[i]);
             dy = abs_diff(player_y, enemy_y[i]);
 
+            // Damage zone
             if (dx < 14 && dy < 14) {
                 --player_hp;
                 player_inv = 60;
+                score_multiplier = 1;
+                graze_count = 0;
+                sfx_damage();
                 if (player_hp == 0) {
                     do_game_over();
                     return;
                 }
                 break;
             }
-        }
-    }
-
-    // Obstacle collisions
-    for (i = 0; i < 4; ++i) {
-        if (obs_on[i]) {
-            dx = abs_diff(player_x, obs_x[i]);
-            dy = abs_diff(player_y, obs_y[i]);
-
-            if (dx < 12 && dy < 12) {
-                --player_hp;
-                player_inv = 60;
-                obs_on[i] = 0;
-                if (player_hp == 0) {
-                    do_game_over();
-                    return;
+            // Graze zone: beside (dx < 20) OR front/back (dy < 28)
+            // Much larger window for grazing
+            else if (car_graze_cooldown == 0 &&
+                     ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
+                // Double the multiplier (max 65535)
+                if (score_multiplier <= 32767u) {
+                    score_multiplier *= 2;
+                } else {
+                    score_multiplier = 65535u;
                 }
+                sfx_graze();
+                car_graze_cooldown = 30;  // Half second cooldown
             }
         }
     }
+
 }
 
 // Main game update
 static void update_game(void) {
     update_player();
     update_enemy();
-    update_obstacles();
     check_collisions();
 
     // Danmaku system
@@ -1463,46 +1535,16 @@ static void update_game(void) {
     update_bullets();
     check_bullet_collisions();
 
-    // No-damage timer: +1x multiplier every 10 seconds (600 frames)
-    ++no_damage_timer;
-    if (no_damage_timer >= 600) {
-        no_damage_timer = 0;
-        if (score_multiplier < 9) {
-            ++score_multiplier;
-        }
-    }
-
-    // Decrease graze display timer
-    if (graze_timer > 0) {
-        --graze_timer;
-    }
-
     // Update explosion animation
     if (explode_timer > 0) {
         --explode_timer;
-        explode_y += SCROLL_SPEED;  // Explosion scrolls down with road
-    }
-
-    // Goal line animation update
-    if (goal_line_timer > 0) {
-        --goal_line_timer;
-        goal_line_y += SCROLL_SPEED;  // Goal line scrolls down
+        explode_y += (pad_now & BTN_B) ? 4 : SCROLL_SPEED;  // Match road speed
     }
 
     ++distance;
     if (distance >= LAP_DISTANCE) {  // Lap complete
         distance = 0;
         ++lap_count;
-
-        // Trigger goal line effect
-        goal_line_y = 0;
-        goal_line_timer = 60;  // Show for 60 frames
-
-        // Recover 3 HP on lap completion
-        player_hp += 3;
-        if (player_hp > PLAYER_MAX_HP) {
-            player_hp = PLAYER_MAX_HP;
-        }
 
         // Change music intensity gradually
         // Loop 1: LAP1-2=calm(0), LAP3=moderate(1)
@@ -1534,7 +1576,7 @@ static void update_game(void) {
                 }
 
                 // Big score bonus for completing a loop (with loop multiplier)
-                score += 1000 * (loop_count) * (1 << loop_count);
+                add_score(1000 * (loop_count) * (1 << loop_count));
 
                 // Clear bullets for fresh start
                 {
@@ -1545,6 +1587,7 @@ static void update_game(void) {
                 }
 
                 // Go to loop clear celebration screen
+                sfx_stop();
                 game_state = STATE_LOOP_CLEAR;
                 loop_clear_timer = 0;
                 music_play(2);  // Victory music
@@ -1556,11 +1599,13 @@ static void update_game(void) {
         }
     }
 
-    if ((frame_count & 0x7F) == 0) {  // Less frequent obstacles
-        spawn_obstacle();
+    // Speed boost with B button
+    if (pad_now & BTN_B) {
+        scroll_y -= 4;  // Fast speed
+        ++distance;     // Extra distance for boost
+    } else {
+        scroll_y -= SCROLL_SPEED;  // Normal speed
     }
-
-    scroll_y += SCROLL_SPEED;
 }
 
 // Draw game sprites
@@ -1614,19 +1659,39 @@ static void draw_game(void) {
     id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
     id = set_sprite(id, 16, 224, SPR_DIGIT + player_hp, 3);
 
-    // HUD - Multiplier "xN" (2 sprites)
-    id = set_sprite(id, 216, 8, SPR_LETTER + 23, 3);  // X
-    id = set_sprite(id, 224, 8, SPR_DIGIT + score_multiplier, 3);
-
-    // HUD - Score (5 sprites)
+    // HUD - Multiplier "x" + 5 decimal digits
     {
-        unsigned int s = score;
-        if (s > 99999) s = 99999;
-        id = set_sprite(id, 200, 20, SPR_DIGIT + (unsigned char)(s / 10000), 3);
-        id = set_sprite(id, 208, 20, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
-        id = set_sprite(id, 216, 20, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
-        id = set_sprite(id, 224, 20, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
-        id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(s % 10), 3);
+        unsigned int m = score_multiplier;
+        id = set_sprite(id, 192, 8, SPR_LETTER + 23, 3);  // X
+        id = set_sprite(id, 200, 8, SPR_DIGIT + (m / 10000), 3);
+        m %= 10000;
+        id = set_sprite(id, 208, 8, SPR_DIGIT + (m / 1000), 3);
+        m %= 1000;
+        id = set_sprite(id, 216, 8, SPR_DIGIT + (m / 100), 3);
+        m %= 100;
+        id = set_sprite(id, 224, 8, SPR_DIGIT + (m / 10), 3);
+        id = set_sprite(id, 232, 8, SPR_DIGIT + (m % 10), 3);
+    }
+
+    // HUD - Score: show score_high with "H" prefix if > 0, else show score
+    {
+        unsigned int s;
+        if (score_high > 0) {
+            // Show "H" + score_high value
+            s = score_high;
+            id = set_sprite(id, 192, 20, SPR_LETTER + 7, 1);  // H in red
+        } else {
+            s = score;
+            id = set_sprite(id, 192, 20, SPR_DIGIT + 0, 3);   // Leading 0
+        }
+        id = set_sprite(id, 200, 20, SPR_DIGIT + (s / 10000), 3);
+        s %= 10000;
+        id = set_sprite(id, 208, 20, SPR_DIGIT + (s / 1000), 3);
+        s %= 1000;
+        id = set_sprite(id, 216, 20, SPR_DIGIT + (s / 100), 3);
+        s %= 100;
+        id = set_sprite(id, 224, 20, SPR_DIGIT + (s / 10), 3);
+        id = set_sprite(id, 232, 20, SPR_DIGIT + (s % 10), 3);
     }
 
     // HUD - Lap counter "LX" at center-top (2 sprites, different Y to avoid scanline limit)
@@ -1639,35 +1704,11 @@ static void draw_game(void) {
         id = set_sprite(id, 104, 16, SPR_DIGIT + loop_count + 1, 1);  // Loop number in red
     }
 
-    // "BUZ" display when grazing (3 sprites)
-    if (graze_timer > 0) {
-        id = set_sprite(id, player_x - 8, player_y - 16, SPR_LETTER + 1, 1);  // B
-        id = set_sprite(id, player_x,     player_y - 16, SPR_LETTER + 20, 1); // U
-        id = set_sprite(id, player_x + 8, player_y - 16, SPR_LETTER + 25, 1); // Z
-    }
-
     // === Game objects (may be culled if too many) ===
 
-    // Goal line (checkered pattern scrolling down)
-    if (goal_line_timer > 0 && goal_line_y < 240) {
-        for (i = 0; i < 6 && id < 56; ++i) {
-            // Alternating pattern
-            id = set_sprite(id, ROAD_LEFT + i * 16, goal_line_y,
-                           (i & 1) ? SPR_BAR_FILL : SPR_BAR_EMPTY, 3);
-        }
-    }
-
-    // Warning marker for next enemy (2 sprites)
+    // Warning marker for next enemy (single up arrow)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1 | 0x80);
-        id = set_sprite(id, enemy_next_x + 4, 16, 0x0A, 1 | 0x80);
-    }
-
-    // Obstacles (up to 4 sprites)
-    for (i = 0; i < 4; ++i) {
-        if (obs_on[i] && id < 60) {
-            id = set_sprite(id, obs_x[i], obs_y[i], SPR_OBSTACLE, 2);
-        }
+        id = set_sprite(id, enemy_next_x + 4, 12, 0x0A, 1);
     }
 
     // Bullets - danmaku (use remaining sprite slots)
@@ -1675,7 +1716,7 @@ static void draw_game(void) {
     // Even frames draw even-indexed bullets, odd frames draw odd-indexed bullets
     for (i = 0; i < MAX_BULLETS; ++i) {
         if (bullet_on[i] && id < 62 && ((i & 1) == (frame_count & 1))) {
-            id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 1);
+            id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 2);
         }
     }
 
@@ -1700,19 +1741,25 @@ static void draw_game(void) {
 // Draw title screen
 static void draw_title(void) {
     unsigned char id = 0;
-    unsigned char x = 100, y = 60;
+    unsigned char x = 96, y = 48;
     unsigned char i;
     unsigned int s;
 
-    // "RACE"
-    id = set_sprite(id, x,      y, SPR_LETTER + 17, 0);  // R
-    id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  0);  // A
-    id = set_sprite(id, x + 16, y, SPR_LETTER + 2,  0);  // C
+    // "EDGE" - top line (blue, player color)
+    id = set_sprite(id, x,      y, SPR_LETTER + 4,  0);  // E
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 3,  0);  // D
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 6,  0);  // G
     id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  0);  // E
 
-    // Blinking car
+    // "RACE" - bottom line, offset right (red, enemy color)
+    id = set_sprite(id, x + 8,  y + 12, SPR_LETTER + 17, 1);  // R
+    id = set_sprite(id, x + 16, y + 12, SPR_LETTER + 0,  1);  // A
+    id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  1);  // C
+    id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  1);  // E
+
+    // Blinking car below title
     if (frame_count & 0x20) {
-        id = set_car(id, x + 4, y + 24, SPR_CAR, 0);
+        id = set_car(id, x + 12, y + 36, SPR_CAR, 0);
     }
 
     // High scores display (3 entries, each on different Y line)
@@ -2142,6 +2189,9 @@ void main(void) {
         // Update music every frame
         music_update();
 
+        // Update sound effects
+        update_sfx();
+
         // State machine
         switch (game_state) {
             case STATE_TITLE:
@@ -2169,6 +2219,8 @@ void main(void) {
             case STATE_RACING:
                 if (pad_new & BTN_START) {
                     game_state = STATE_PAUSED;
+                    music_pause();
+                    sfx_stop();
                 } else {
                     update_game();
                     // Only draw game if still racing (not transitioned to WIN/GAMEOVER)
@@ -2182,6 +2234,7 @@ void main(void) {
                 draw_pause();
                 if (pad_new & BTN_START) {
                     game_state = STATE_RACING;
+                    music_resume();
                 }
                 break;
 
@@ -2253,6 +2306,8 @@ void main(void) {
                     position = 12;  // Start from the back again
                     distance = 0;
                     scroll_y = 0;
+                    boost_remaining = 2;  // Reset boosts for new loop
+                    boost_active = 0;
 
                     // Setup PPU like main() does
                     ppu_off();

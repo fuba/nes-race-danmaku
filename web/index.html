@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NES Racing Game</title>
+    <title>EDGERACE - NES Racing Game</title>
     <style>
         * {
             box-sizing: border-box;
@@ -245,7 +245,7 @@
     </style>
 </head>
 <body>
-    <h1>NES Racing Game</h1>
+    <h1>EDGERACE</h1>
 
     <div id="game-container">
         <canvas id="nes-canvas" width="256" height="240"></canvas>
@@ -469,7 +469,7 @@
         });
 
         // SRAM persistence functions
-        const SRAM_KEY = 'race_nes_sram';
+        const SRAM_KEY = 'edgerace_nes_sram';
         const SRAM_START = 0x6000;
         const SRAM_SIZE = 0x2000;  // 8KB
 
@@ -600,7 +600,7 @@
                 status.textContent = 'Loading ROM...';
                 status.className = 'loading';
 
-                const response = await fetch('./race.nes');
+                const response = await fetch('./edgerace.nes');
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
