@@ -242,6 +242,50 @@
         #reset-save-btn:active {
             transform: scale(0.95);
         }
+
+        #screenshot-btn {
+            padding: 8px 16px;
+            background: linear-gradient(145deg, #4a6a4a, #3a5a3a);
+            border: 2px solid #666;
+            border-radius: 5px;
+            color: #ccc;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+
+        #screenshot-btn:hover {
+            background: linear-gradient(145deg, #5a8a5a, #4a7a4a);
+            border-color: #6bff6b;
+            color: #fff;
+        }
+
+        #screenshot-btn:active {
+            transform: scale(0.95);
+        }
+
+        #share-x-btn {
+            padding: 8px 16px;
+            background: linear-gradient(145deg, #4a4a6a, #3a3a5a);
+            border: 2px solid #666;
+            border-radius: 5px;
+            color: #ccc;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+
+        #share-x-btn:hover {
+            background: linear-gradient(145deg, #2f7cff, #245fcc);
+            border-color: #7fb3ff;
+            color: #fff;
+        }
+
+        #share-x-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -281,6 +325,8 @@
 
         <div id="save-controls">
             <button id="reset-save-btn">Reset Save Data</button>
+            <button id="screenshot-btn">📷 Screenshot</button>
+            <button id="share-x-btn">Share on X</button>
         </div>
     </div>
 
@@ -472,6 +518,10 @@
         const SRAM_KEY = 'edgerace_nes_sram';
         const SRAM_START = 0x6000;
         const SRAM_SIZE = 0x2000;  // 8KB
+        const SAVE_MAGIC = 0x52;
+        const HIGH_SCORE_OFFSET = 1;
+        const GAME_NAME = 'EDGERACE';
+        const SHARE_HASHTAGS = 'EDGERACE';
 
         function saveSRAM() {
             try {
@@ -533,6 +583,74 @@
 
         // Attach reset button handler
         document.getElementById('reset-save-btn').addEventListener('click', resetSRAM);
+
+        function readUint16LE(address) {
+            const lo = nes.cpu.mem[address] || 0;
+            const hi = nes.cpu.mem[address + 1] || 0;
+            return (hi << 8) | lo;
+        }
+
+        function readHighScoreFromSRAM() {
+            const magic = nes.cpu.mem[SRAM_START] || 0;
+            if (magic !== SAVE_MAGIC) {
+                return 0;
+            }
+            return readUint16LE(SRAM_START + HIGH_SCORE_OFFSET);
+        }
+
+        function openShareIntent() {
+            const score = readHighScoreFromSRAM();
+            const text = `${GAME_NAME} ハイスコア: ${score}`;
+            const url = window.location.href;
+            const params = new URLSearchParams({
+                text,
+                url,
+                hashtags: SHARE_HASHTAGS
+            });
+            const intentUrl = `https://twitter.com/intent/tweet?${params.toString()}`;
+            window.open(intentUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        document.getElementById('share-x-btn').addEventListener('click', openShareIntent);
+
+        // Screenshot function
+        function takeScreenshot() {
+            try {
+                // Create a scaled-up canvas for better quality (2x)
+                const scale = 2;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 256 * scale;
+                tempCanvas.height = 240 * scale;
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Disable image smoothing for crisp pixels
+                tempCtx.imageSmoothingEnabled = false;
+
+                // Draw the NES canvas scaled up
+                tempCtx.drawImage(canvas, 0, 0, 256 * scale, 240 * scale);
+
+                // Generate filename with timestamp
+                const now = new Date();
+                const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                const filename = `edgerace-${timestamp}.png`;
+
+                // Create download link
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = tempCanvas.toDataURL('image/png');
+                link.click();
+
+                status.textContent = 'Screenshot saved: ' + filename;
+                status.className = 'ready';
+            } catch (err) {
+                console.error('Screenshot failed:', err);
+                status.textContent = 'Screenshot failed';
+                status.className = 'error';
+            }
+        }
+
+        // Attach screenshot button handler
+        document.getElementById('screenshot-btn').addEventListener('click', takeScreenshot);
 
         // Gamepad support
         let gamepadIndex = null;
