@@ -53,11 +53,14 @@
 #define BTN_RIGHT   0x01
 
 // Game states
-#define STATE_TITLE     0
-#define STATE_RACING    1
-#define STATE_GAMEOVER  2
-#define STATE_WIN       3
-#define STATE_PAUSED    4
+#define STATE_TITLE      0
+#define STATE_RACING     1
+#define STATE_GAMEOVER   2
+#define STATE_WIN        3
+#define STATE_PAUSED     4
+#define STATE_HIGHSCORE  5  // Name entry for high score
+#define STATE_LOOP_CLEAR 6  // Loop completion celebration
+#define STATE_EXPLODE    7  // Player explosion before game over
 
 // Screen constants
 #define ROAD_LEFT       64
@@ -104,12 +107,14 @@ static unsigned char player_y;
 static unsigned char player_hp;
 static unsigned char player_inv;
 
-static unsigned char enemy_x;
-static unsigned char enemy_y;
-static unsigned char enemy_speed;
-static unsigned char enemy_on;
+#define MAX_ENEMIES 3
+static unsigned char enemy_x[MAX_ENEMIES];
+static unsigned char enemy_y[MAX_ENEMIES];
+static unsigned char enemy_on[MAX_ENEMIES];
+static unsigned char enemy_passed[MAX_ENEMIES];
 static unsigned char enemy_next_x;     // Next enemy spawn X position
 static unsigned char enemy_warn_timer; // Warning countdown before spawn
+static unsigned char enemy_slot;       // Next enemy slot to use
 
 // Explosion effect
 static unsigned char explode_x;
@@ -122,6 +127,7 @@ static unsigned char goal_line_timer;  // Timer for goal line animation
 
 static unsigned char position;
 static unsigned char lap_count;
+static unsigned char loop_count;  // Current loop (2周目, 3周目...)
 static unsigned int score;
 static unsigned int distance;
 static unsigned char score_multiplier;  // Score multiplier (1-9)
@@ -133,7 +139,7 @@ static unsigned char obs_y[4];
 static unsigned char obs_on[4];
 
 // Bullet system (danmaku)
-#define MAX_BULLETS 16
+#define MAX_BULLETS 24
 static unsigned char bullet_x[MAX_BULLETS];
 static unsigned char bullet_y[MAX_BULLETS];
 static signed char bullet_dx[MAX_BULLETS];  // X velocity
@@ -144,12 +150,38 @@ static unsigned char bullet_next;   // Next bullet slot (circular buffer)
 
 static unsigned char rnd_seed;
 static unsigned char win_timer;  // Animation timer for win screen
+static unsigned char loop_clear_timer;  // Timer for loop clear celebration
 
 // Confetti particles for win animation
 #define MAX_CONFETTI 12
 static unsigned char confetti_x[MAX_CONFETTI];
 static unsigned char confetti_y[MAX_CONFETTI];
 static unsigned char confetti_color[MAX_CONFETTI];
+
+// ============================================
+// HIGH SCORE SYSTEM (Battery-backed SRAM)
+// ============================================
+
+#define SAVE_MAGIC 0x52  // 'R' for Race - validates save data
+#define NUM_HIGH_SCORES 3
+
+// Save data structure in battery-backed SRAM ($6000-$7FFF)
+// Use volatile to ensure compiler doesn't optimize away SRAM writes
+#pragma bss-name(push, "SAVE")
+static volatile unsigned char save_magic;           // Magic byte to validate save
+static volatile unsigned int  high_scores[NUM_HIGH_SCORES];  // Top 3 scores
+static volatile unsigned char high_names[NUM_HIGH_SCORES][3]; // 3-letter names
+static volatile unsigned char max_loop;             // Maximum loop reached (for loop select)
+#pragma bss-name(pop)
+
+// Name entry state
+static unsigned char name_entry_pos;     // Current letter position (0-2)
+static unsigned char name_entry_char;    // Current character index (0-25 = A-Z)
+static unsigned char entry_name[3];      // Name being entered
+static unsigned char new_score_rank;     // Which rank the new score achieved (0-2)
+
+// Title screen loop selection
+static unsigned char title_select_loop;  // Selected starting loop (0-based)
 
 // ============================================
 // MUSIC ENGINE
@@ -416,6 +448,29 @@ static const unsigned char gameover_pl2[GAMEOVER_LEN] = {
     GS3, E3, NOTE_REST, NOTE_REST,
 };
 
+// ============================================
+// EPILOGUE BGM - Calm, reflective ending
+// ============================================
+#define EPILOGUE_LEN 16
+
+// Gentle, sustained bass
+static const unsigned char epilogue_tri[EPILOGUE_LEN] = {
+    C3, C3, C3, C3,  G2, G2, G2, G2,
+    A2, A2, A2, A2,  E2, E2, E2, E2,
+};
+
+// Soft, peaceful melody
+static const unsigned char epilogue_pl1[EPILOGUE_LEN] = {
+    E4, G4, C5, NOTE_REST,  D5, C5, B4, NOTE_REST,
+    C5, E5, A4, NOTE_REST,  G4, F4, E4, NOTE_REST,
+};
+
+// Gentle harmony
+static const unsigned char epilogue_pl2[EPILOGUE_LEN] = {
+    C4, E4, G4, NOTE_REST,  B3, A3, G3, NOTE_REST,
+    A3, C4, E4, NOTE_REST,  E3, D3, C3, NOTE_REST,
+};
+
 // Palette data
 const unsigned char palette[32] = {
     // BG palettes
@@ -429,6 +484,17 @@ const unsigned char palette[32] = {
     0x0F, 0x07, 0x17, 0x27,  // Obstacle (orange)
     0x0F, 0x30, 0x30, 0x30   // HUD (white)
 };
+
+// ============================================
+// FORWARD DECLARATIONS
+// ============================================
+static void do_game_over(void);
+static void finish_game_over(void);
+static unsigned char check_high_score(unsigned int new_score);
+static void init_name_entry(unsigned char rank);
+static void music_play(unsigned char track);
+static void music_stop(void);
+static void update_loop_palette(void);
 
 // ============================================
 // MUSIC FUNCTIONS
@@ -584,6 +650,10 @@ static void music_play(unsigned char track) {
             music_tempo = 16;
             music_intensity = 0;
             break;
+        case 4:  // Epilogue - calm, slow
+            music_tempo = 12;
+            music_intensity = 0;
+            break;
     }
 }
 
@@ -668,6 +738,13 @@ static void music_update(void) {
             tri_data = gameover_tri;
             pl1_data = gameover_pl1;
             pl2_data = gameover_pl2;
+            noise_data = 0;
+            break;
+        case 4:  // Epilogue
+            len = EPILOGUE_LEN;
+            tri_data = epilogue_tri;
+            pl1_data = epilogue_pl1;
+            pl2_data = epilogue_pl2;
             noise_data = 0;
             break;
         default:
@@ -775,6 +852,41 @@ static void load_palettes(void) {
     }
 }
 
+// Update background palette for different loops
+// Each loop shifts the grass color hue
+static void update_loop_palette(void) {
+    unsigned char hue_shift;
+    unsigned char base_hue;
+
+    // Different hue for each loop (wraps around)
+    // Loop 0 = green ($09), Loop 1 = cyan ($0B), Loop 2 = purple ($04), etc.
+    static const unsigned char loop_hues[4] = { 0x09, 0x0B, 0x04, 0x06 };
+
+    hue_shift = loop_count & 0x03;  // 0-3
+    base_hue = loop_hues[hue_shift];
+
+    // Wait for VBlank to safely update palette
+    wait_vblank();
+
+    // Disable rendering during palette update
+    PPU_MASK = 0x00;
+
+    // Update grass palette (BG palette 1 at $3F04-$3F07)
+    ppu_addr(0x3F04);
+    PPU_DATA = 0x0F;          // Black background
+    PPU_DATA = base_hue;      // Dark shade
+    PPU_DATA = base_hue + 0x10;  // Medium shade
+    PPU_DATA = base_hue + 0x20;  // Light shade
+
+    // IMPORTANT: Reset scroll BEFORE enabling rendering
+    // PPU_ADDR and PPU_SCROLL share internal registers
+    PPU_SCROLL = 0;
+    PPU_SCROLL = 0;  // Reset to top of screen
+
+    // Re-enable rendering
+    PPU_MASK = 0x1E;
+}
+
 // Draw the road background
 static void draw_road(void) {
     unsigned char row, col;
@@ -826,16 +938,20 @@ static void prepare_enemy(void) {
     if (enemy_next_x > ROAD_RIGHT - 24) {
         enemy_next_x = ROAD_RIGHT - 24;
     }
-    enemy_warn_timer = 60;  // 1 second warning
+    enemy_warn_timer = 120;  // 2 second warning
 }
 
 // Actually spawn the enemy (appears from top, player must overtake)
 static void spawn_enemy(void) {
-    enemy_x = enemy_next_x;
-    enemy_y = 8;  // Start just below top of screen (ahead of player)
-    enemy_speed = 1;  // Moves down slowly (player catches up via scroll)
-    enemy_on = 1;
+    unsigned char slot = enemy_slot;
+    enemy_x[slot] = enemy_next_x;
+    enemy_y[slot] = 8;  // Start just below top of screen
+    enemy_on[slot] = 1;
+    enemy_passed[slot] = 0;
     enemy_warn_timer = 0;
+    // Cycle through slots (can't use bitwise AND since MAX_ENEMIES is not power of 2)
+    ++enemy_slot;
+    if (enemy_slot >= MAX_ENEMIES) enemy_slot = 0;
 }
 
 // Spawn obstacle
@@ -866,6 +982,17 @@ static void spawn_bullet(unsigned char x, unsigned char y, signed char dx, signe
     bullet_x[bullet_next] = x;
     bullet_y[bullet_next] = y;
     bullet_dx[bullet_next] = dx;
+
+    // Increase bullet speed slightly in later loops
+    // Add +1 speed for every 3 loops
+    if (dy > 0) {
+        dy += (loop_count / 3);  // Moving down
+        if (dy > 5) dy = 5;  // Cap at 5
+    } else if (dy < 0) {
+        dy -= (loop_count / 3);  // Moving up (more negative)
+        if (dy < -5) dy = -5;
+    }
+
     bullet_dy[bullet_next] = dy;
     bullet_on[bullet_next] = 1;
     ++bullet_next;
@@ -878,146 +1005,72 @@ static void spawn_bullet(unsigned char x, unsigned char y, signed char dx, signe
 static unsigned char pattern_phase;
 static unsigned char pattern_type;
 
-// Spawn danmaku pattern from enemy - Fast, sparse bullets
+// Calculate aimed bullet velocity - simple version
+static signed char calc_aim_dx(unsigned char bx) {
+    unsigned char px = player_x + 8;
+    if (px > bx + 24) return 2;
+    if (px > bx + 8) return 1;
+    if (px + 24 < bx) return -2;
+    if (px + 8 < bx) return -1;
+    return 0;
+}
+
+// Spawn danmaku pattern from enemies - ALL AIMED AT PLAYER
 static void spawn_danmaku(void) {
-    unsigned char cx, cy;
+    unsigned char i, cx, cy;
     signed char dx, dy;
-    signed char aim_dx;
+    unsigned char mask;
 
     ++bullet_timer;
-
-    // When in 1st place, bullets come from behind (bottom of screen)
-    if (position == 1) {
-        // Spawn bullets from bottom, moving upward
-        if ((bullet_timer & 0x1F) == 0) {
-            cx = ROAD_LEFT + 16 + (rnd() & 0x7F);
-            if (cx > ROAD_RIGHT - 16) cx = ROAD_RIGHT - 16;
-
-            // Aim toward player
-            if (player_x + 8 > cx) {
-                aim_dx = 1;
-            } else if (player_x + 8 < cx) {
-                aim_dx = -1;
-            } else {
-                aim_dx = 0;
-            }
-
-            // Bullet from bottom moving up (negative dy)
-            spawn_bullet(cx, 232, aim_dx, -3);
-        }
-        // Additional random shot
-        if ((bullet_timer & 0x3F) == 16) {
-            cx = ROAD_LEFT + 24 + (rnd() & 0x7F);
-            if (cx > ROAD_RIGHT - 24) cx = ROAD_RIGHT - 24;
-            spawn_bullet(cx, 236, 0, -4);
-        }
-        return;
-    }
-
-    if (!enemy_on) return;
-    if (enemy_y < 24) return;  // Don't shoot while entering screen
-
-    cx = enemy_x + 8;  // Center X
-    cy = enemy_y + 16; // Bullet spawn Y
 
     // Change pattern every 256 frames
     if (bullet_timer == 0) {
         pattern_type = (pattern_type + 1) & 0x07;
-        pattern_phase = 0;
     }
 
-    // Calculate aim toward player (for aimed shots)
-    if (player_x + 8 > cx) {
-        aim_dx = (player_x + 8 - cx) > 32 ? 2 : 1;
-    } else if (player_x + 8 < cx) {
-        aim_dx = (cx - player_x - 8) > 32 ? -2 : -1;
-    } else {
-        aim_dx = 0;
+    // When in 1st place: beautiful danmaku from behind
+    if (position == 1) {
+        // Wave pattern from bottom - sweeping left to right
+        if ((bullet_timer & 0x17) == 0) {
+            // Sine-like wave using frame count
+            cx = 80 + ((bullet_timer >> 2) & 0x3F);
+            dx = calc_aim_dx(cx);
+            spawn_bullet(cx, 236, dx, -2);
+        }
+        if ((bullet_timer & 0x17) == 12) {
+            cx = 176 - ((bullet_timer >> 2) & 0x3F);
+            dx = calc_aim_dx(cx);
+            spawn_bullet(cx, 236, dx, -2);
+        }
+        // Center aimed shot
+        if ((bullet_timer & 0x2F) == 0) {
+            cx = ROAD_LEFT + 64;
+            dx = calc_aim_dx(cx);
+            spawn_bullet(cx, 232, dx, -3);
+            spawn_bullet(cx + 32, 232, calc_aim_dx(cx + 32), -3);
+        }
+        return;
     }
 
-    switch (pattern_type) {
-        case 0:
-            // === SNIPER ===
-            // Single fast aimed shot
-            if ((bullet_timer & 0x1F) == 0) {
-                spawn_bullet(cx, cy, aim_dx, 4);
-            }
-            break;
+    // Each enemy shoots
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (!enemy_on[i]) continue;
+        if (enemy_y[i] < 24 && enemy_y[i] < player_y) continue;
 
-        case 1:
-            // === SPREAD SHOT ===
-            // 3-way fast spread
-            if ((bullet_timer & 0x17) == 0) {
-                spawn_bullet(cx, cy, -1, 3);
-                spawn_bullet(cx, cy, 0, 4);
-                spawn_bullet(cx, cy, 1, 3);
-            }
-            break;
+        cx = enemy_x[i] + 8;
+        cy = enemy_y[i] + 8;
+        dx = calc_aim_dx(cx);
+        dy = (enemy_y[i] > player_y) ? -3 : 3;
 
-        case 2:
-            // === DOUBLE TAP ===
-            // Two fast bullets with slight delay
-            if ((bullet_timer & 0x1F) == 0) {
-                spawn_bullet(cx, cy, aim_dx, 3);
-            }
-            if ((bullet_timer & 0x1F) == 4) {
-                spawn_bullet(cx, cy, aim_dx, 4);
-            }
-            break;
+        mask = 0x17;
+        if (loop_count >= 2) mask = 0x0F;
+        if (loop_count >= 3) mask = 0x0B;
+        if (dy < 0) mask |= 0x10;  // Slower when shooting up
 
-        case 3:
-            // === SIDE SWEEP ===
-            // Alternating left-right fast shots
-            if ((bullet_timer & 0x0F) == 0) {
-                dx = (pattern_phase & 1) ? 2 : -2;
-                spawn_bullet(cx, cy, dx, 3);
-                ++pattern_phase;
-            }
-            break;
-
-        case 4:
-            // === RAIN ===
-            // Random fast drops
-            if ((bullet_timer & 0x0F) == 0) {
-                dx = (rnd() & 0x03) - 1;  // -1 to 2
-                spawn_bullet(cx + dx * 8, cy, 0, 4);
-            }
-            break;
-
-        case 5:
-            // === PREDICTION ===
-            // Aimed at where player is heading
-            if ((bullet_timer & 0x17) == 0) {
-                // Lead the target slightly
-                dx = aim_dx;
-                if (aim_dx > 0) dx = 2;
-                if (aim_dx < 0) dx = -2;
-                spawn_bullet(cx, cy, dx, 4);
-            }
-            break;
-
-        case 6:
-            // === BURST ===
-            // Quick 2-shot burst straight down
-            if ((bullet_timer & 0x1F) == 0) {
-                spawn_bullet(cx - 6, cy, 0, 4);
-                spawn_bullet(cx + 6, cy, 0, 4);
-            }
-            break;
-
-        case 7:
-            // === CROSS ===
-            // Fast cross pattern
-            if ((bullet_timer & 0x17) == 0) {
-                spawn_bullet(cx, cy, 0, 4);   // Down
-                dy = 2;
-                if (pattern_phase & 1) {
-                    spawn_bullet(cx, cy, 2, dy);
-                    spawn_bullet(cx, cy, -2, dy);
-                }
-                ++pattern_phase;
-            }
-            break;
+        // Offset timing per enemy
+        if (((bullet_timer + (i << 3)) & mask) == 0) {
+            spawn_bullet(cx, cy, dx, dy);
+        }
     }
 }
 
@@ -1054,8 +1107,8 @@ static void check_bullet_collisions(void) {
             dx = abs_diff(player_x + 8, bullet_x[i]);
             dy = abs_diff(player_y + 8, bullet_y[i]);
 
-            // Damage zone: dx < 10 && dy < 10
-            if (dx < 10 && dy < 10) {
+            // Damage zone: dx < 4 && dy < 4 (very small hitbox - cockpit only)
+            if (dx < 4 && dy < 4) {
                 --player_hp;
                 player_inv = 60;
                 bullet_on[i] = 0;
@@ -1065,17 +1118,119 @@ static void check_bullet_collisions(void) {
                 score_multiplier = 1;
                 no_damage_timer = 0;
                 if (player_hp == 0) {
-                    game_state = STATE_GAMEOVER; music_play(3);
+                    do_game_over();
+                    return;
                 }
             }
-            // Graze zone: dx < 14 && dy < 14 but outside damage zone
-            else if (dx < 14 && dy < 14) {
-                // Graze! +1 point * multiplier (bullet keeps moving)
-                score += score_multiplier;
+            // Graze zone: dx < 10 && dy < 10 but outside damage zone
+            else if (dx < 10 && dy < 10) {
+                // Graze! Points = multiplier * 2^loop_count
+                // Loop 0: x1, Loop 1: x2, Loop 2: x4, etc.
+                score += score_multiplier * (1 << loop_count);
                 graze_timer = 15;  // Show "BUZ" for 15 frames
                 // Don't remove bullet - player can still get hit!
             }
         }
+    }
+}
+
+// ============================================
+// HIGH SCORE FUNCTIONS
+// ============================================
+
+// Initialize save data if not valid
+static void init_save(void) {
+    unsigned char i;
+    unsigned char sram_ok = 1;
+
+    // SRAM functionality test
+    // Use $6100 (not $6000) to avoid corrupting save_magic which is at $6000
+    // Note: Web emulators (jsnes) may not persist SRAM - use FCEUX/Mesen for testing
+    *((volatile unsigned char*)0x6100) = 0xAA;
+    if (*((volatile unsigned char*)0x6100) != 0xAA) {
+        sram_ok = 0;  // SRAM not working
+    }
+
+    // Initialize if SRAM not working OR if magic byte is wrong
+    if (!sram_ok || save_magic != SAVE_MAGIC) {
+        // First run, corrupted save, or SRAM not working - initialize
+        save_magic = SAVE_MAGIC;
+        for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+            high_scores[i] = 0;
+            high_names[i][0] = 0;  // A
+            high_names[i][1] = 0;  // A
+            high_names[i][2] = 0;  // A
+        }
+        max_loop = 0;  // No loops completed yet
+    }
+
+    // Range check for title_select_loop (prevent invalid values)
+    if (title_select_loop > max_loop) {
+        title_select_loop = 0;
+    }
+    title_select_loop = 0;  // Default to starting from loop 1
+}
+
+// Check if score qualifies for high score, return rank (0-2) or 255 if not
+static unsigned char check_high_score(unsigned int new_score) {
+    unsigned char i;
+    for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+        if (new_score > high_scores[i]) {
+            return i;
+        }
+    }
+    return 255;  // Not a high score
+}
+
+// Insert a new high score at given rank
+static void insert_high_score(unsigned char rank, unsigned int new_score) {
+    unsigned char i;
+    // Shift lower scores down
+    for (i = NUM_HIGH_SCORES - 1; i > rank; --i) {
+        high_scores[i] = high_scores[i - 1];
+        high_names[i][0] = high_names[i - 1][0];
+        high_names[i][1] = high_names[i - 1][1];
+        high_names[i][2] = high_names[i - 1][2];
+    }
+    // Insert new score
+    high_scores[rank] = new_score;
+    high_names[rank][0] = entry_name[0];
+    high_names[rank][1] = entry_name[1];
+    high_names[rank][2] = entry_name[2];
+}
+
+// Initialize name entry
+static void init_name_entry(unsigned char rank) {
+    new_score_rank = rank;
+    name_entry_pos = 0;
+    name_entry_char = 0;
+    entry_name[0] = 0;
+    entry_name[1] = 0;
+    entry_name[2] = 0;
+}
+
+// Handle game over - start explosion first, then check high score
+static void do_game_over(void) {
+    // Start explosion at player position
+    explode_x = player_x;
+    explode_y = player_y;
+    explode_timer = 0;
+    game_state = STATE_EXPLODE;
+    music_play(3);  // Game over music during explosion only
+}
+
+// Finish game over after explosion - check for high score
+static void finish_game_over(void) {
+    new_score_rank = check_high_score(score);
+    if (new_score_rank < NUM_HIGH_SCORES) {
+        // Got a high score! Go to name entry
+        game_state = STATE_HIGHSCORE;
+        init_name_entry(new_score_rank);
+        music_play(4);  // Epilogue music for score entry
+    } else {
+        // No high score, just game over
+        game_state = STATE_GAMEOVER;
+        music_stop();  // Silence after explosion
     }
 }
 
@@ -1088,18 +1243,28 @@ static void init_game(void) {
     player_hp = PLAYER_MAX_HP;
     player_inv = 0;
 
-    enemy_on = 0;
+    for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
+    enemy_slot = 0;
+    enemy_warn_timer = 0;
     position = 12;  // Start in 12th place (last of 12 cars)
     lap_count = 0;
+    loop_count = title_select_loop;  // Start from selected loop
     score = 0;
     distance = 0;
     scroll_y = 0;
-    music_intensity = 0;  // Reset music intensity for lap 1
     score_multiplier = 1;  // Start with 1x multiplier
     no_damage_timer = 0;
     graze_timer = 0;
     explode_timer = 0;
     goal_line_timer = 0;
+
+    // Set music intensity based on starting loop
+    // Loop 1 LAP1: calm(0), Loop 2+ LAP1: moderate(1)
+    if (loop_count > 0) {
+        music_intensity = 1;  // Loop 2+: moderate start
+    } else {
+        music_intensity = 0;  // Loop 1: calm start
+    }
 
     for (i = 0; i < 4; ++i) {
         obs_on[i] = 0;
@@ -1115,6 +1280,11 @@ static void init_game(void) {
     pattern_type = 0;
 
     draw_road();
+
+    // Apply palette for starting loop
+    if (loop_count > 0) {
+        update_loop_palette();
+    }
 
     // Spawn first enemy immediately (no warning delay)
     enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
@@ -1133,7 +1303,9 @@ static void update_player(void) {
         if (player_x < ROAD_RIGHT - 16) player_x += PLAYER_SPEED;
     }
     if (pad_now & BTN_UP) {
-        if (player_y > 32) player_y -= PLAYER_SPEED;
+        // Keep player below HUD area (Y=60 is about 1/4 of screen height)
+        // This prevents sprite overflow conflicts with HUD sprites on same scanlines
+        if (player_y > 60) player_y -= PLAYER_SPEED;
     }
     if (pad_now & BTN_DOWN) {
         if (player_y < SCREEN_HEIGHT - 32) player_y += PLAYER_SPEED;
@@ -1142,64 +1314,76 @@ static void update_player(void) {
     if (player_inv > 0) --player_inv;
 }
 
-// Update enemy
+// Count enemies ahead of player (not yet passed)
+static unsigned char count_enemies_ahead(void) {
+    unsigned char i, count = 0;
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (enemy_on[i] && !enemy_passed[i]) ++count;
+    }
+    return count;
+}
+
+// Update all enemies
 static void update_enemy(void) {
-    // When in 1st place, no enemies spawn (bullets come from behind instead)
+    unsigned char i, enemies_ahead;
+
+    // When in 1st place, no enemies spawn
     if (position == 1) {
-        enemy_on = 0;
+        for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
         enemy_warn_timer = 0;
         return;
     }
 
-    // Warning phase - countdown before spawn
-    if (!enemy_on && enemy_warn_timer > 0) {
+    // Count enemies ahead - only spawn if fewer than (position - 1)
+    // e.g., position 3 means 2 cars ahead, so max 2 non-passed enemies
+    enemies_ahead = count_enemies_ahead();
+    if (enemies_ahead < position - 1 && enemies_ahead < MAX_ENEMIES && enemy_warn_timer == 0) {
+        prepare_enemy();
+    }
+    if (enemy_warn_timer > 0) {
         --enemy_warn_timer;
         if (enemy_warn_timer == 0) {
-            spawn_enemy();
-        }
-        return;
-    }
-
-    // No enemy and no warning - prepare next one
-    if (!enemy_on) {
-        prepare_enemy();
-        return;
-    }
-
-    enemy_y += enemy_speed;
-
-    // Racing AI - enemy tries to block player's overtaking path
-    // Enemy moves toward player's X position to obstruct
-    if ((frame_count & 0x07) == 0) {
-        if (enemy_x + 8 < player_x && enemy_x < ROAD_RIGHT - 24) {
-            enemy_x += 1;  // Move right to block
-        } else if (enemy_x > player_x + 8 && enemy_x > ROAD_LEFT + 8) {
-            enemy_x -= 1;  // Move left to block
-        }
-    }
-
-    // Overtaken when player Y is above enemy Y (lower Y = higher on screen)
-    if (player_y < enemy_y) {
-        // Trigger explosion at enemy position
-        explode_x = enemy_x;
-        explode_y = enemy_y;
-        explode_timer = 20;  // Show explosion for 20 frames
-
-        enemy_on = 0;
-        score += 20 * score_multiplier;  // +20 points * multiplier
-
-        // Improve position (overtook one car)
-        if (position > 1) {
-            --position;
-        }
-
-        if (lap_count < 3) {
-            // Spawn next enemy immediately
-            enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
-            if (enemy_next_x > ROAD_RIGHT - 24) {
-                enemy_next_x = ROAD_RIGHT - 24;
+            // Re-check condition: only spawn if still needed
+            if (count_enemies_ahead() < position - 1) {
+                spawn_enemy();
             }
-            spawn_enemy();
+        }
+    }
+
+    // Update each enemy
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (!enemy_on[i]) continue;
+
+        // Speed depends on whether enemy is ahead or behind player
+        if (enemy_passed[i]) {
+            // Behind player: double speed (2 pixels/frame)
+            enemy_y[i] += 2;
+        } else {
+            // Ahead of player: half speed (1 pixel every 2 frames)
+            if (frame_count & 1) {
+                enemy_y[i] += 1;
+            }
+        }
+
+        // AI: try to block player (only if ahead)
+        if (!enemy_passed[i] && (frame_count & 0x07) == 0) {
+            if (enemy_x[i] + 8 < player_x && enemy_x[i] < ROAD_RIGHT - 24) {
+                enemy_x[i] += 1;
+            } else if (enemy_x[i] > player_x + 8 && enemy_x[i] > ROAD_LEFT + 8) {
+                enemy_x[i] -= 1;
+            }
+        }
+
+        // Overtaken - award points once
+        if (player_y + 16 < enemy_y[i] && !enemy_passed[i]) {
+            enemy_passed[i] = 1;
+            score += 20 * score_multiplier;
+            if (position > 1) --position;
+        }
+
+        // Remove when off screen
+        if (enemy_y[i] > 240) {
+            enemy_on[i] = 0;
         }
     }
 }
@@ -1223,16 +1407,20 @@ static void check_collisions(void) {
 
     if (player_inv > 0) return;
 
-    // Enemy collision
-    if (enemy_on) {
-        dx = abs_diff(player_x, enemy_x);
-        dy = abs_diff(player_y, enemy_y);
+    // Enemy collisions
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (enemy_on[i]) {
+            dx = abs_diff(player_x, enemy_x[i]);
+            dy = abs_diff(player_y, enemy_y[i]);
 
-        if (dx < 14 && dy < 14) {
-            --player_hp;
-            player_inv = 60;
-            if (player_hp == 0) {
-                game_state = STATE_GAMEOVER; music_play(3);
+            if (dx < 14 && dy < 14) {
+                --player_hp;
+                player_inv = 60;
+                if (player_hp == 0) {
+                    do_game_over();
+                    return;
+                }
+                break;
             }
         }
     }
@@ -1248,7 +1436,8 @@ static void check_collisions(void) {
                 player_inv = 60;
                 obs_on[i] = 0;
                 if (player_hp == 0) {
-                    game_state = STATE_GAMEOVER; music_play(3);
+                    do_game_over();
+                    return;
                 }
             }
         }
@@ -1294,7 +1483,7 @@ static void update_game(void) {
     }
 
     ++distance;
-    if (distance >= 1000) {
+    if (distance >= 700) {  // Shorter laps for faster pace
         distance = 0;
         ++lap_count;
 
@@ -1308,20 +1497,54 @@ static void update_game(void) {
             player_hp = PLAYER_MAX_HP;
         }
 
-        // Change music intensity for each lap (more distorted!)
-        if (lap_count < 3) {
-            music_set_intensity(lap_count);
+        // Change music intensity gradually
+        // Loop 1: LAP1-2=calm(0), LAP3=moderate(1)
+        // Loop 2+: LAP1=moderate(1), LAP2-3=intense(2)
+        if (loop_count == 0) {
+            // First loop: stay calm longer, only LAP3 gets slightly intense
+            if (lap_count >= 2) {
+                music_set_intensity(1);  // LAP3 only
+            } else {
+                music_set_intensity(0);  // LAP1-2 calm
+            }
+        } else {
+            // Later loops: moderate start, intense finish
+            if (lap_count >= 1) {
+                music_set_intensity(2);  // LAP2-3 intense
+            } else {
+                music_set_intensity(1);  // LAP1 moderate
+            }
         }
 
         if (lap_count >= 3) {
             if (position == 1) {
-                game_state = STATE_WIN;
-                init_win_animation();
-                music_play(2);  // Victory fanfare!
+                // Victory! Advance to next loop (2周目, 3周目...)
+                ++loop_count;
+
+                // Save new max loop record if achieved
+                if (loop_count > max_loop) {
+                    max_loop = loop_count;
+                }
+
+                // Big score bonus for completing a loop (with loop multiplier)
+                score += 1000 * (loop_count) * (1 << loop_count);
+
+                // Clear bullets for fresh start
+                {
+                    unsigned char b;
+                    for (b = 0; b < MAX_BULLETS; ++b) {
+                        bullet_on[b] = 0;
+                    }
+                }
+
+                // Go to loop clear celebration screen
+                game_state = STATE_LOOP_CLEAR;
+                loop_clear_timer = 0;
+                music_play(2);  // Victory music
+                init_win_animation();  // Reuse confetti
             } else {
-                // Finished 3 laps but not in 1st place - lose
-                game_state = STATE_GAMEOVER;
-                music_play(3);  // Sad music
+                // Finished 3 laps but not in 1st place - game over
+                do_game_over();
             }
         }
     }
@@ -1343,9 +1566,11 @@ static void draw_game(void) {
         id = set_car(id, player_x, player_y, SPR_CAR, 0);
     }
 
-    // Enemy car (4 sprites)
-    if (enemy_on) {
-        id = set_car(id, enemy_x, enemy_y, SPR_CAR + 4, 1);
+    // Enemy cars (4 sprites each)
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (enemy_on[i]) {
+            id = set_car(id, enemy_x[i], enemy_y[i], SPR_CAR + 4, 1);
+        }
     }
 
     // Explosion effect (1 sprite, blinking)
@@ -1378,9 +1603,9 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - HP (2 sprites)
-    id = set_sprite(id, 8, 20, SPR_LETTER + 7, 3);  // H
-    id = set_sprite(id, 16, 20, SPR_DIGIT + player_hp, 3);
+    // HUD - HP (2 sprites) - bottom left to avoid overlap
+    id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
+    id = set_sprite(id, 16, 224, SPR_DIGIT + player_hp, 3);
 
     // HUD - Multiplier "xN" (2 sprites)
     id = set_sprite(id, 216, 8, SPR_LETTER + 23, 3);  // X
@@ -1401,6 +1626,12 @@ static void draw_game(void) {
     id = set_sprite(id, 120, 16, SPR_LETTER + 11, 3);  // L
     id = set_sprite(id, 128, 16, SPR_DIGIT + lap_count + 1, 3);  // Current lap (1-3)
 
+    // Loop counter (shown when in 2nd loop or higher)
+    if (loop_count > 0) {
+        // Show loop number at center (周=loop)
+        id = set_sprite(id, 104, 16, SPR_DIGIT + loop_count + 1, 1);  // Loop number in red
+    }
+
     // "BUZ" display when grazing (3 sprites)
     if (graze_timer > 0) {
         id = set_sprite(id, player_x - 8, player_y - 16, SPR_LETTER + 1, 1);  // B
@@ -1420,8 +1651,8 @@ static void draw_game(void) {
     }
 
     // Warning marker for next enemy (2 sprites)
-    if (!enemy_on && enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1 | 0x80);  // Arrow, flipped vertically
+    if (enemy_warn_timer > 0 && (frame_count & 8)) {
+        id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1 | 0x80);
         id = set_sprite(id, enemy_next_x + 4, 16, 0x0A, 1 | 0x80);
     }
 
@@ -1433,8 +1664,10 @@ static void draw_game(void) {
     }
 
     // Bullets - danmaku (use remaining sprite slots)
+    // Flicker rendering: only draw half the bullets per frame to reduce sprite overflow
+    // Even frames draw even-indexed bullets, odd frames draw odd-indexed bullets
     for (i = 0; i < MAX_BULLETS; ++i) {
-        if (bullet_on[i] && id < 62) {  // Leave room for progress bar
+        if (bullet_on[i] && id < 62 && ((i & 1) == (frame_count & 1))) {
             id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 1);
         }
     }
@@ -1466,7 +1699,9 @@ static void draw_game(void) {
 // Draw title screen
 static void draw_title(void) {
     unsigned char id = 0;
-    unsigned char x = 100, y = 100;
+    unsigned char x = 100, y = 60;
+    unsigned char i;
+    unsigned int s;
 
     // "RACE"
     id = set_sprite(id, x,      y, SPR_LETTER + 17, 0);  // R
@@ -1477,6 +1712,65 @@ static void draw_title(void) {
     // Blinking car
     if (frame_count & 0x20) {
         id = set_car(id, x + 4, y + 24, SPR_CAR, 0);
+    }
+
+    // High scores display (3 entries, each on different Y line)
+    // Entry 1 at y=120, Entry 2 at y=136, Entry 3 at y=152
+    for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+        y = 120 + i * 16;
+
+        // Rank number (1-3)
+        id = set_sprite(id, 64, y, SPR_DIGIT + i + 1, 3);
+
+        // Name (3 letters)
+        id = set_sprite(id, 80, y, SPR_LETTER + high_names[i][0], 3);
+        id = set_sprite(id, 88, y, SPR_LETTER + high_names[i][1], 3);
+        id = set_sprite(id, 96, y, SPR_LETTER + high_names[i][2], 3);
+
+        // Score (5 digits)
+        s = high_scores[i];
+        if (s > 99999) s = 99999;
+        x = 112;
+        id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+        id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+        id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+        id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+        id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+    }
+
+    // Loop selection (only show if player has completed at least 1 loop)
+    if (max_loop > 0) {
+        y = 176;
+        x = 80;
+        // "LOOP" label
+        id = set_sprite(id, x,      y, SPR_LETTER + 11, 3);  // L
+        id = set_sprite(id, x + 8,  y, SPR_LETTER + 14, 3);  // O
+        id = set_sprite(id, x + 16, y, SPR_LETTER + 14, 3);  // O
+        id = set_sprite(id, x + 24, y, SPR_LETTER + 15, 3);  // P
+
+        // Loop number (blinking if selectable)
+        x = 120;
+        if (frame_count & 0x10) {
+            id = set_sprite(id, x, y, SPR_DIGIT + title_select_loop + 1,
+                           title_select_loop > 0 ? 1 : 3);  // Red if loop 2+
+        }
+
+        // Up/Down arrows if more than 1 option
+        if (max_loop > 0) {
+            id = set_sprite(id, x + 12, y - 6, 0x0A, 3);        // Up arrow
+            id = set_sprite(id, x + 12, y + 6, 0x0A, 3 | 0x80); // Down arrow (flipped)
+        }
+    }
+
+    // "START" prompt at bottom (blinking)
+    if (frame_count & 0x20) {
+        y = 208;
+        x = 88;
+        id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
+        id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
+        id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
+        id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
+        id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
     // Hide rest
@@ -1548,6 +1842,79 @@ static void update_win_animation(void) {
             confetti_y[i] = 0;
             confetti_x[i] = 32 + (rnd() & 0x7F) + (rnd() & 0x3F);
         }
+    }
+}
+
+// Draw high score name entry screen
+static void draw_highscore_entry(void) {
+    unsigned char id = 0;
+    unsigned char x, y, i;
+    unsigned int s;
+
+    // "NEW HIGH SCORE!" (split to 2 lines for sprite limit)
+    x = 72;
+    y = 40;
+    id = set_sprite(id, x,      y, SPR_LETTER + 13, 0);  // N
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 4,  0);  // E
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 22, 0);  // W
+
+    x = 68;
+    y = 56;
+    id = set_sprite(id, x,      y, SPR_LETTER + 7,  0);  // H
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 8,  0);  // I
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 6,  0);  // G
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 7,  0);  // H
+
+    // Score value
+    x = 96;
+    y = 80;
+    s = score;
+    if (s > 99999) s = 99999;
+    id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+    id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+    id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+    id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+
+    // "ENTER NAME" (on 2 lines)
+    x = 88;
+    y = 110;
+    id = set_sprite(id, x,      y, SPR_LETTER + 13, 3);  // N
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  3);  // A
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 12, 3);  // M
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  3);  // E
+
+    // Name entry display (3 letters)
+    x = 104;
+    y = 140;
+    for (i = 0; i < 3; ++i) {
+        // Draw letter
+        id = set_sprite(id, x + i * 16, y, SPR_LETTER + entry_name[i],
+                       (i == name_entry_pos) ? 0 : 3);
+
+        // Draw cursor under current position (blinking)
+        if (i == name_entry_pos && (frame_count & 0x10)) {
+            id = set_sprite(id, x + i * 16, y + 10, SPR_BAR_FILL, 1);
+        }
+    }
+
+    // Up/Down arrows hint
+    x = 80;
+    y = 140;
+    id = set_sprite(id, x, y - 4, 0x0A, 0);  // Up arrow (rotated)
+    id = set_sprite(id, x, y + 8, 0x0A, 0 | 0x80);  // Down arrow
+
+    // "A=OK" hint
+    y = 190;
+    x = 104;
+    id = set_sprite(id, x,      y, SPR_LETTER + 0, 3);   // A
+    id = set_sprite(id, x + 12, y, SPR_LETTER + 14, 3);  // O
+    id = set_sprite(id, x + 20, y, SPR_LETTER + 10, 3);  // K
+
+    // Hide remaining sprites
+    while (id < 64) {
+        OAM[id * 4] = 0xFF;
+        ++id;
     }
 }
 
@@ -1659,6 +2026,46 @@ static void draw_win(void) {
     }
 }
 
+// Draw loop clear celebration screen (simplified to save ROM)
+static void draw_loop_clear(void) {
+    unsigned char id = 0;
+    unsigned char i;
+
+    // Confetti
+    for (i = 0; i < MAX_CONFETTI && id < 16; ++i) {
+        id = set_sprite(id, confetti_x[i], confetti_y[i], SPR_BULLET, confetti_color[i]);
+    }
+
+    // "LOOP" "X" (Y=60)
+    id = set_sprite(id, 76,  60, SPR_LETTER + 11, 0);  // L
+    id = set_sprite(id, 84,  60, SPR_LETTER + 14, 0);  // O
+    id = set_sprite(id, 92,  60, SPR_LETTER + 14, 0);  // O
+    id = set_sprite(id, 100, 60, SPR_LETTER + 15, 0);  // P
+    id = set_sprite(id, 112, 60, SPR_DIGIT + loop_count, 1);
+
+    // "OK" (Y=80)
+    id = set_sprite(id, 100, 80, SPR_LETTER + 14, 0);  // O
+    id = set_sprite(id, 108, 80, SPR_LETTER + 10, 0);  // K
+
+    // Car
+    id = set_car(id, 112, 100, SPR_CAR, (frame_count & 0x10) ? 0 : 0x40);
+
+    // "START" blinking (after 60 frames)
+    if (loop_clear_timer > 60 && (frame_count & 0x20)) {
+        id = set_sprite(id, 88, 180, SPR_LETTER + 18, 3);   // S
+        id = set_sprite(id, 96, 180, SPR_LETTER + 19, 3);   // T
+        id = set_sprite(id, 104, 180, SPR_LETTER + 0, 3);   // A
+        id = set_sprite(id, 112, 180, SPR_LETTER + 17, 3);  // R
+        id = set_sprite(id, 120, 180, SPR_LETTER + 19, 3);  // T
+    }
+
+    // Hide rest
+    while (id < 64) {
+        OAM[id * 4] = 0xFF;
+        ++id;
+    }
+}
+
 // Draw pause screen
 static void draw_pause(void) {
     unsigned char id = 0;
@@ -1682,6 +2089,9 @@ void main(void) {
     // Initialize
     rnd_seed = 42;
     game_state = STATE_TITLE;
+
+    // Initialize battery-backed save data
+    init_save();
 
     // Wait for PPU to stabilize
     wait_vblank();
@@ -1735,6 +2145,19 @@ void main(void) {
         switch (game_state) {
             case STATE_TITLE:
                 draw_title();
+                // Loop selection with Up/Down (only if player has unlocked loops)
+                if (max_loop > 0) {
+                    if (pad_new & BTN_UP) {
+                        if (title_select_loop < max_loop) {
+                            ++title_select_loop;
+                        }
+                    }
+                    if (pad_new & BTN_DOWN) {
+                        if (title_select_loop > 0) {
+                            --title_select_loop;
+                        }
+                    }
+                }
                 if (pad_new & BTN_START) {
                     init_game();
                     music_play(1);  // Racing BGM - energetic!
@@ -1761,6 +2184,45 @@ void main(void) {
                 }
                 break;
 
+            case STATE_EXPLODE:
+                // Show explosion animation
+                ++explode_timer;
+                // Draw road background
+                draw_game();
+                // Draw explosion effect - expanding
+                {
+                    unsigned char id = 0;
+                    unsigned char ex, ey;
+                    unsigned char phase = explode_timer >> 3;  // Every 8 frames
+
+                    // Center explosion
+                    id = set_sprite(id, explode_x, explode_y, SPR_EXPLOSION, 2);
+
+                    // Expanding explosions around center
+                    if (phase >= 1) {
+                        ex = explode_x - 8;
+                        ey = explode_y - 8;
+                        id = set_sprite(id, ex, ey, SPR_EXPLOSION, 2);
+                        id = set_sprite(id, ex + 16, ey, SPR_EXPLOSION, 2);
+                    }
+                    if (phase >= 2) {
+                        ex = explode_x - 16;
+                        ey = explode_y;
+                        id = set_sprite(id, ex, ey, SPR_EXPLOSION, 2);
+                        id = set_sprite(id, ex + 32, ey, SPR_EXPLOSION, 2);
+                    }
+                    if (phase >= 3) {
+                        ey = explode_y + 8;
+                        id = set_sprite(id, explode_x - 8, ey, SPR_EXPLOSION, 2);
+                        id = set_sprite(id, explode_x + 8, ey, SPR_EXPLOSION, 2);
+                    }
+                }
+                // After ~1 second, move to next state
+                if (explode_timer > 60) {
+                    finish_game_over();
+                }
+                break;
+
             case STATE_GAMEOVER:
                 draw_gameover();
                 if (pad_new & BTN_START) {
@@ -1776,6 +2238,81 @@ void main(void) {
                 if (win_timer > 90 && (pad_new & BTN_START)) {
                     music_play(0);  // Back to title BGM
                     game_state = STATE_TITLE;
+                }
+                break;
+
+            case STATE_LOOP_CLEAR:
+                ++loop_clear_timer;
+                update_win_animation();  // Reuse confetti animation
+                draw_loop_clear();
+                // Accept START after 60 frames
+                if (loop_clear_timer > 60 && (pad_new & BTN_START)) {
+                    // Start next loop
+                    lap_count = 0;
+                    position = 12;  // Start from the back again
+
+                    // Shift palette for new loop
+                    update_loop_palette();
+
+                    // Resume racing BGM with moderate intensity for LAP 1
+                    music_play(1);
+                    music_set_intensity(1);  // Loop 2+: moderate start
+
+                    game_state = STATE_RACING;
+                }
+                break;
+
+            case STATE_HIGHSCORE:
+                draw_highscore_entry();
+                // Up/Down to change letter
+                if (pad_new & BTN_UP) {
+                    if (name_entry_char < 25) {
+                        ++name_entry_char;
+                    } else {
+                        name_entry_char = 0;  // Wrap around
+                    }
+                    entry_name[name_entry_pos] = name_entry_char;
+                }
+                if (pad_new & BTN_DOWN) {
+                    if (name_entry_char > 0) {
+                        --name_entry_char;
+                    } else {
+                        name_entry_char = 25;  // Wrap around
+                    }
+                    entry_name[name_entry_pos] = name_entry_char;
+                }
+                // A button to confirm letter
+                if (pad_new & BTN_A) {
+                    ++name_entry_pos;
+                    if (name_entry_pos >= 3) {
+                        // Done entering name - save score
+                        // Direct write to SRAM at $6000
+                        {
+                            volatile unsigned char *sram = (volatile unsigned char *)0x6000;
+                            unsigned int s = score;
+                            // Write magic byte
+                            sram[0] = SAVE_MAGIC;
+                            // Write score at offset 1 (high_scores[0])
+                            sram[1] = (unsigned char)(s & 0xFF);
+                            sram[2] = (unsigned char)(s >> 8);
+                            // Write name at offset 7 (high_names[0])
+                            sram[7] = entry_name[0];
+                            sram[8] = entry_name[1];
+                            sram[9] = entry_name[2];
+                        }
+                        game_state = STATE_GAMEOVER;
+                    } else {
+                        // Move to next letter
+                        name_entry_char = entry_name[name_entry_pos];
+                    }
+                }
+                // START button to finish name entry immediately
+                if (pad_new & BTN_START) {
+                    high_scores[new_score_rank] = score;
+                    high_names[new_score_rank][0] = entry_name[0];
+                    high_names[new_score_rank][1] = entry_name[1];
+                    high_names[new_score_rank][2] = entry_name[2];
+                    game_state = STATE_GAMEOVER;
                 }
                 break;
         }

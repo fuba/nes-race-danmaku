@@ -17,7 +17,7 @@
     .byte $4E, $45, $53, $1A    ; "NES" + $1A
     .byte $01                   ; 16KB PRG-ROM (1 x 16KB)
     .byte $01                   ; 8KB CHR-ROM (1 x 8KB)
-    .byte $01                   ; Flags 6: Horizontal mirroring, no SRAM
+    .byte $03                   ; Flags 6: Horizontal mirroring + battery-backed SRAM
     .byte $00                   ; Flags 7: Mapper 0 (NROM)
     .byte $00, $00, $00, $00    ; Padding
     .byte $00, $00, $00, $00

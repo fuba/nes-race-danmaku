@@ -437,6 +437,47 @@
             });
         });
 
+        // SRAM persistence functions
+        const SRAM_KEY = 'race_nes_sram';
+        const SRAM_START = 0x6000;
+        const SRAM_SIZE = 0x2000;  // 8KB
+
+        function saveSRAM() {
+            try {
+                const sram = new Uint8Array(SRAM_SIZE);
+                for (let i = 0; i < SRAM_SIZE; i++) {
+                    sram[i] = nes.cpu.mem[SRAM_START + i] || 0;
+                }
+                const base64 = btoa(String.fromCharCode.apply(null, sram));
+                localStorage.setItem(SRAM_KEY, base64);
+            } catch (e) {
+                console.warn('Failed to save SRAM:', e);
+            }
+        }
+
+        function loadSRAM() {
+            try {
+                const base64 = localStorage.getItem(SRAM_KEY);
+                if (base64) {
+                    const binary = atob(base64);
+                    for (let i = 0; i < binary.length && i < SRAM_SIZE; i++) {
+                        nes.cpu.mem[SRAM_START + i] = binary.charCodeAt(i);
+                    }
+                    console.log('SRAM loaded from localStorage');
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Failed to load SRAM:', e);
+            }
+            return false;
+        }
+
+        // Auto-save SRAM periodically (every 5 seconds)
+        setInterval(saveSRAM, 5000);
+
+        // Save on page unload
+        window.addEventListener('beforeunload', saveSRAM);
+
         // Load ROM
         async function loadROM() {
             try {
@@ -458,6 +499,9 @@
                 }
 
                 nes.loadROM(romString);
+
+                // Load saved SRAM after ROM is loaded
+                loadSRAM();
 
                 status.textContent = 'Ready! Press START to play';
                 status.className = 'ready';
