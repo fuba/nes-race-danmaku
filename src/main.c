@@ -785,7 +785,9 @@ static void ppu_on(void) {
 }
 
 // Set PPU address for VRAM writes
+// Always reset the address latch first for safety
 static void ppu_addr(unsigned int addr) {
+    (void)PPU_STATUS;  // Reset PPU address latch
     PPU_ADDR = (unsigned char)(addr >> 8);
     PPU_ADDR = (unsigned char)(addr);
 }
@@ -856,54 +858,41 @@ static void load_palettes(void) {
 }
 
 // Update background palette for different loops
-// Loop 1: Day, Loop 2: Evening, Loop 3: Night, Loop 4+: repeat
+// Loop 1: Day, Loop 2: Evening, Loop 3+: Night, then alternate
+// This function should be called while PPU is OFF (during draw_road)
 static void update_loop_palette(void) {
     unsigned char grass_hue, road_hue;
 
     // Select hue based on loop_count
-    // Loop 0: Day (green 0x09, gray 0x00)
-    // Loop 1: Evening (orange 0x07, warm 0x06)
-    // Loop 2+: Night (blue 0x02, cold 0x01), then alternate
     if (loop_count == 0) {
-        grass_hue = 0x09;  // Green
+        grass_hue = 0x09;  // Green (day)
         road_hue = 0x00;   // Gray
     } else if ((loop_count & 1) == 1) {
-        grass_hue = 0x07;  // Orange/evening
-        road_hue = 0x06;   // Warm
+        grass_hue = 0x17;  // Yellow-orange (evening)
+        road_hue = 0x07;   // Orange-brown
     } else {
-        grass_hue = 0x02;  // Blue/night
-        road_hue = 0x01;   // Cold
+        grass_hue = 0x01;  // Blue (night)
+        road_hue = 0x00;   // Gray-blue
     }
 
-    // Wait for VBlank to safely update palette
-    wait_vblank();
-
-    // Disable rendering during palette update
-    PPU_MASK = 0x00;
-
-    // Update road palette (BG palette 0 at $3F00-$3F03)
+    // Write road palette (BG palette 0 at $3F00-$3F03)
     ppu_addr(0x3F00);
-    PPU_DATA = 0x0F;
-    PPU_DATA = road_hue;
-    PPU_DATA = road_hue + 0x10;
-    PPU_DATA = road_hue + 0x20;
+    PPU_DATA = 0x0F;              // Background color (black)
+    PPU_DATA = road_hue;          // Dark
+    PPU_DATA = road_hue + 0x10;   // Medium
+    PPU_DATA = road_hue + 0x20;   // Light
 
-    // Update grass palette (BG palette 1 at $3F04-$3F07)
+    // Write grass palette (BG palette 1 at $3F04-$3F07)
     ppu_addr(0x3F04);
-    PPU_DATA = 0x0F;
-    PPU_DATA = grass_hue;
-    PPU_DATA = grass_hue + 0x10;
-    PPU_DATA = grass_hue + 0x20;
+    PPU_DATA = 0x0F;              // Background color (black)
+    PPU_DATA = grass_hue;         // Dark
+    PPU_DATA = grass_hue + 0x10;  // Medium
+    PPU_DATA = grass_hue + 0x20;  // Light
 
-    // IMPORTANT: Reset PPU address latch before writing scroll
+    // Reset PPU address latch and scroll after palette writes
     (void)PPU_STATUS;
-
-    // Restore scroll to current position (not fixed zero)
     PPU_SCROLL = 0;
-    PPU_SCROLL = scroll_y;
-
-    // Re-enable rendering
-    PPU_MASK = 0x1E;
+    PPU_SCROLL = 0;
 }
 
 // Draw the road background
@@ -1298,10 +1287,11 @@ static void init_game(void) {
     pattern_phase = 0;
     pattern_type = 0;
 
+    // Setup PPU like main() does - this order works
+    ppu_off();
+    load_palettes();
+    update_loop_palette();  // Override road/grass colors based on loop_count
     draw_road();
-
-    // Apply palette for current loop (day/evening/night)
-    update_loop_palette();
 
     // Spawn first enemy immediately (no warning delay)
     enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
@@ -2264,9 +2254,11 @@ void main(void) {
                     distance = 0;
                     scroll_y = 0;
 
-                    // Redraw road first, then apply new palette
+                    // Setup PPU like main() does
+                    ppu_off();
+                    load_palettes();
+                    update_loop_palette();  // Override road/grass colors based on loop_count
                     draw_road();
-                    update_loop_palette();
 
                     // Resume racing BGM with moderate intensity for LAP 1
                     music_play(1);

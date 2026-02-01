@@ -216,6 +216,32 @@
                 font-size: 14px;
             }
         }
+
+        #save-controls {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        #reset-save-btn {
+            padding: 8px 16px;
+            background: linear-gradient(145deg, #4a4a6a, #3a3a5a);
+            border: 2px solid #666;
+            border-radius: 5px;
+            color: #ccc;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #reset-save-btn:hover {
+            background: linear-gradient(145deg, #6a4a4a, #5a3a3a);
+            border-color: #ff6b6b;
+            color: #fff;
+        }
+
+        #reset-save-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -251,6 +277,10 @@
         <div id="keyboard-hint">
             Keyboard: Arrow keys = D-Pad, Z = A, X = B, Enter = Start, Shift = Select<br>
             Gamepad: D-Pad/Stick, A/B buttons, Start/Select supported
+        </div>
+
+        <div id="save-controls">
+            <button id="reset-save-btn">Reset Save Data</button>
         </div>
     </div>
 
@@ -478,6 +508,31 @@
 
         // Save on page unload
         window.addEventListener('beforeunload', saveSRAM);
+
+        // Reset SRAM (clear save data)
+        function resetSRAM() {
+            if (!confirm('Are you sure you want to reset all save data?\n(High scores and unlocked loops will be lost)')) {
+                return;
+            }
+            try {
+                // Clear localStorage
+                localStorage.removeItem(SRAM_KEY);
+                // Clear NES memory
+                for (let i = 0; i < SRAM_SIZE; i++) {
+                    nes.cpu.mem[SRAM_START + i] = 0;
+                }
+                status.textContent = 'Save data reset! Refresh or restart game.';
+                status.className = 'ready';
+                console.log('SRAM reset complete');
+            } catch (e) {
+                console.error('Failed to reset SRAM:', e);
+                status.textContent = 'Error resetting save data';
+                status.className = 'error';
+            }
+        }
+
+        // Attach reset button handler
+        document.getElementById('reset-save-btn').addEventListener('click', resetSRAM);
 
         // Gamepad support
         let gamepadIndex = null;
