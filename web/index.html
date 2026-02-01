@@ -249,7 +249,8 @@
         <div id="status" class="loading">Loading emulator...</div>
 
         <div id="keyboard-hint">
-            Keyboard: Arrow keys = D-Pad, Z = A, X = B, Enter = Start, Shift = Select
+            Keyboard: Arrow keys = D-Pad, Z = A, X = B, Enter = Start, Shift = Select<br>
+            Gamepad: D-Pad/Stick, A/B buttons, Start/Select supported
         </div>
     </div>
 
@@ -478,6 +479,66 @@
         // Save on page unload
         window.addEventListener('beforeunload', saveSRAM);
 
+        // Gamepad support
+        let gamepadIndex = null;
+        const gamepadState = {};
+
+        window.addEventListener('gamepadconnected', (e) => {
+            console.log('Gamepad connected:', e.gamepad.id);
+            gamepadIndex = e.gamepad.index;
+            status.textContent = 'Gamepad connected: ' + e.gamepad.id.substring(0, 30);
+            status.className = 'ready';
+        });
+
+        window.addEventListener('gamepaddisconnected', (e) => {
+            console.log('Gamepad disconnected');
+            if (gamepadIndex === e.gamepad.index) {
+                gamepadIndex = null;
+            }
+        });
+
+        function pollGamepad() {
+            if (gamepadIndex === null) return;
+
+            const gamepads = navigator.getGamepads();
+            const gp = gamepads[gamepadIndex];
+            if (!gp) return;
+
+            initAudio();
+
+            // D-pad (buttons 12-15 or axes)
+            const up = gp.buttons[12]?.pressed || gp.axes[1] < -0.5;
+            const down = gp.buttons[13]?.pressed || gp.axes[1] > 0.5;
+            const left = gp.buttons[14]?.pressed || gp.axes[0] < -0.5;
+            const right = gp.buttons[15]?.pressed || gp.axes[0] > 0.5;
+
+            // Face buttons (standard mapping: 0=B, 1=A, 2=Y, 3=X on Xbox style)
+            // NES: A=east, B=south. Map button 0 to B, button 1 to A
+            const btnA = gp.buttons[1]?.pressed || gp.buttons[0]?.pressed;
+            const btnB = gp.buttons[2]?.pressed || gp.buttons[3]?.pressed;
+            const btnStart = gp.buttons[9]?.pressed;
+            const btnSelect = gp.buttons[8]?.pressed;
+
+            // Update button states
+            function updateButton(name, pressed, nesButton) {
+                if (pressed && !gamepadState[name]) {
+                    nes.buttonDown(1, nesButton);
+                } else if (!pressed && gamepadState[name]) {
+                    nes.buttonUp(1, nesButton);
+                }
+                gamepadState[name] = pressed;
+            }
+
+            updateButton('up', up, jsnes.Controller.BUTTON_UP);
+            updateButton('down', down, jsnes.Controller.BUTTON_DOWN);
+            updateButton('left', left, jsnes.Controller.BUTTON_LEFT);
+            updateButton('right', right, jsnes.Controller.BUTTON_RIGHT);
+            updateButton('a', btnA, jsnes.Controller.BUTTON_A);
+            updateButton('b', btnB, jsnes.Controller.BUTTON_B);
+            updateButton('start', btnStart, jsnes.Controller.BUTTON_START);
+            updateButton('select', btnSelect, jsnes.Controller.BUTTON_SELECT);
+        }
+
         // Load ROM
         async function loadROM() {
             try {
@@ -518,6 +579,9 @@
                         return;
                     }
                     lastFrameTime = currentTime - ((currentTime - lastFrameTime) % FRAME_TIME);
+
+                    // Poll gamepad input
+                    pollGamepad();
 
                     nes.frame();
                 }

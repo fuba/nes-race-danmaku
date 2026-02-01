@@ -77,6 +77,9 @@
 #define ENEMY_START_Y   0    // Start from top of screen (will use 240-16 wrapped)
 #define SCROLL_SPEED    2
 
+// Lap distance constant
+#define LAP_DISTANCE    700u
+
 // Tile indices
 #define TILE_ROAD       0x01
 #define TILE_GRASS      0x02
@@ -139,7 +142,7 @@ static unsigned char obs_y[4];
 static unsigned char obs_on[4];
 
 // Bullet system (danmaku)
-#define MAX_BULLETS 24
+#define MAX_BULLETS 16
 static unsigned char bullet_x[MAX_BULLETS];
 static unsigned char bullet_y[MAX_BULLETS];
 static signed char bullet_dx[MAX_BULLETS];  // X velocity
@@ -153,7 +156,7 @@ static unsigned char win_timer;  // Animation timer for win screen
 static unsigned char loop_clear_timer;  // Timer for loop clear celebration
 
 // Confetti particles for win animation
-#define MAX_CONFETTI 12
+#define MAX_CONFETTI 8
 static unsigned char confetti_x[MAX_CONFETTI];
 static unsigned char confetti_y[MAX_CONFETTI];
 static unsigned char confetti_color[MAX_CONFETTI];
@@ -853,17 +856,24 @@ static void load_palettes(void) {
 }
 
 // Update background palette for different loops
-// Each loop shifts the grass color hue
+// Loop 1: Day, Loop 2: Evening, Loop 3: Night, Loop 4+: repeat
 static void update_loop_palette(void) {
-    unsigned char hue_shift;
-    unsigned char base_hue;
+    unsigned char grass_hue, road_hue;
 
-    // Different hue for each loop (wraps around)
-    // Loop 0 = green ($09), Loop 1 = cyan ($0B), Loop 2 = purple ($04), etc.
-    static const unsigned char loop_hues[4] = { 0x09, 0x0B, 0x04, 0x06 };
-
-    hue_shift = loop_count & 0x03;  // 0-3
-    base_hue = loop_hues[hue_shift];
+    // Select hue based on loop_count
+    // Loop 0: Day (green 0x09, gray 0x00)
+    // Loop 1: Evening (orange 0x07, warm 0x06)
+    // Loop 2+: Night (blue 0x02, cold 0x01), then alternate
+    if (loop_count == 0) {
+        grass_hue = 0x09;  // Green
+        road_hue = 0x00;   // Gray
+    } else if ((loop_count & 1) == 1) {
+        grass_hue = 0x07;  // Orange/evening
+        road_hue = 0x06;   // Warm
+    } else {
+        grass_hue = 0x02;  // Blue/night
+        road_hue = 0x01;   // Cold
+    }
 
     // Wait for VBlank to safely update palette
     wait_vblank();
@@ -871,17 +881,26 @@ static void update_loop_palette(void) {
     // Disable rendering during palette update
     PPU_MASK = 0x00;
 
+    // Update road palette (BG palette 0 at $3F00-$3F03)
+    ppu_addr(0x3F00);
+    PPU_DATA = 0x0F;
+    PPU_DATA = road_hue;
+    PPU_DATA = road_hue + 0x10;
+    PPU_DATA = road_hue + 0x20;
+
     // Update grass palette (BG palette 1 at $3F04-$3F07)
     ppu_addr(0x3F04);
-    PPU_DATA = 0x0F;          // Black background
-    PPU_DATA = base_hue;      // Dark shade
-    PPU_DATA = base_hue + 0x10;  // Medium shade
-    PPU_DATA = base_hue + 0x20;  // Light shade
+    PPU_DATA = 0x0F;
+    PPU_DATA = grass_hue;
+    PPU_DATA = grass_hue + 0x10;
+    PPU_DATA = grass_hue + 0x20;
 
-    // IMPORTANT: Reset scroll BEFORE enabling rendering
-    // PPU_ADDR and PPU_SCROLL share internal registers
+    // IMPORTANT: Reset PPU address latch before writing scroll
+    (void)PPU_STATUS;
+
+    // Restore scroll to current position (not fixed zero)
     PPU_SCROLL = 0;
-    PPU_SCROLL = 0;  // Reset to top of screen
+    PPU_SCROLL = scroll_y;
 
     // Re-enable rendering
     PPU_MASK = 0x1E;
@@ -1281,10 +1300,8 @@ static void init_game(void) {
 
     draw_road();
 
-    // Apply palette for starting loop
-    if (loop_count > 0) {
-        update_loop_palette();
-    }
+    // Apply palette for current loop (day/evening/night)
+    update_loop_palette();
 
     // Spawn first enemy immediately (no warning delay)
     enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
@@ -1483,7 +1500,7 @@ static void update_game(void) {
     }
 
     ++distance;
-    if (distance >= 700) {  // Shorter laps for faster pace
+    if (distance >= LAP_DISTANCE) {  // Lap complete
         distance = 0;
         ++lap_count;
 
@@ -1673,20 +1690,14 @@ static void draw_game(void) {
     }
 
     // HUD - Simple progress indicator (car icon moving toward GOAL)
+    // Simplified: distance 0-700 maps to position 80-168 (88 pixels)
+    // car_pos = 80 + (distance * 88 / 700) = 80 + distance / 8 (approx)
     {
-        unsigned char progress;
         unsigned char car_pos;
-
-        // Calculate progress (0-100)
-        progress = (unsigned char)(distance / 10);
-        if (progress > 100) progress = 100;
-
-        // Draw car icon moving right (position 80-160)
-        car_pos = 80 + ((progress * 80) / 100);
+        car_pos = 80 + (unsigned char)(distance >> 3);  // distance / 8
+        if (car_pos > 168) car_pos = 168;
         id = set_sprite(id, car_pos, 224, SPR_CAR_ICON, 0);
-
-        // Draw "G" at end (goal marker) - just 1 sprite
-        id = set_sprite(id, 168, 224, SPR_LETTER + 6, 3);  // G
+        id = set_sprite(id, 168, 224, SPR_LETTER + 6, 3);  // G (goal)
     }
 
     // Hide remaining sprites
@@ -2250,8 +2261,11 @@ void main(void) {
                     // Start next loop
                     lap_count = 0;
                     position = 12;  // Start from the back again
+                    distance = 0;
+                    scroll_y = 0;
 
-                    // Shift palette for new loop
+                    // Redraw road first, then apply new palette
+                    draw_road();
                     update_loop_palette();
 
                     // Resume racing BGM with moderate intensity for LAP 1
