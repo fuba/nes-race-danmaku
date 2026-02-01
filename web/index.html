@@ -722,7 +722,7 @@
                 status.textContent = 'Loading ROM...';
                 status.className = 'loading';
 
-                const response = await fetch('./edgerace.nes');
+                const response = await fetch('./edgerace.nes?v=' + Date.now());
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }

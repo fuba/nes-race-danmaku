@@ -1846,9 +1846,9 @@ static void draw_title(void) {
         }
     }
 
-    // "START" prompt at bottom (blinking)
+    // "START" prompt (blinking)
     if (frame_count & 0x20) {
-        y = 208;
+        y = 168;
         x = 88;
         id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
@@ -1856,6 +1856,27 @@ static void draw_title(void) {
         id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
+
+    // Version "V301" at bottom
+    y = 180;
+    x = 104;
+    id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
+    id = set_sprite(id, x + 8,  y, SPR_DIGIT + 3, 3);    // 3
+    id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + 1, 3);    // 1
+
+    // Copyright "2026 FUBA"
+    y = 192;
+    x = 80;
+    id = set_sprite(id, x,      y, SPR_DIGIT + 2, 3);    // 2
+    id = set_sprite(id, x + 8,  y, SPR_DIGIT + 0, 3);    // 0
+    id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + 6, 3);    // 6
+    x = 112;
+    id = set_sprite(id, x,      y, SPR_LETTER + 5, 3);   // F
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 20, 3);  // U
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 1, 3);   // B
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 0, 3);   // A
 
     // Hide rest
     while (id < 64) {
