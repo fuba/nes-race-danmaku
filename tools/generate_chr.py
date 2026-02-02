@@ -629,6 +629,18 @@ BOSS_CAR_BR = [
     "10033001",  # Flames
 ]
 
+# Copyright symbol (C in circle)
+COPYRIGHT = [
+    "00111100",
+    "01000010",
+    "10011001",
+    "10100001",
+    "10100001",
+    "10011001",
+    "01000010",
+    "00111100",
+]
+
 # Explosion sprite
 EXPLOSION = [
     "00100100",
@@ -959,6 +971,8 @@ def main():
         sprites.append((0x10 + i, digit))
     for i, letter in enumerate(LETTERS):
         sprites.append((0x30 + i, letter))  # Changed to 0x30 for SPR_LETTER
+    # Copyright symbol at 0x4A (after Z at 0x49)
+    sprites.append((0x4A, COPYRIGHT))
 
     # Note: LAP display simplified to "LX" format, slash not needed
 
