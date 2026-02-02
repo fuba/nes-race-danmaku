@@ -1851,8 +1851,9 @@ static void draw_title(void) {
     }
 
     // Loop selection (only show if player has completed at least 1 loop)
+    // Positioned above high scores
     if (max_loop > 0) {
-        y = 176;
+        y = 104;
         x = 80;
         // "LOOP" label
         id = set_sprite(id, x,      y, SPR_LETTER + 11, 3);  // L
