@@ -1897,7 +1897,7 @@ static void draw_title(void) {
 
     // Copyright "(C) 2026 FUBA" at bottom-center
     y = 220;
-    x = 56;
+    x = 84;
     id = set_sprite(id, x,      y, SPR_COPYRIGHT, 3);    // (C)
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
     id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
