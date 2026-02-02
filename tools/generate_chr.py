@@ -487,52 +487,55 @@ LETTERS = [
 # Sprite tiles (for pattern table 1, starting at offset 0x1000 in CHR)
 
 # Player car (4 tiles for 16x16 sprite)
+# Racing car with visible core at center (hitbox area)
+# Core is color 3, body is color 1, accents are color 2
+
 # Top-left
 PLAYER_CAR_TL = [
-    "00011000",
-    "00111100",
-    "00111100",
-    "01111110",
-    "01111110",
-    "11111111",
-    "11111111",
-    "11311311",
+    "00011000",  # Nose tip
+    "00111100",  # Nose
+    "01111110",  # Upper body
+    "01111110",  # Body
+    "11111111",  # Wing start
+    "11111111",  # Wing
+    "11111133",  # Core top-right (center of car)
+    "11211133",  # Core with accent
 ]
 
 # Top-right
 PLAYER_CAR_TR = [
-    "00011000",
-    "00111100",
-    "00111100",
-    "01111110",
-    "01111110",
-    "11111111",
-    "11111111",
-    "11311311",
+    "00011000",  # Nose tip
+    "00111100",  # Nose
+    "01111110",  # Upper body
+    "01111110",  # Body
+    "11111111",  # Wing start
+    "11111111",  # Wing
+    "33111111",  # Core top-left (center of car)
+    "33112111",  # Core with accent
 ]
 
 # Bottom-left
 PLAYER_CAR_BL = [
-    "11333311",
-    "11111111",
-    "11111111",
-    "01111110",
-    "01111110",
-    "00111100",
-    "00111100",
-    "00022000",
+    "11211133",  # Core with accent
+    "11111133",  # Core bottom-right
+    "11111111",  # Body
+    "11111111",  # Body
+    "01111110",  # Lower body
+    "00111100",  # Narrowing
+    "00111100",  # Near wheels
+    "00022000",  # Wheels (color 2)
 ]
 
 # Bottom-right
 PLAYER_CAR_BR = [
-    "11333311",
-    "11111111",
-    "11111111",
-    "01111110",
-    "01111110",
-    "00111100",
-    "00111100",
-    "00022000",
+    "33112111",  # Core with accent
+    "33111111",  # Core bottom-left
+    "11111111",  # Body
+    "11111111",  # Body
+    "01111110",  # Lower body
+    "00111100",  # Narrowing
+    "00111100",  # Near wheels
+    "00022000",  # Wheels (color 2)
 ]
 
 # Enemy car (4 tiles for 16x16 sprite)
