@@ -1415,9 +1415,18 @@ static void update_player(void) {
         if (player_x < ROAD_RIGHT - 16) player_x += speed;
     }
     if (pad_now & BTN_UP) {
-        // Keep player below HUD area (Y=60 is about 1/4 of screen height)
-        // This prevents sprite overflow conflicts with HUD sprites on same scanlines
-        if (player_y > 60) player_y -= speed;
+        // Progressive slowdown as player moves up
+        // Zone 1: y > 60 - full speed
+        // Zone 2: 30 < y <= 60 - half speed (move every other frame)
+        // Zone 3: 16 < y <= 30 - quarter speed (move every 4th frame)
+        // Zone 4: y <= 16 - no movement (HUD area)
+        if (player_y > 60) {
+            player_y -= speed;
+        } else if (player_y > 30) {
+            if ((frame_count & 1) == 0) player_y -= speed;
+        } else if (player_y > 16) {
+            if ((frame_count & 3) == 0) player_y -= speed;
+        }
     }
     if (pad_now & BTN_DOWN) {
         if (player_y < SCREEN_HEIGHT - 32) player_y += speed;
