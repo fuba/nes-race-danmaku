@@ -1886,16 +1886,16 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Version "V301" at bottom
-    y = 180;
-    x = 104;
+    // Version "V301" at bottom-right
+    y = 216;
+    x = 216;
     id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
     id = set_sprite(id, x + 8,  y, SPR_DIGIT + 3, 3);    // 3
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
     id = set_sprite(id, x + 24, y, SPR_DIGIT + 1, 3);    // 1
 
-    // Copyright "2026 FUBA"
-    y = 192;
+    // Copyright "2026 FUBA" at bottom-center
+    y = 220;
     x = 80;
     id = set_sprite(id, x,      y, SPR_DIGIT + 2, 3);    // 2
     id = set_sprite(id, x + 8,  y, SPR_DIGIT + 0, 3);    // 0
