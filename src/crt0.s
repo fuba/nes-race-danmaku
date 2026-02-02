@@ -5,9 +5,16 @@
 .export _exit
 
 .import _main
+.import _music_update
 .import initlib, donelib
 .import zerobss, copydata
 .importzp sp
+
+; NMI flag - set when NMI happens, cleared by main loop
+; Use BSS instead of ZEROPAGE to avoid overflow
+.export _nmi_flag
+.segment "BSS"
+_nmi_flag: .res 1
 
 ; Stack is at top of SRAM ($0300-$07FF)
 ; We'll put C stack at $0700-$0800
@@ -91,8 +98,26 @@ _exit:
 @hang:
     jmp @hang
 
-; NMI handler (minimal)
+; NMI handler - updates music for stable audio timing
 nmi:
+    pha                     ; Save A
+    txa
+    pha                     ; Save X
+    tya
+    pha                     ; Save Y
+
+    ; Set NMI flag for main loop sync
+    lda #1
+    sta _nmi_flag
+
+    ; Call music update (C function)
+    jsr _music_update
+
+    pla
+    tay                     ; Restore Y
+    pla
+    tax                     ; Restore X
+    pla                     ; Restore A
     rti
 
 ; IRQ handler (not used)

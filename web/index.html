@@ -55,6 +55,9 @@
             max-width: 500px;
             padding: 20px 10px;
             gap: 20px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         /* D-Pad */
@@ -79,6 +82,7 @@
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
             transition: all 0.1s;
         }
 
@@ -124,6 +128,7 @@
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
             transition: all 0.1s;
         }
 
@@ -151,6 +156,7 @@
             cursor: pointer;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         .small-btn:active, .small-btn.pressed {
@@ -485,6 +491,8 @@
             btn.addEventListener('touchstart', handleTouchStart, { passive: false });
             btn.addEventListener('touchend', handleTouchEnd, { passive: false });
             btn.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+            // Prevent context menu on long press (mobile)
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
 
             // Mouse support for testing on desktop
             btn.addEventListener('mousedown', (e) => {
@@ -513,6 +521,9 @@
                 }
             });
         });
+
+        // Prevent context menu on controls container (for long press on mobile)
+        document.getElementById('controls').addEventListener('contextmenu', (e) => e.preventDefault());
 
         // SRAM persistence functions
         const SRAM_KEY = 'edgerace_nes_sram';

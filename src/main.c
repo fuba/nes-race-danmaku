@@ -71,7 +71,8 @@
 #define PLAYER_START_X  120
 #define PLAYER_START_Y  200
 #define PLAYER_SPEED    2
-#define PLAYER_MAX_HP   5
+#define PLAYER_START_HP 5
+#define PLAYER_MAX_HP   100
 
 // Enemy constants
 #define ENEMY_START_Y   0    // Start from top of screen (will use 240-16 wrapped)
@@ -98,6 +99,9 @@
 #define SPR_LETTER      0x30
 #define SPR_COPYRIGHT   0x4A    // (C) symbol
 #define SPR_BOSS        0x60    // Boss/Elite enemy car
+
+// NMI flag from crt0.s (set by NMI handler, cleared by main loop)
+extern volatile unsigned char nmi_flag;
 
 // Global variables
 static unsigned char game_state;
@@ -139,10 +143,11 @@ static unsigned char graze_count;       // Graze counter for HP recovery (every 
 static unsigned char car_graze_cooldown; // Cooldown for enemy car graze
 static unsigned char boost_remaining;   // Boosts remaining this loop (max 2)
 static unsigned char boost_active;      // Currently boosting flag
+static unsigned char boss_music_active; // Is boss music currently playing?
 
 
 // Bullet system (danmaku)
-#define MAX_BULLETS 16
+#define MAX_BULLETS 48
 static unsigned char bullet_x[MAX_BULLETS];
 static unsigned char bullet_y[MAX_BULLETS];
 static signed char bullet_dx[MAX_BULLETS];  // X velocity
@@ -150,6 +155,7 @@ static signed char bullet_dy[MAX_BULLETS];  // Y velocity
 static unsigned char bullet_on[MAX_BULLETS];
 static unsigned char bullet_timer;  // Timer for shooting patterns
 static unsigned char bullet_next;   // Next bullet slot (circular buffer)
+static unsigned char burst_phase;   // 0-79 counter (avoids % 80 division)
 
 static unsigned char rnd_seed;
 static unsigned char win_timer;  // Animation timer for win screen
@@ -266,108 +272,207 @@ static const unsigned int note_table[48] = {
 #define F5  41
 #define FS5 42
 #define G5  43
+#define GS5 44
+#define A5  45
+#define AS5 46
+#define B5  47
 
 // ============================================
-// RACING BGM - Energetic with heavy triangle bass!
+// RACING BGM LOOP 1 (DAY) - Bright, upbeat rock
 // ============================================
 #define RACING_LEN 32
 
-// Triangle bass line - driving bass!
+// Triangle bass - bouncy driving bass (C major feel)
 static const unsigned char racing_tri[RACING_LEN] = {
-    E2, E2, E3, E2,  G2, G2, G3, G2,
+    C2, C2, C3, C2,  G2, G2, G3, G2,
     A2, A2, A3, A2,  G2, G2, G3, G2,
-    E2, E2, E3, E2,  G2, G2, G3, G2,
-    A2, A2, B2, B2,  C3, C3, B2, A2,
+    F2, F2, F3, F2,  G2, G2, G3, G2,
+    A2, A2, B2, B2,  C3, C3, NOTE_REST, C2,
 };
 
-// Pulse 1 - melody
+// Pulse 1 - cheerful melody
 static const unsigned char racing_pl1[RACING_LEN] = {
-    E4, NOTE_REST, G4, E4,  NOTE_REST, B4, A4, G4,
-    A4, NOTE_REST, C5, A4,  NOTE_REST, G4, E4, D4,
-    E4, NOTE_REST, G4, E4,  NOTE_REST, B4, A4, G4,
-    A4, A4, B4, B4,  C5, C5, B4, A4,
+    C4, NOTE_REST, E4, G4,  NOTE_REST, G4, E4, C4,
+    A4, NOTE_REST, G4, E4,  NOTE_REST, D4, E4, G4,
+    F4, NOTE_REST, A4, C5,  NOTE_REST, G4, E4, D4,
+    E4, E4, G4, G4,  C5, NOTE_REST, NOTE_REST, NOTE_REST,
 };
 
-// Pulse 2 - harmony/arpeggios
+// Pulse 2 - harmony
 static const unsigned char racing_pl2[RACING_LEN] = {
-    B3, B3, E4, B3,  D4, D4, G4, D4,
-    E4, E4, A4, E4,  D4, D4, G4, D4,
-    B3, B3, E4, B3,  D4, D4, G4, D4,
-    E4, E4, FS4, FS4, G4, G4, FS4, E4,
+    E3, E3, G3, E3,  B3, B3, D4, B3,
+    C4, C4, E4, C4,  B3, B3, D4, B3,
+    A3, A3, C4, A3,  B3, B3, D4, B3,
+    C4, C4, E4, E4,  G4, NOTE_REST, NOTE_REST, NOTE_REST,
 };
 
 // Noise pattern (0=off, 1=kick, 2=snare, 3=hihat)
 static const unsigned char racing_noise[RACING_LEN] = {
-    1, 3, 0, 3,  2, 3, 0, 3,
-    1, 3, 0, 3,  2, 3, 0, 3,
-    1, 3, 0, 3,  2, 3, 0, 3,
-    1, 3, 2, 3,  1, 2, 1, 2,
+    1, 0, 3, 0,  2, 0, 3, 0,
+    1, 0, 3, 0,  2, 0, 3, 0,
+    1, 0, 3, 0,  2, 0, 3, 0,
+    1, 0, 2, 0,  1, 0, 0, 0,
 };
 
 // ============================================
-// RACING BGM LAP 2 - More intense! (A minor, faster)
+// RACING BGM LOOP 2 (EVENING) - Mysterious, tension (D minor)
 // ============================================
-// Triangle bass - driving harder
+// Triangle bass - ominous pulsing
 static const unsigned char racing2_tri[RACING_LEN] = {
-    A2, A2, A3, A2,  C3, C3, C3, C3,
-    D3, D3, D3, D3,  E3, E3, E3, E2,
-    A2, A2, A3, A2,  C3, C3, C3, C3,
-    D3, D3, E3, E3,  A2, A2, A3, A2,
+    D2, D2, NOTE_REST, D3,  D2, D2, NOTE_REST, D3,
+    F2, F2, NOTE_REST, F3,  A2, A2, NOTE_REST, A3,
+    D2, D2, NOTE_REST, D3,  C2, C2, NOTE_REST, C3,
+    AS2, AS2, NOTE_REST, AS2, A2, A2, NOTE_REST, A2,
 };
 
-// Pulse 1 - more aggressive melody
+// Pulse 1 - haunting melody
 static const unsigned char racing2_pl1[RACING_LEN] = {
-    A4, C5, E5, G5,  G5, E5, C5, E5,
-    D5, F5, G5, F5,  E5, G5, B4, E5,
-    A4, C5, E5, G5,  G5, E5, C5, E5,
-    D5, E5, F5, E5,  A4, A4, G5, A4,
+    D4, NOTE_REST, F4, NOTE_REST,  A4, NOTE_REST, G4, F4,
+    E4, NOTE_REST, G4, NOTE_REST,  A4, NOTE_REST, NOTE_REST, NOTE_REST,
+    D4, F4, A4, G4,  F4, E4, D4, NOTE_REST,
+    C4, NOTE_REST, D4, NOTE_REST,  E4, NOTE_REST, NOTE_REST, NOTE_REST,
 };
 
-// Pulse 2 - intense arpeggios
+// Pulse 2 - eerie arpeggios
 static const unsigned char racing2_pl2[RACING_LEN] = {
-    E4, A4, C5, E4,  C4, E4, G4, C4,
-    F4, A4, D5, F4,  E4, G4, B4, E4,
-    E4, A4, C5, E4,  C4, E4, G4, C4,
-    F4, G4, A4, G4,  E4, E4, A4, E4,
+    A3, D4, F4, A3,  D4, F4, A3, D4,
+    G3, C4, E4, G3,  C4, E4, G3, C4,
+    A3, D4, F4, A3,  G3, C4, E4, G3,
+    F3, AS3, D4, F3,  E3, A3, CS4, E3,
 };
 
-// More aggressive drums
+// Subtle drums - tension building
 static const unsigned char racing2_noise[RACING_LEN] = {
+    1, 0, 0, 3,  0, 0, 0, 3,
+    1, 0, 0, 3,  2, 0, 0, 3,
+    1, 0, 0, 3,  0, 0, 0, 3,
+    1, 0, 2, 0,  1, 0, 0, 0,
+};
+
+// ============================================
+// RACING BGM LOOP 3 (NIGHT) - Dark, intense (E minor)
+// ============================================
+// Triangle bass - menacing
+static const unsigned char racing3_tri[RACING_LEN] = {
+    E2, NOTE_REST, E2, E3,  E2, NOTE_REST, E2, E3,
+    G2, NOTE_REST, G2, G3,  A2, NOTE_REST, B2, B3,
+    E2, NOTE_REST, E2, E3,  D2, NOTE_REST, D2, D3,
+    C2, NOTE_REST, B2, NOTE_REST,  E2, E2, E3, E2,
+};
+
+// Pulse 1 - dark powerful melody
+static const unsigned char racing3_pl1[RACING_LEN] = {
+    E4, NOTE_REST, G4, E4,  B4, NOTE_REST, A4, G4,
+    G4, NOTE_REST, B4, G4,  A4, NOTE_REST, B4, A4,
+    E4, G4, B4, E5,  D5, NOTE_REST, C5, B4,
+    A4, NOTE_REST, G4, NOTE_REST,  E4, NOTE_REST, NOTE_REST, NOTE_REST,
+};
+
+// Pulse 2 - ominous harmonies
+static const unsigned char racing3_pl2[RACING_LEN] = {
+    B3, E4, G4, B3,  E4, G4, B3, E4,
+    D4, G4, B4, D4,  E4, A4, C5, E4,
+    B3, E4, G4, B4,  A3, D4, FS4, A3,
+    E3, A3, C4, E3,  B3, NOTE_REST, NOTE_REST, NOTE_REST,
+};
+
+// Heavy drums
+static const unsigned char racing3_noise[RACING_LEN] = {
+    1, 0, 0, 3,  2, 0, 0, 3,
+    1, 0, 0, 3,  2, 0, 0, 3,
+    1, 0, 0, 3,  2, 0, 0, 3,
+    1, 0, 2, 0,  1, 0, 0, 0,
+};
+
+// ============================================
+// BOSS BGM LOOP 1 - Exciting battle! (A minor)
+// ============================================
+#define BOSS_LEN 32
+
+static const unsigned char boss1_tri[BOSS_LEN] = {
+    A2, A2, A3, A2,  A2, A2, A3, A2,
+    G2, G2, G3, G2,  F2, F2, E2, E2,
+    A2, A2, A3, A2,  A2, A2, A3, A2,
+    G2, G2, F2, F2,  E2, E2, E3, E2,
+};
+
+static const unsigned char boss1_pl1[BOSS_LEN] = {
+    A4, C5, E5, C5,  A4, C5, E5, C5,
+    G4, B4, D5, B4,  F4, A4, C5, E5,
+    A4, C5, E5, G5,  E5, C5, A4, C5,
+    G4, B4, F4, A4,  E4, E4, E5, E4,
+};
+
+static const unsigned char boss1_pl2[BOSS_LEN] = {
+    E4, A4, C5, A4,  E4, A4, C5, A4,
+    D4, G4, B4, G4,  C4, F4, A4, C5,
+    E4, A4, C5, E5,  C5, A4, E4, A4,
+    D4, G4, C4, F4,  B3, B3, B4, B3,
+};
+
+static const unsigned char boss1_noise[BOSS_LEN] = {
     1, 3, 2, 3,  1, 3, 2, 3,
-    1, 3, 2, 3,  1, 2, 1, 2,
+    1, 3, 2, 3,  1, 3, 2, 3,
     1, 3, 2, 3,  1, 3, 2, 3,
     1, 2, 1, 2,  1, 2, 1, 2,
 };
 
 // ============================================
-// RACING BGM LAP 3 - Maximum chaos! (E minor, fastest)
+// BOSS BGM LOOP 2 - Mysterious danger (D minor)
 // ============================================
-// Triangle bass - relentless
-static const unsigned char racing3_tri[RACING_LEN] = {
-    E3, E3, E3, E2,  E3, E3, E3, E2,
-    G3, G3, G3, G2,  A3, A3, B3, B3,
-    E3, E3, E3, E2,  G3, G3, G3, G2,
-    A3, B3, C4, B3,  E3, E3, E2, E3,
+static const unsigned char boss2_tri[BOSS_LEN] = {
+    D2, D3, D2, D3,  D2, D3, D2, D3,
+    C2, C3, C2, C3,  AS2, AS3, A2, A3,
+    D2, D3, D2, D3,  E2, E3, F2, F3,
+    G2, G3, A2, A3,  D2, D3, D2, D3,
 };
 
-// Pulse 1 - frantic melody
-static const unsigned char racing3_pl1[RACING_LEN] = {
-    E5, G5, E5, E5,  G5, E5, E5, G5,
-    G5, E5, D5, G5,  G5, E5, C5, E5,
-    E5, G5, E5, E5,  G5, E5, E5, G5,
-    G5, E5, C5, E5,  E5, E5, E5, E5,
+static const unsigned char boss2_pl1[BOSS_LEN] = {
+    D5, A4, D5, F5,  D5, A4, D5, F5,
+    C5, G4, C5, E5,  AS4, F4, A4, C5,
+    D5, F5, A5, F5,  E5, G5, F5, E5,
+    D5, C5, AS4, A4,  D5, NOTE_REST, D5, D5,
 };
 
-// Pulse 2 - chaotic harmonies
-static const unsigned char racing3_pl2[RACING_LEN] = {
-    B4, E5, G4, B4,  D5, G4, B4, D5,
-    D5, G5, B4, D5,  E5, FS4, G4, FS4,
-    B4, E5, G4, B4,  D5, G4, B4, D5,
-    E5, FS4, G4, FS4, B4, B4, B4, B4,
+static const unsigned char boss2_pl2[BOSS_LEN] = {
+    F4, D4, F4, A4,  F4, D4, F4, A4,
+    E4, C4, E4, G4,  D4, AS3, D4, F4,
+    F4, A4, D5, A4,  G4, B4, A4, G4,
+    F4, E4, D4, CS4,  D4, NOTE_REST, D4, D4,
 };
 
-// Frantic drums
-static const unsigned char racing3_noise[RACING_LEN] = {
+static const unsigned char boss2_noise[BOSS_LEN] = {
+    1, 0, 2, 3,  1, 0, 2, 3,
+    1, 0, 2, 3,  1, 0, 2, 3,
+    1, 0, 2, 3,  1, 0, 2, 3,
+    1, 2, 1, 2,  1, 0, 1, 1,
+};
+
+// ============================================
+// BOSS BGM LOOP 3 - FINAL BOSS! Maximum intensity (E minor)
+// ============================================
+static const unsigned char boss3_tri[BOSS_LEN] = {
+    E2, E3, E2, E3,  E2, E3, E2, E3,
+    E2, E3, E2, E3,  G2, G3, A2, A3,
+    B2, B3, B2, B3,  A2, A3, G2, G3,
+    FS2, FS3, G2, G3,  E2, E2, E3, E2,
+};
+
+static const unsigned char boss3_pl1[BOSS_LEN] = {
+    E5, B4, E5, G5,  E5, B4, E5, G5,
+    E5, G5, B5, G5,  E5, G5, A5, B5,
+    B4, DS5, FS5, B5,  A5, FS5, DS5, FS5,
+    FS5, G5, FS5, G5,  E5, E5, E5, E5,
+};
+
+static const unsigned char boss3_pl2[BOSS_LEN] = {
+    G4, E4, G4, B4,  G4, E4, G4, B4,
+    G4, B4, E5, B4,  G4, B4, C5, E5,
+    DS4, FS4, B4, DS5,  C5, A4, FS4, A4,
+    A4, B4, A4, B4,  G4, G4, G4, G4,
+};
+
+static const unsigned char boss3_noise[BOSS_LEN] = {
     1, 2, 1, 2,  1, 2, 1, 2,
     1, 2, 1, 2,  1, 2, 1, 2,
     1, 2, 1, 2,  1, 2, 1, 2,
@@ -675,6 +780,16 @@ static void play_noise(unsigned char type) {
     }
 }
 
+// Track numbers
+#define TRACK_TITLE     0
+#define TRACK_RACING    1
+#define TRACK_WIN       2
+#define TRACK_GAMEOVER  3
+#define TRACK_EPILOGUE  4
+#define TRACK_BOSS1     5   // Boss battle loop 1
+#define TRACK_BOSS2     6   // Boss battle loop 2
+#define TRACK_BOSS3     7   // Boss battle loop 3 (final)
+
 // Start a music track
 static void music_play(unsigned char track) {
     current_track = track;
@@ -682,41 +797,50 @@ static void music_play(unsigned char track) {
     music_frame = 0;
 
     switch (track) {
-        case 0:  // Title - Heroic march
-            music_tempo = 8;
+        case TRACK_TITLE:  // Title - Heroic march
+            music_tempo = 12;  // Slower, more majestic
             music_intensity = 0;
             break;
-        case 1:  // Racing - tempo varies with intensity
+        case TRACK_RACING:  // Racing - tempo varies with intensity
             switch (music_intensity) {
-                case 0:  music_tempo = 6; break;   // Lap 1: Normal
-                case 1:  music_tempo = 5; break;   // Lap 2: Faster
-                default: music_tempo = 4; break;   // Lap 3: Fastest!
+                case 0:  music_tempo = 10; break;  // Loop 1: Relaxed
+                case 1:  music_tempo = 9;  break;  // Loop 2: Moderate
+                default: music_tempo = 8;  break;  // Loop 3: Intense
             }
             break;
-        case 2:  // Win
-            music_tempo = 10;
+        case TRACK_WIN:  // Win
+            music_tempo = 14;
             music_intensity = 0;
             break;
-        case 3:  // Game Over
+        case TRACK_GAMEOVER:  // Game Over
+            music_tempo = 20;  // Slower, more dramatic
+            music_intensity = 0;
+            break;
+        case TRACK_EPILOGUE:  // Epilogue - calm, slow
             music_tempo = 16;
             music_intensity = 0;
             break;
-        case 4:  // Epilogue - calm, slow
-            music_tempo = 12;
-            music_intensity = 0;
+        case TRACK_BOSS1:  // Boss loop 1 - exciting
+            music_tempo = 8;
+            break;
+        case TRACK_BOSS2:  // Boss loop 2 - tense
+            music_tempo = 7;
+            break;
+        case TRACK_BOSS3:  // Boss loop 3 - INTENSE!
+            music_tempo = 6;
             break;
     }
 }
 
-// Set music intensity (for lap-based changes)
+// Set music intensity (for loop-based changes)
 static void music_set_intensity(unsigned char intensity) {
     music_intensity = intensity;
-    // Update tempo if currently playing racing music
-    if (current_track == 1) {
+    // Update tempo if currently playing racing or boss music
+    if (current_track == TRACK_RACING) {
         switch (intensity) {
-            case 0:  music_tempo = 6; break;   // Lap 1
-            case 1:  music_tempo = 5; break;   // Lap 2
-            default: music_tempo = 4; break;   // Lap 3
+            case 0:  music_tempo = 10; break;  // Loop 1
+            case 1:  music_tempo = 9;  break;  // Loop 2
+            default: music_tempo = 8;  break;  // Loop 3
         }
         music_pos = 0;  // Reset to sync with new track
     }
@@ -745,7 +869,8 @@ static void music_resume(void) {
 }
 
 // Update music (call every frame)
-static void music_update(void) {
+// Called from NMI handler for stable timing
+void music_update(void) {
     unsigned char len;
     const unsigned char *tri_data;
     const unsigned char *pl1_data;
@@ -761,29 +886,29 @@ static void music_update(void) {
 
     // Select track data
     switch (current_track) {
-        case 0:  // Title
+        case TRACK_TITLE:  // Title
             len = TITLE_LEN;
             tri_data = title_tri;
             pl1_data = title_pl1;
             pl2_data = title_pl2;
             noise_data = 0;
             break;
-        case 1:  // Racing - different music per lap
+        case TRACK_RACING:  // Racing - different music per loop
             len = RACING_LEN;
             switch (music_intensity) {
-                case 0:  // Lap 1 - Normal
+                case 0:  // Loop 1 - Day
                     tri_data = racing_tri;
                     pl1_data = racing_pl1;
                     pl2_data = racing_pl2;
                     noise_data = racing_noise;
                     break;
-                case 1:  // Lap 2 - Intense
+                case 1:  // Loop 2 - Evening
                     tri_data = racing2_tri;
                     pl1_data = racing2_pl1;
                     pl2_data = racing2_pl2;
                     noise_data = racing2_noise;
                     break;
-                default: // Lap 3 - Chaos
+                default: // Loop 3 - Night
                     tri_data = racing3_tri;
                     pl1_data = racing3_pl1;
                     pl2_data = racing3_pl2;
@@ -791,26 +916,47 @@ static void music_update(void) {
                     break;
             }
             break;
-        case 2:  // Win
+        case TRACK_WIN:  // Win
             len = WIN_LEN;
             tri_data = win_tri;
             pl1_data = win_pl1;
             pl2_data = win_pl2;
             noise_data = 0;
             break;
-        case 3:  // Game Over
+        case TRACK_GAMEOVER:  // Game Over
             len = GAMEOVER_LEN;
             tri_data = gameover_tri;
             pl1_data = gameover_pl1;
             pl2_data = gameover_pl2;
             noise_data = 0;
             break;
-        case 4:  // Epilogue
+        case TRACK_EPILOGUE:  // Epilogue
             len = EPILOGUE_LEN;
             tri_data = epilogue_tri;
             pl1_data = epilogue_pl1;
             pl2_data = epilogue_pl2;
             noise_data = 0;
+            break;
+        case TRACK_BOSS1:  // Boss battle loop 1
+            len = BOSS_LEN;
+            tri_data = boss1_tri;
+            pl1_data = boss1_pl1;
+            pl2_data = boss1_pl2;
+            noise_data = boss1_noise;
+            break;
+        case TRACK_BOSS2:  // Boss battle loop 2
+            len = BOSS_LEN;
+            tri_data = boss2_tri;
+            pl1_data = boss2_pl1;
+            pl2_data = boss2_pl2;
+            noise_data = boss2_noise;
+            break;
+        case TRACK_BOSS3:  // Boss battle loop 3 - FINAL
+            len = BOSS_LEN;
+            tri_data = boss3_tri;
+            pl1_data = boss3_pl1;
+            pl2_data = boss3_pl2;
+            noise_data = boss3_noise;
             break;
         default:
             return;
@@ -831,9 +977,20 @@ static void music_update(void) {
     }
 }
 
-// Wait for vblank
+// NMI enabled flag (set after PPU_CTRL enables NMI)
+static unsigned char nmi_enabled;
+
+// Wait for vblank using NMI flag (more reliable than PPU_STATUS)
 static void wait_vblank(void) {
-    while (!(PPU_STATUS & 0x80));
+    if (nmi_enabled) {
+        // Wait for NMI to set the flag
+        while (!nmi_flag);
+        // Clear the flag for next frame
+        nmi_flag = 0;
+    } else {
+        // Fallback for early init before NMI is enabled
+        while (!(PPU_STATUS & 0x80));
+    }
 }
 
 // Turn off PPU
@@ -1073,7 +1230,7 @@ static void spawn_bullet(unsigned char x, unsigned char y, signed char dx, signe
 static unsigned char pattern_phase;
 static unsigned char pattern_type;
 
-// Calculate aimed bullet velocity - simple version
+// Calculate aimed bullet velocity - X component
 static signed char calc_aim_dx(unsigned char bx) {
     unsigned char px = player_x + 8;
     if (px > bx + 24) return 2;
@@ -1083,12 +1240,74 @@ static signed char calc_aim_dx(unsigned char bx) {
     return 0;
 }
 
-// Spawn danmaku pattern from enemies - ALL AIMED AT PLAYER
+// Calculate aimed bullet velocity - Y component
+static signed char calc_aim_dy(unsigned char by) {
+    unsigned char py = player_y + 8;
+    if (py > by + 24) return 2;
+    if (py > by + 8) return 1;
+    if (py + 24 < by) return -2;
+    if (py + 8 < by) return -1;
+    return 0;
+}
+
+// Spawn boss danmaku - aimed patterns towards player
+static void spawn_boss_danmaku(unsigned char i, unsigned char cx, unsigned char cy) {
+    unsigned char pattern, angle;
+    signed char dx, dy, aim_dx, aim_dy;
+
+    // Boss pattern based on rank and timer
+    pattern = (bullet_timer + enemy_rank[i] * 64) & 0xFF;
+
+    // Calculate base aim direction
+    aim_dx = calc_aim_dx(cx);
+    aim_dy = calc_aim_dy(cy);
+    // Ensure some movement if directly aligned
+    if (aim_dy == 0) aim_dy = (cy < player_y) ? 1 : -1;
+
+    // Pattern 1: Aimed spiral (every 16 frames)
+    // Spiral around the aimed direction
+    if ((pattern & 0x0F) == 0) {
+        angle = pattern >> 3;
+        // Rotate around aim direction
+        switch (angle & 0x03) {
+            case 0: dx = aim_dx;     dy = aim_dy + 1; break;
+            case 1: dx = aim_dx + 1; dy = aim_dy;     break;
+            case 2: dx = aim_dx;     dy = aim_dy - 1; break;
+            default: dx = aim_dx - 1; dy = aim_dy;    break;
+        }
+        spawn_bullet(cx, cy, dx, dy);
+    }
+
+    // Pattern 2: Aimed spread (every 24 frames)
+    // 3-way spread towards player
+    if ((pattern & 0x17) == 0) {
+        spawn_bullet(cx, cy, aim_dx, aim_dy);
+        spawn_bullet(cx, cy, aim_dx - 1, aim_dy);
+        spawn_bullet(cx, cy, aim_dx + 1, aim_dy);
+    }
+
+    // Pattern 3: Aimed burst (every 64 frames)
+    // Multiple shots towards player with slight spread
+    if ((pattern & 0x3F) == 0) {
+        spawn_bullet(cx, cy, aim_dx, aim_dy);
+        spawn_bullet(cx - 8, cy, aim_dx, aim_dy);
+        spawn_bullet(cx + 8, cy, aim_dx, aim_dy);
+    }
+
+    // Pattern 4: Aimed wave (every 12 frames)
+    // Wave that follows player
+    if ((pattern & 0x0B) == 0) {
+        // Add wave offset to aim
+        dx = aim_dx + (((bullet_timer >> 2) & 0x03) - 1);
+        spawn_bullet(cx, cy, dx, aim_dy);
+    }
+}
+
+// Spawn danmaku pattern from enemies
 static void spawn_danmaku(void) {
     unsigned char i, cx, cy;
     signed char dx, dy;
     unsigned char mask;
-    unsigned char burst_phase;
 
     ++bullet_timer;
 
@@ -1098,8 +1317,9 @@ static void spawn_danmaku(void) {
     }
 
     // Burst pattern: 3 bursts then 2 pauses (cycle of ~80 frames)
-    // Phase 0-47: fire, Phase 48-79: pause
-    burst_phase = bullet_timer % 80;
+    // Use counter reset instead of modulo (% 80) for performance
+    ++burst_phase;
+    if (burst_phase >= 80) burst_phase = 0;
 
     // When in 1st place: beautiful danmaku from behind
     if (position == 1) {
@@ -1128,9 +1348,6 @@ static void spawn_danmaku(void) {
         return;
     }
 
-    // Pause phase - create gaps in bullet stream
-    if (burst_phase >= 48) return;
-
     // Each enemy shoots
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (!enemy_on[i]) continue;
@@ -1138,6 +1355,17 @@ static void spawn_danmaku(void) {
 
         cx = enemy_x[i] + 8;
         cy = enemy_y[i] + 8;
+
+        // Boss enemies (rank 1-3): special danmaku patterns
+        if (enemy_rank[i] < 3 && !enemy_passed[i]) {
+            // Bosses fire continuously with beautiful patterns (no pause phase)
+            spawn_boss_danmaku(i, cx, cy);
+            continue;
+        }
+
+        // Normal enemies: pause phase
+        if (burst_phase >= 48) continue;
+
         dx = calc_aim_dx(cx);
         dy = (enemy_y[i] > player_y) ? -3 : 3;
 
@@ -1153,81 +1381,89 @@ static void spawn_danmaku(void) {
     }
 }
 
-// Update all bullets
+// Update all bullets (with LOD optimization)
 static void update_bullets(void) {
     unsigned char i;
     unsigned char nx, ny;
+    unsigned char by;
 
     for (i = 0; i < MAX_BULLETS; ++i) {
-        if (bullet_on[i]) {
-            // Move bullet
-            nx = bullet_x[i] + bullet_dx[i];
-            ny = bullet_y[i] + bullet_dy[i];
+        if (!bullet_on[i]) continue;
 
-            // Check bounds
-            if (nx < 8 || nx > 248 || ny > 240) {
-                bullet_on[i] = 0;
-            } else {
-                bullet_x[i] = nx;
-                bullet_y[i] = ny;
-            }
+        by = bullet_y[i];
+
+        // LOD: Update far bullets (top/bottom of screen) every other frame
+        if ((frame_count & 1) && (by < 40 || by > 200)) {
+            continue;
+        }
+
+        // Move bullet
+        nx = bullet_x[i] + bullet_dx[i];
+        ny = by + bullet_dy[i];
+
+        // Check bounds
+        if (nx < 8 || nx > 248 || ny > 240) {
+            bullet_on[i] = 0;
+        } else {
+            bullet_x[i] = nx;
+            bullet_y[i] = ny;
         }
     }
 }
 
-// Check bullet collisions with player
-static void check_bullet_collisions(void) {
+// Check bullet collisions with player (optimized single-pass)
+// Returns 1 if damage occurred, 0 otherwise
+static unsigned char check_bullet_collisions(void) {
     unsigned char i, dx, dy;
+    unsigned char player_cx, player_cy;
+    unsigned char graze_found = 0;
 
-    if (player_inv > 0) return;
+    if (player_inv > 0) return 0;
 
+    // Precompute player center
+    player_cx = player_x + 8;
+    player_cy = player_y + 8;
+
+    // Single pass: check damage and record graze
     for (i = 0; i < MAX_BULLETS; ++i) {
-        if (bullet_on[i]) {
-            dx = abs_diff(player_x + 8, bullet_x[i]);
-            dy = abs_diff(player_y + 8, bullet_y[i]);
+        if (!bullet_on[i]) continue;
 
-            // Damage zone: dx < 4 && dy < 4 (very small hitbox - cockpit only)
-            if (dx < 4 && dy < 4) {
-                --player_hp;
-                player_inv = 60;
-                bullet_on[i] = 0;
-                // Penalty: -1 point (but don't go negative)
-                if (score > 0) --score;
-                // Reset multiplier and graze count
-                score_multiplier = 1;
-                graze_count = 0;
-                // Play deflating sound
-                sfx_damage();
-                if (player_hp == 0) {
-                    do_game_over();
-                    return;
-                }
-            }
-            // Graze zone: dx < 10 && dy < 10 but outside damage zone
-            else if (dx < 10 && dy < 10) {
-                // Graze! Points = multiplier * 2^loop_count
-                add_score(score_multiplier * (1 << loop_count));
+        // Inline abs_diff to avoid function call overhead
+        dx = (player_cx >= bullet_x[i]) ? (player_cx - bullet_x[i]) : (bullet_x[i] - player_cx);
+        dy = (player_cy >= bullet_y[i]) ? (player_cy - bullet_y[i]) : (bullet_y[i] - player_cy);
 
-                // Increase multiplier by 1 for each graze (max 65535)
-                if (score_multiplier < 65535u) {
-                    ++score_multiplier;
-                }
+        // Damage zone: dx < 4 && dy < 4 (very small hitbox - cockpit only)
+        if (dx < 4 && dy < 4) {
+            player_inv = 60;
+            bullet_on[i] = 0;
+            if (score > 0) --score;
+            score_multiplier = 1;
+            graze_count = 0;
+            sfx_damage();
+            if (player_hp > 0) --player_hp;
+            if (player_hp == 0) do_game_over();
+            return 1;
+        }
 
-                // Every 10 grazes, recover 1 HP
-                ++graze_count;
-                if (graze_count >= 10) {
-                    graze_count = 0;
-                    if (player_hp < PLAYER_MAX_HP) {
-                        ++player_hp;
-                    }
-                }
-
-                // Play graze sound effect
-                sfx_graze();
-                // Don't remove bullet - player can still get hit!
-            }
+        // Record graze candidate (apply later only if no damage)
+        if (dx < 10 && dy < 10) {
+            graze_found = 1;
         }
     }
+
+    // Apply graze effect if any found (no damage this frame)
+    if (graze_found) {
+        add_score(score_multiplier * (1 << loop_count));
+        if (score_multiplier < 65535u) ++score_multiplier;
+        ++graze_count;
+        if (graze_count >= 10) {
+            graze_count = 0;
+            if (player_hp < PLAYER_MAX_HP) ++player_hp;
+        }
+        sfx_graze();
+    }
+
+    return 0;
 }
 
 // ============================================
@@ -1353,7 +1589,7 @@ static void init_game(void) {
 
     player_x = PLAYER_START_X;
     player_y = PLAYER_START_Y;
-    player_hp = PLAYER_MAX_HP;
+    player_hp = PLAYER_START_HP;
     player_inv = 0;
 
     for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
@@ -1371,6 +1607,7 @@ static void init_game(void) {
     car_graze_cooldown = 0;
     boost_remaining = 2;   // 2 boosts per loop
     boost_active = 0;
+    boss_music_active = 0; // No boss music at start
     explode_timer = 0;
 
     // Set music intensity based on starting loop
@@ -1409,30 +1646,31 @@ static void update_player(void) {
     unsigned char speed = (pad_now & BTN_B) ? 4 : PLAYER_SPEED;
 
     if (pad_now & BTN_LEFT) {
-        if (player_x > ROAD_LEFT && (frame_count & 1) == 0) player_x -= speed;
+        if (player_x > ROAD_LEFT) player_x -= speed;
     }
     if (pad_now & BTN_RIGHT) {
-        if (player_x < ROAD_RIGHT - 16 && (frame_count & 1) == 0) player_x += speed;
+        if (player_x < ROAD_RIGHT - 16) player_x += speed;
     }
     if (pad_now & BTN_UP) {
-        // Progressive slowdown as player moves up
-        // Zone 1: y > 60 - half speed (move every other frame)
-        // Zone 2: 30 < y <= 60 - quarter speed (move every 4th frame)
-        // Zone 3: 16 < y <= 30 - 1/8 speed (move every 8th frame)
-        // Zone 4: y <= 16 - no movement (HUD area)
+        // Normal area: full speed
+        // Slowdown zones near top of screen
         if (player_y > 60) {
+            player_y -= speed;
+        } else if (player_y > 40) {
+            // Zone 1: half speed
             if ((frame_count & 1) == 0) player_y -= speed;
-        } else if (player_y > 30) {
+        } else if (player_y > 24) {
+            // Zone 2: quarter speed
             if ((frame_count & 3) == 0) player_y -= speed;
         } else if (player_y > 16) {
+            // Zone 3: 1/8 speed
             if ((frame_count & 7) == 0) player_y -= speed;
         }
     }
     if (pad_now & BTN_DOWN) {
         if (player_y < SCREEN_HEIGHT - 32) player_y += speed;
     }
-
-    if (player_inv > 0) --player_inv;
+    // Note: player_inv is now decremented in update_game() after collision checks
 }
 
 // Count enemies ahead of player (not yet passed)
@@ -1442,6 +1680,17 @@ static unsigned char count_enemies_ahead(void) {
         if (enemy_on[i] && !enemy_passed[i]) ++count;
     }
     return count;
+}
+
+// Check if there's an active boss (rank < 3) on screen
+static unsigned char has_active_boss(void) {
+    unsigned char i;
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (enemy_on[i] && !enemy_passed[i] && enemy_rank[i] < 3) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 // Update all enemies
@@ -1458,15 +1707,28 @@ static void update_enemy(void) {
     // Count enemies ahead - only spawn if fewer than (position - 1)
     // e.g., position 3 means 2 cars ahead, so max 2 non-passed enemies
     enemies_ahead = count_enemies_ahead();
+
+    // Boss spawning rule: only one boss at a time
+    // Next enemy would be boss if position <= 4 (rank = position - 1 < 3)
     if (enemies_ahead < position - 1 && enemies_ahead < MAX_ENEMIES && enemy_warn_timer == 0) {
-        prepare_enemy();
+        // If next enemy would be a boss, check if there's already one
+        if (position <= 4 && has_active_boss()) {
+            // Don't spawn another boss yet
+        } else {
+            prepare_enemy();
+        }
     }
     if (enemy_warn_timer > 0) {
         --enemy_warn_timer;
         if (enemy_warn_timer == 0) {
             // Re-check condition: only spawn if still needed
+            // Also check boss condition again
             if (count_enemies_ahead() < position - 1) {
-                spawn_enemy();
+                if (position <= 4 && has_active_boss()) {
+                    // Cancel spawn - boss already active
+                } else {
+                    spawn_enemy();
+                }
             }
         }
     }
@@ -1479,19 +1741,33 @@ static void update_enemy(void) {
         if (enemy_passed[i]) {
             // Behind player: double speed (2 pixels/frame)
             enemy_y[i] += 2;
+        } else if (enemy_rank[i] < 3) {
+            // Boss enemies (rank 1-3): very slow approach (1 pixel every 4 frames)
+            if ((frame_count & 3) == 0) {
+                enemy_y[i] += 1;
+            }
         } else {
-            // Ahead of player: half speed (1 pixel every 2 frames)
+            // Normal enemies ahead: half speed (1 pixel every 2 frames)
             if (frame_count & 1) {
                 enemy_y[i] += 1;
             }
         }
 
-        // AI: try to block player (only if ahead)
-        if (!enemy_passed[i] && (frame_count & 0x07) == 0) {
-            if (enemy_x[i] + 8 < player_x && enemy_x[i] < ROAD_RIGHT - 24) {
-                enemy_x[i] += 1;
-            } else if (enemy_x[i] > player_x + 8 && enemy_x[i] > ROAD_LEFT + 8) {
-                enemy_x[i] -= 1;
+        // AI: try to block player (only if ahead, not for bosses)
+        // Movement frequency increases with loop: loop0=8frames, loop1=4frames, loop2+=2frames
+        {
+            unsigned char move_mask;
+            switch (loop_count) {
+                case 0:  move_mask = 0x07; break;  // Every 8 frames
+                case 1:  move_mask = 0x03; break;  // Every 4 frames
+                default: move_mask = 0x01; break;  // Every 2 frames
+            }
+            if (!enemy_passed[i] && enemy_rank[i] >= 3 && (frame_count & move_mask) == 0) {
+                if (enemy_x[i] + 8 < player_x && enemy_x[i] < ROAD_RIGHT - 24) {
+                    enemy_x[i] += 1;
+                } else if (enemy_x[i] > player_x + 8 && enemy_x[i] > ROAD_LEFT + 8) {
+                    enemy_x[i] -= 1;
+                }
             }
         }
 
@@ -1509,16 +1785,17 @@ static void update_enemy(void) {
     }
 }
 
-// Check collisions
-static void check_collisions(void) {
+// Check collisions with enemy cars
+// Returns 1 if damage occurred, 0 otherwise
+static unsigned char check_collisions(void) {
     unsigned char i, dx, dy;
 
     // Decrease car graze cooldown
     if (car_graze_cooldown > 0) --car_graze_cooldown;
 
-    if (player_inv > 0) return;
+    if (player_inv > 0) return 0;
 
-    // Enemy collisions
+    // Enemy collisions - damage check first
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (enemy_on[i]) {
             dx = abs_diff(player_x, enemy_x[i]);
@@ -1526,21 +1803,34 @@ static void check_collisions(void) {
 
             // Damage zone
             if (dx < 14 && dy < 14) {
-                --player_hp;
                 player_inv = 60;
                 score_multiplier = 1;
                 graze_count = 0;
                 sfx_damage();
+                // Decrement HP with underflow protection
+                if (player_hp > 0) {
+                    --player_hp;
+                }
                 if (player_hp == 0) {
                     do_game_over();
-                    return;
                 }
-                break;
+                // Return immediately - no graze this frame
+                return 1;
             }
+        }
+    }
+
+    // Graze check only if no damage
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (enemy_on[i]) {
+            dx = abs_diff(player_x, enemy_x[i]);
+            dy = abs_diff(player_y, enemy_y[i]);
+
             // Graze zone: beside (dx < 20) OR front/back (dy < 28)
-            // Much larger window for grazing
-            else if (car_graze_cooldown == 0 &&
-                     ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
+            // But not in damage zone
+            if (!(dx < 14 && dy < 14) &&
+                car_graze_cooldown == 0 &&
+                ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
                 // Double the multiplier (max 65535)
                 if (score_multiplier <= 32767u) {
                     score_multiplier *= 2;
@@ -1553,18 +1843,46 @@ static void check_collisions(void) {
         }
     }
 
+    return 0;
 }
 
 // Main game update
 static void update_game(void) {
+    unsigned char took_damage;
+    unsigned char boss_now;
+
     update_player();
     update_enemy();
-    check_collisions();
+    took_damage = check_collisions();
+
+    // Check boss state and switch music if needed
+    boss_now = has_active_boss();
+    if (boss_now && !boss_music_active) {
+        // Boss appeared - switch to boss music
+        boss_music_active = 1;
+        switch (loop_count) {
+            case 0:  music_play(TRACK_BOSS1); break;
+            case 1:  music_play(TRACK_BOSS2); break;
+            default: music_play(TRACK_BOSS3); break;
+        }
+    } else if (!boss_now && boss_music_active) {
+        // Boss defeated/passed - return to racing music
+        boss_music_active = 0;
+        music_set_intensity(loop_count);
+        music_play(TRACK_RACING);
+    }
 
     // Danmaku system
     spawn_danmaku();
     update_bullets();
-    check_bullet_collisions();
+    // Only check bullet collisions if no damage from enemy collision
+    if (!took_damage) {
+        check_bullet_collisions();
+    }
+
+    // Decrement invincibility AFTER all collision checks
+    // This prevents "last frame of inv" vulnerability
+    if (player_inv > 0) --player_inv;
 
     // Update explosion animation
     if (explode_timer > 0) {
@@ -1710,9 +2028,15 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - HP (2 sprites) - bottom left to avoid overlap
-    id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
-    id = set_sprite(id, 16, 224, SPR_DIGIT + player_hp, 3);
+    // HUD - HP (4 sprites) - bottom left to avoid overlap
+    {
+        unsigned char hp = player_hp;
+        id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
+        id = set_sprite(id, 16, 224, SPR_DIGIT + (hp / 100), 3);
+        hp %= 100;
+        id = set_sprite(id, 24, 224, SPR_DIGIT + (hp / 10), 3);
+        id = set_sprite(id, 32, 224, SPR_DIGIT + (hp % 10), 3);
+    }
 
     // HUD - Multiplier "x" + 5 decimal digits
     {
@@ -1896,13 +2220,13 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Version "V301" at bottom-right
+    // Version "V400" at bottom-right
     y = 216;
     x = 216;
     id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
-    id = set_sprite(id, x + 8,  y, SPR_DIGIT + 3, 3);    // 3
+    id = set_sprite(id, x + 8,  y, SPR_DIGIT + 4, 3);    // 4
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, x + 24, y, SPR_DIGIT + 1, 3);    // 1
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
 
     // Copyright "(C) 2026 FUBA" at bottom-center
     y = 220;
@@ -2256,6 +2580,7 @@ void main(void) {
 
     // Enable NMI and rendering
     PPU_CTRL = 0x88;  // NMI on, sprites at $1000
+    nmi_enabled = 1;  // Allow wait_vblank to use NMI flag
     ppu_on();
 
     // Main loop
@@ -2282,8 +2607,8 @@ void main(void) {
         // Clear sprites first
         clear_sprites();
 
-        // Update music every frame
-        music_update();
+        // Music is updated in NMI handler for stable timing
+        // (no music_update call here)
 
         // Update sound effects
         update_sfx();
@@ -2307,7 +2632,7 @@ void main(void) {
                 }
                 if (pad_new & BTN_START) {
                     init_game();
-                    music_play(1);  // Racing BGM - energetic!
+                    music_play(TRACK_RACING);  // Racing BGM - energetic!
                     game_state = STATE_RACING;
                 }
                 break;
@@ -2404,6 +2729,7 @@ void main(void) {
                     scroll_y = 0;
                     boost_remaining = 2;  // Reset boosts for new loop
                     boost_active = 0;
+                    boss_music_active = 0; // No boss at loop start
 
                     // Setup PPU like main() does
                     ppu_off();
@@ -2412,7 +2738,7 @@ void main(void) {
                     draw_road();
 
                     // Resume racing BGM with moderate intensity for LAP 1
-                    music_play(1);
+                    music_play(TRACK_RACING);
                     music_set_intensity(1);  // Loop 2+: moderate start
 
                     game_state = STATE_RACING;
