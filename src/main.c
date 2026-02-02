@@ -1409,23 +1409,23 @@ static void update_player(void) {
     unsigned char speed = (pad_now & BTN_B) ? 4 : PLAYER_SPEED;
 
     if (pad_now & BTN_LEFT) {
-        if (player_x > ROAD_LEFT) player_x -= speed;
+        if (player_x > ROAD_LEFT && (frame_count & 1) == 0) player_x -= speed;
     }
     if (pad_now & BTN_RIGHT) {
-        if (player_x < ROAD_RIGHT - 16) player_x += speed;
+        if (player_x < ROAD_RIGHT - 16 && (frame_count & 1) == 0) player_x += speed;
     }
     if (pad_now & BTN_UP) {
         // Progressive slowdown as player moves up
-        // Zone 1: y > 60 - full speed
-        // Zone 2: 30 < y <= 60 - half speed (move every other frame)
-        // Zone 3: 16 < y <= 30 - quarter speed (move every 4th frame)
+        // Zone 1: y > 60 - half speed (move every other frame)
+        // Zone 2: 30 < y <= 60 - quarter speed (move every 4th frame)
+        // Zone 3: 16 < y <= 30 - 1/8 speed (move every 8th frame)
         // Zone 4: y <= 16 - no movement (HUD area)
         if (player_y > 60) {
-            player_y -= speed;
-        } else if (player_y > 30) {
             if ((frame_count & 1) == 0) player_y -= speed;
-        } else if (player_y > 16) {
+        } else if (player_y > 30) {
             if ((frame_count & 3) == 0) player_y -= speed;
+        } else if (player_y > 16) {
+            if ((frame_count & 7) == 0) player_y -= speed;
         }
     }
     if (pad_now & BTN_DOWN) {
