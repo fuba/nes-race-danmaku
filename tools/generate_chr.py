@@ -583,6 +583,52 @@ ENEMY_CAR_BR = [
     "00033000",
 ]
 
+# Boss/Elite enemy car (4 tiles for 16x16 sprite)
+# More aggressive design with larger wings and spikes
+BOSS_CAR_TL = [
+    "10011001",  # Spikes on sides
+    "11022011",  # Aggressive nose
+    "11122211",  # Wide body
+    "12222221",  # Large wings
+    "22222222",  # Full width
+    "22222222",  # Body
+    "22233222",  # Core visible
+    "22233222",  # Core
+]
+
+BOSS_CAR_TR = [
+    "10011001",  # Spikes on sides
+    "11022011",  # Aggressive nose
+    "11222111",  # Wide body
+    "12222221",  # Large wings
+    "22222222",  # Full width
+    "22222222",  # Body
+    "22332222",  # Core visible
+    "22332222",  # Core
+]
+
+BOSS_CAR_BL = [
+    "22233222",  # Core
+    "22233222",  # Core
+    "22222222",  # Body
+    "22222222",  # Body
+    "12222221",  # Large wings
+    "11222211",  # Narrowing
+    "11022011",  # Exhaust
+    "10033001",  # Flames
+]
+
+BOSS_CAR_BR = [
+    "22332222",  # Core
+    "22332222",  # Core
+    "22222222",  # Body
+    "22222222",  # Body
+    "12222221",  # Large wings
+    "11222211",  # Narrowing
+    "11022011",  # Exhaust
+    "10033001",  # Flames
+]
+
 # Explosion sprite
 EXPLOSION = [
     "00100100",
@@ -896,6 +942,11 @@ def main():
         (0x0C, BULLET2),
         (0x0D, BULLET3),
         (0x0E, EXPLOSION),       # Explosion effect
+        # Boss/Elite enemy car (0x60-0x63)
+        (0x60, BOSS_CAR_TL),
+        (0x61, BOSS_CAR_TR),
+        (0x62, BOSS_CAR_BL),
+        (0x63, BOSS_CAR_BR),
         # Water puddle obstacle 4x4 = 16 tiles (0x50-0x5F)
         (0x50, PUDDLE_00), (0x51, PUDDLE_01), (0x52, PUDDLE_02), (0x53, PUDDLE_03),
         (0x54, PUDDLE_10), (0x55, PUDDLE_11), (0x56, PUDDLE_12), (0x57, PUDDLE_13),

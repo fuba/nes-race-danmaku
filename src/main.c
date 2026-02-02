@@ -87,6 +87,7 @@
 
 // Sprite tiles
 #define SPR_CAR         0x00
+#define SPR_ENEMY       0x04    // Normal enemy car
 #define SPR_SLASH       0x05
 #define SPR_BAR_FILL    0x06
 #define SPR_BAR_EMPTY   0x07
@@ -95,6 +96,7 @@
 #define SPR_BULLET      0x0B    // Diamond bullet sprite
 #define SPR_DIGIT       0x10
 #define SPR_LETTER      0x30
+#define SPR_BOSS        0x60    // Boss/Elite enemy car
 
 // Global variables
 static unsigned char game_state;
@@ -114,6 +116,7 @@ static unsigned char enemy_x[MAX_ENEMIES];
 static unsigned char enemy_y[MAX_ENEMIES];
 static unsigned char enemy_on[MAX_ENEMIES];
 static unsigned char enemy_passed[MAX_ENEMIES];
+static unsigned char enemy_rank[MAX_ENEMIES];  // Position/rank of this enemy (1-11)
 static unsigned char enemy_next_x;     // Next enemy spawn X position
 static unsigned char enemy_warn_timer; // Warning countdown before spawn
 static unsigned char enemy_slot;       // Next enemy slot to use
@@ -1027,6 +1030,7 @@ static void spawn_enemy(void) {
     enemy_y[slot] = 8;  // Start just below top of screen
     enemy_on[slot] = 1;
     enemy_passed[slot] = 0;
+    enemy_rank[slot] = position - 1;  // This enemy is one position ahead
     enemy_warn_timer = 0;
     // Cycle through slots (can't use bitwise AND since MAX_ENEMIES is not power of 2)
     ++enemy_slot;
@@ -1635,10 +1639,34 @@ static void draw_game(void) {
         id = set_car(id, player_x, player_y, SPR_CAR, 0);
     }
 
-    // Enemy cars (4 sprites each)
+    // Enemy cars (4 sprites each) - color/design based on rank
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (enemy_on[i]) {
-            id = set_car(id, enemy_x[i], enemy_y[i], SPR_CAR + 4, 1);
+            unsigned char tile, pal;
+            unsigned char rank = enemy_rank[i];
+
+            // Top 3 positions (rank 1-3): Boss design
+            if (rank <= 3) {
+                tile = SPR_BOSS;
+                pal = 1;  // Red (boss color)
+            }
+            // Rank 4-5: Strong enemies (palette 3 = blue/white)
+            else if (rank <= 5) {
+                tile = SPR_ENEMY;
+                pal = 3;
+            }
+            // Rank 6-8: Medium enemies (palette 2 = green)
+            else if (rank <= 8) {
+                tile = SPR_ENEMY;
+                pal = 2;
+            }
+            // Rank 9-11: Weak enemies (palette 1 = red)
+            else {
+                tile = SPR_ENEMY;
+                pal = 1;
+            }
+
+            id = set_car(id, enemy_x[i], enemy_y[i], tile, pal);
         }
     }
 
