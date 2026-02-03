@@ -2336,11 +2336,11 @@ static void draw_title(void) {
     unsigned char i;
     unsigned int s;
 
-    // Version "V5.0" at top-right (4 sprites)
+    // Version "V5.1" at top-right (4 sprites)
     id = set_sprite(id, 216, 8, SPR_LETTER + 21, 3);  // V
     id = set_sprite(id, 224, 8, SPR_DIGIT + 5, 3);    // 5
     id = set_sprite(id, 232, 8, SPR_DOT, 3);          // .
-    id = set_sprite(id, 240, 8, SPR_DIGIT + 0, 3);    // 0
+    id = set_sprite(id, 240, 8, SPR_DIGIT + 1, 3);    // 1
 
     // "EDGE" - top line (blue, player color)
     id = set_sprite(id, x,      y, SPR_LETTER + 4,  0);  // E
