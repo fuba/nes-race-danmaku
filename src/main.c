@@ -2055,31 +2055,31 @@ static void draw_game(void) {
     }
 
     // HUD Layout (redesigned to avoid sprite overflow):
-    // Row 1 (Y=8):   Position(left), Lap(center) - max 6 sprites
-    // Row 2 (Y=216): Progress indicator (car icon + Goal)
-    // Row 3 (Y=224): HP(left), Multiplier(center), Score(right)
+    // Row 1 (Y=8):   Position(left), Lap(center), HP(right) - max 8 sprites
+    // Row 2 (Y=216): Progress indicator (left-center), Multiplier (right)
+    // Row 3 (Y=224): Score (right)
 
-    // HUD - HP (3 sprites) - bottom left
+    // HUD - HP (3 sprites) - top right
     {
         unsigned char hp = player_hp;
         if (hp > 99) hp = 99;  // Cap display at 99
-        id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
-        id = set_sprite(id, 16, 224, SPR_DIGIT + (hp / 10), 3);
-        id = set_sprite(id, 24, 224, SPR_DIGIT + (hp % 10), 3);
+        id = set_sprite(id, 208, HUD_TOP_Y, SPR_LETTER + 7, 3);  // H
+        id = set_sprite(id, 216, HUD_TOP_Y, SPR_DIGIT + (hp / 10), 3);
+        id = set_sprite(id, 224, HUD_TOP_Y, SPR_DIGIT + (hp % 10), 3);
     }
 
-    // HUD - Multiplier "x" + 3 digits (capped at 999) - bottom center
+    // HUD - Multiplier "x" + 3 digits (capped at 999) - bottom right row 1
     {
         unsigned int m = score_multiplier;
         if (m > 999u) m = 999u;
-        id = set_sprite(id, 96, 224, SPR_LETTER + 23, 3);  // X
-        id = set_sprite(id, 104, 224, SPR_DIGIT + (m / 100), 3);
+        id = set_sprite(id, 200, 216, SPR_LETTER + 23, 3);  // X
+        id = set_sprite(id, 208, 216, SPR_DIGIT + (m / 100), 3);
         m %= 100;
-        id = set_sprite(id, 112, 224, SPR_DIGIT + (m / 10), 3);
-        id = set_sprite(id, 120, 224, SPR_DIGIT + (m % 10), 3);
+        id = set_sprite(id, 216, 216, SPR_DIGIT + (m / 10), 3);
+        id = set_sprite(id, 224, 216, SPR_DIGIT + (m % 10), 3);
     }
 
-    // HUD - Score: 5 digits (max 99999) - bottom right
+    // HUD - Score: 5 digits (max 99999) - bottom right row 2
     {
         unsigned int s;
         if (score_high > 0) {
