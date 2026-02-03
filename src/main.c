@@ -1708,11 +1708,11 @@ static unsigned char count_enemies_ahead(void) {
     return count;
 }
 
-// Check if there's an active boss (rank < 3) on screen
+// Check if there's an active boss (rank 1-3) on screen
 static unsigned char has_active_boss(void) {
     unsigned char i;
     for (i = 0; i < MAX_ENEMIES; ++i) {
-        if (enemy_on[i] && !enemy_passed[i] && enemy_rank[i] < 3) {
+        if (enemy_on[i] && !enemy_passed[i] && enemy_rank[i] <= 3) {
             return 1;
         }
     }
