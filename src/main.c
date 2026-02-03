@@ -2030,9 +2030,7 @@ static void draw_game(void) {
                 pal = 1;
             }
 
-            id = set_car(id, ex, ey, tile, pal);
-
-            // Draw rank number ON enemy car (centered on car body)
+            // Draw rank number FIRST (lower OAM index = appears on top)
             if (id < 60) {
                 unsigned char rank_y = ey + 4;  // Center vertically on car
                 if (rank >= 10) {
@@ -2044,6 +2042,9 @@ static void draw_game(void) {
                     id = set_sprite(id, ex + 4, rank_y, SPR_DIGIT + rank, 2);
                 }
             }
+
+            // Draw car AFTER rank number (so number appears on top)
+            id = set_car(id, ex, ey, tile, pal);
         }
     }
 
