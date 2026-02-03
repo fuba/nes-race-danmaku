@@ -39,16 +39,14 @@ jobs:
       - name: Verify build
         run: |
           ls -la build/
-          file build/race.nes
-
-      - name: Copy ROM to web directory
-        run: cp build/race.nes web/race.nes
+          ls -la web/
+          file build/edgerace.nes
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: race-nes
-          path: build/race.nes
+          name: edgerace-nes
+          path: build/edgerace.nes
 
       - name: Setup Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
