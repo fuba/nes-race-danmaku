@@ -2224,28 +2224,45 @@ static void draw_title(void) {
         id = set_sprite(id, 132, y, SPR_LETTER + high_names[i][1], 3);
         id = set_sprite(id, 140, y, SPR_LETTER + high_names[i][2], 3);
 
-        // Line 2: Score (6 sprites) - centered at X=104
+        // Line 2: Score (5-6 sprites) - centered at X=104
         y = y_base + 10;
         x = 104;
-        if (high_scores_high[i] > 0) {
-            // 32-bit score: use unsigned long for calculation
+        {
             unsigned long full_score = ((unsigned long)high_scores_high[i] << 16) | high_scores[i];
-            if (full_score > 999999UL) full_score = 999999UL;
-            id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
-            id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
-            id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
-            id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
-            id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
-            id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
-        } else {
-            // 16-bit score: display 6 digits
-            s = high_scores[i];
-            id = set_sprite(id, x,      y, SPR_DIGIT + 0, 3);  // Leading zero
-            id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
-            id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
-            id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
-            id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
-            id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+            if (full_score >= 1000000UL) {
+                // Large score: use scientific notation (XXXE# format, 5 sprites)
+                unsigned char exp = 0;
+                unsigned int mantissa;
+                while (full_score >= 1000UL) {
+                    full_score /= 10;
+                    exp++;
+                }
+                mantissa = (unsigned int)full_score;
+                // Display: XXX E X (5 sprites, centered)
+                x = 108;
+                id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(mantissa / 100), 3);
+                id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((mantissa / 10) % 10), 3);
+                id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)(mantissa % 10), 3);
+                id = set_sprite(id, x + 24, y, SPR_LETTER + 4, 2);  // E (yellow)
+                id = set_sprite(id, x + 32, y, SPR_DIGIT + exp, 2); // exponent (yellow)
+            } else if (full_score >= 100000UL) {
+                // 6-digit score: display normally
+                id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
+                id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
+                id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
+                id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
+                id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
+                id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
+            } else {
+                // Smaller score: display with leading zeros
+                s = (unsigned int)full_score;
+                id = set_sprite(id, x,      y, SPR_DIGIT + 0, 3);
+                id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+                id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+                id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+                id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+                id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+            }
         }
     }
 
