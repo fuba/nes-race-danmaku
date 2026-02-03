@@ -130,6 +130,7 @@ static unsigned char enemy_rank[MAX_ENEMIES];  // Position/rank of this enemy (1
 static unsigned char enemy_next_x;     // Next enemy spawn X position
 static unsigned char enemy_warn_timer; // Warning countdown before spawn
 static unsigned char enemy_slot;       // Next enemy slot to use
+static unsigned char enemy_next_rank;  // Next rank to assign (11, 10, 9, ... 1)
 
 // Explosion effect
 static unsigned char explode_x;        // Explosion/retire position X
@@ -1195,11 +1196,16 @@ static void prepare_enemy(void) {
 // Actually spawn the enemy (appears from top, player must overtake)
 static void spawn_enemy(void) {
     unsigned char slot = enemy_slot;
+
+    // Don't spawn if no more ranks to assign
+    if (enemy_next_rank < 1) return;
+
     enemy_x[slot] = enemy_next_x;
     enemy_y[slot] = 8;  // Start just below top of screen
     enemy_on[slot] = 1;
     enemy_passed[slot] = 0;
-    enemy_rank[slot] = position - 1;  // This enemy is one position ahead
+    enemy_rank[slot] = enemy_next_rank;  // Assign unique rank
+    enemy_next_rank--;  // Next enemy gets lower rank
     enemy_warn_timer = 0;
     // Cycle through slots (can't use bitwise AND since MAX_ENEMIES is not power of 2)
     ++enemy_slot;
@@ -1614,6 +1620,7 @@ static void init_game(void) {
     for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
     enemy_slot = 0;
     enemy_warn_timer = 0;
+    enemy_next_rank = 11;  // First enemy will be 11th place
     position = 12;  // Start in 12th place (last of 12 cars)
     lap_count = 0;
     loop_count = title_select_loop;  // Start from selected loop
@@ -2820,6 +2827,11 @@ void main(void) {
                     boost_remaining = 2;  // Reset boosts for new loop
                     boost_active = 0;
                     boss_music_active = 0; // No boss at loop start
+                    enemy_next_rank = 11;  // Reset enemy ranks for new loop
+                    {
+                        unsigned char j;
+                        for (j = 0; j < MAX_ENEMIES; ++j) enemy_on[j] = 0;
+                    }
 
                     // Setup PPU like main() does
                     ppu_off();
