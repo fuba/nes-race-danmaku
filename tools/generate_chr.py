@@ -680,16 +680,16 @@ ROAD_EDGE = [
     "33333300",
 ]
 
-# Arrow sprite (pointing up)
+# Arrow sprite (pointing up) - thick and visible
 ARROW_UP = [
-    "00010000",
-    "00111000",
-    "01111100",
-    "11111110",
-    "00010000",
-    "00010000",
-    "00010000",
-    "00000000",
+    "00333000",
+    "03333300",
+    "33333330",
+    "33333330",
+    "00333000",
+    "00333000",
+    "00333000",
+    "00333000",
 ]
 
 # Bullet sprite (small diamond shape - danmaku style)
