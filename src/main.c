@@ -161,6 +161,7 @@ static unsigned char bullet_y[MAX_BULLETS];
 static signed char bullet_dx[MAX_BULLETS];  // X velocity
 static signed char bullet_dy[MAX_BULLETS];  // Y velocity
 static unsigned char bullet_on[MAX_BULLETS];
+static unsigned char bullet_grazed[MAX_BULLETS];  // Already grazed flag (1 graze per bullet)
 static unsigned char bullet_timer;  // Timer for shooting patterns
 static unsigned char bullet_next;   // Next bullet slot (circular buffer)
 static unsigned char burst_phase;   // 0-79 counter (avoids % 80 division)
@@ -1253,6 +1254,7 @@ static void spawn_bullet(unsigned char x, unsigned char y, signed char dx, signe
 
     bullet_dy[bullet_next] = dy;
     bullet_on[bullet_next] = 1;
+    bullet_grazed[bullet_next] = 0;  // Reset graze flag for new bullet
     ++bullet_next;
     if (bullet_next >= MAX_BULLETS) {
         bullet_next = 0;
@@ -1506,12 +1508,14 @@ static unsigned char check_bullet_collisions(void) {
         }
 
         // Record graze candidate (apply later only if no damage)
-        if (dx < 10 && dy < 10) {
+        // Only count bullets that haven't been grazed yet
+        if (dx < 10 && dy < 10 && !bullet_grazed[i]) {
+            bullet_grazed[i] = 1;  // Mark as grazed (one graze per bullet)
             graze_found = 1;
         }
     }
 
-    // Apply graze effect if any found (no damage this frame)
+    // Apply graze effect if any NEW grazes found (no damage this frame)
     if (graze_found) {
         add_score(score_multiplier * (1 << loop_count));
         if (score_multiplier < 65535u) ++score_multiplier;
@@ -1690,6 +1694,7 @@ static void init_game(void) {
     // Clear all bullets
     for (i = 0; i < MAX_BULLETS; ++i) {
         bullet_on[i] = 0;
+        bullet_grazed[i] = 0;
     }
     bullet_timer = 0;
     bullet_next = 0;
