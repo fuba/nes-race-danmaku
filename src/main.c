@@ -2153,6 +2153,12 @@ static void draw_title(void) {
     unsigned char i;
     unsigned int s;
 
+    // Version "V406" at top-right (4 sprites)
+    id = set_sprite(id, 216, 8, SPR_LETTER + 21, 3);  // V
+    id = set_sprite(id, 224, 8, SPR_DIGIT + 4, 3);    // 4
+    id = set_sprite(id, 232, 8, SPR_DIGIT + 0, 3);    // 0
+    id = set_sprite(id, 240, 8, SPR_DIGIT + 6, 3);    // 6
+
     // "EDGE" - top line (blue, player color)
     id = set_sprite(id, x,      y, SPR_LETTER + 4,  0);  // E
     id = set_sprite(id, x + 8,  y, SPR_LETTER + 3,  0);  // D
@@ -2170,21 +2176,22 @@ static void draw_title(void) {
         id = set_car(id, x + 12, y + 36, SPR_CAR, 0);
     }
 
-    // High scores display (3 entries, each on different Y line)
-    // Entry 1 at y=120, Entry 2 at y=136, Entry 3 at y=152
+    // High scores display (2 lines per entry to avoid 8-sprite limit)
+    // Line 1: Rank + Name (4 sprites)
+    // Line 2: Score (6 sprites)
     for (i = 0; i < NUM_HIGH_SCORES; ++i) {
-        y = 120 + i * 16;
+        unsigned char y_base = 112 + i * 20;  // 112, 132, 152
 
-        // Rank number (1-3)
-        id = set_sprite(id, 64, y, SPR_DIGIT + i + 1, 3);
+        // Line 1: Rank + Name (4 sprites)
+        y = y_base;
+        id = set_sprite(id, 72, y, SPR_DIGIT + i + 1, 3);  // Rank
+        id = set_sprite(id, 88, y, SPR_LETTER + high_names[i][0], 3);
+        id = set_sprite(id, 96, y, SPR_LETTER + high_names[i][1], 3);
+        id = set_sprite(id, 104, y, SPR_LETTER + high_names[i][2], 3);
 
-        // Name (3 letters)
-        id = set_sprite(id, 80, y, SPR_LETTER + high_names[i][0], 3);
-        id = set_sprite(id, 88, y, SPR_LETTER + high_names[i][1], 3);
-        id = set_sprite(id, 96, y, SPR_LETTER + high_names[i][2], 3);
-
-        // Score (6 digits, 32-bit support)
-        x = 112;
+        // Line 2: Score (6 sprites)
+        y = y_base + 10;
+        x = 88;
         if (high_scores_high[i] > 0) {
             // 32-bit score: use unsigned long for calculation
             unsigned long full_score = ((unsigned long)high_scores_high[i] << 16) | high_scores[i];
@@ -2196,9 +2203,9 @@ static void draw_title(void) {
             id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
             id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
         } else {
-            // 16-bit score: display 6 digits (leading zero for consistency)
+            // 16-bit score: display 6 digits
             s = high_scores[i];
-            id = set_sprite(id, x,      y, SPR_DIGIT + 0, 3);  // Leading zero for alignment
+            id = set_sprite(id, x,      y, SPR_DIGIT + 0, 3);  // Leading zero
             id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
             id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
             id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
@@ -2243,17 +2250,9 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Version "V406" at bottom-right
-    y = 216;
-    x = 216;
-    id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
-    id = set_sprite(id, x + 8,  y, SPR_DIGIT + 4, 3);    // 4
-    id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, x + 24, y, SPR_DIGIT + 6, 3);    // 6
-
-    // Copyright "(C) 2026 FUBA" at bottom-center
-    y = 220;
-    x = 84;
+    // Copyright "(C) 2026 FUBA" at bottom-center (8 sprites, version moved to top)
+    y = 224;
+    x = 72;
     id = set_sprite(id, x,      y, SPR_COPYRIGHT, 3);    // (C)
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
     id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
