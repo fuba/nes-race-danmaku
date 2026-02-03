@@ -656,6 +656,18 @@ HEART = [
     "00000000",
 ]
 
+# Dot/period for version display
+DOT = [
+    "00000000",
+    "00000000",
+    "00000000",
+    "00000000",
+    "00000000",
+    "00011000",
+    "00011000",
+    "00000000",
+]
+
 # Explosion sprite
 EXPLOSION = [
     "00100100",
@@ -1006,6 +1018,8 @@ def main():
     sprites.append((0x4A, COPYRIGHT))
     # Heart symbol at 0x4B for HP display
     sprites.append((0x4B, HEART))
+    # Dot/period at 0x4C for version display
+    sprites.append((0x4C, DOT))
 
     # Note: LAP display simplified to "LX" format, slash not needed
 

@@ -103,8 +103,9 @@
 #define SPR_BULLET      0x0B    // Diamond bullet sprite
 #define SPR_DIGIT       0x10
 #define SPR_LETTER      0x30
-#define SPR_COPYRIGHT   0x4A    // (C) symbol
+#define SPR_COPYRIGHT   0x4A    // (C) symbol (unused)
 #define SPR_HEART       0x4B    // Heart symbol for HP
+#define SPR_DOT         0x4C    // Dot/period for version
 #define SPR_BOSS        0x60    // Boss/Elite enemy car
 
 // NMI flag from crt0.s (set by NMI handler, cleared by main loop)
@@ -1201,6 +1202,23 @@ static void draw_road(void) {
     ppu_on();
 }
 
+// Clear center line for title screen (replace dashed line with plain road)
+static void clear_center_line(void) {
+    unsigned char row;
+
+    wait_vblank();
+    ppu_off();
+
+    // Overwrite center line tiles (columns 15-16) with plain road
+    for (row = 0; row < 30; ++row) {
+        ppu_addr(0x2000 + (unsigned int)row * 32 + 15);
+        PPU_DATA = TILE_ROAD;
+        PPU_DATA = TILE_ROAD;
+    }
+
+    ppu_on();
+}
+
 // Prepare next enemy spawn (show warning marker)
 static void prepare_enemy(void) {
     enemy_next_x = ROAD_LEFT + 8 + (rnd() & 0x7F);
@@ -2278,11 +2296,11 @@ static void draw_title(void) {
     unsigned char i;
     unsigned int s;
 
-    // Version "V406" at top-right (4 sprites)
+    // Version "V5.0" at top-right (4 sprites)
     id = set_sprite(id, 216, 8, SPR_LETTER + 21, 3);  // V
-    id = set_sprite(id, 224, 8, SPR_DIGIT + 4, 3);    // 4
-    id = set_sprite(id, 232, 8, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, 240, 8, SPR_DIGIT + 6, 3);    // 6
+    id = set_sprite(id, 224, 8, SPR_DIGIT + 5, 3);    // 5
+    id = set_sprite(id, 232, 8, SPR_DOT, 3);          // .
+    id = set_sprite(id, 240, 8, SPR_DIGIT + 0, 3);    // 0
 
     // "EDGE" - top line (blue, player color)
     id = set_sprite(id, x,      y, SPR_LETTER + 4,  0);  // E
@@ -2305,7 +2323,7 @@ static void draw_title(void) {
     // Line 1: Rank + Name (4 sprites, 40px wide, centered)
     // Line 2: Score (6 sprites, 48px wide, centered)
     for (i = 0; i < NUM_HIGH_SCORES; ++i) {
-        unsigned char y_base = 112 + i * 20;  // 112, 132, 152
+        unsigned char y_base = 118 + i * 20;  // 118, 138, 158
 
         // Line 1: Rank + Name (4 sprites) - centered at X=108
         y = y_base;
@@ -2359,7 +2377,7 @@ static void draw_title(void) {
     // Loop selection (only show if player has completed at least 1 loop)
     // Positioned above high scores, centered
     if (max_loop > 0) {
-        y = 104;
+        y = 92;
         x = 100;  // Centered: "LOOP X" is ~48px, start at 104
         // "LOOP" label
         id = set_sprite(id, x,      y, SPR_LETTER + 11, 3);  // L
@@ -2383,7 +2401,7 @@ static void draw_title(void) {
 
     // "START" prompt (blinking) - centered (40px wide)
     if (frame_count & 0x20) {
-        y = 176;
+        y = 196;
         x = 108;  // Centered: 128 - 20 = 108
         id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
@@ -2392,18 +2410,17 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Copyright "(C) 2026 FUBA" at bottom-center (88px wide, centered)
+    // "2026 FUBA" at bottom-center (no copyright symbol)
     y = 224;
-    x = 84;  // Centered: 128 - 44 = 84
-    id = set_sprite(id, x,      y, SPR_COPYRIGHT, 3);    // (C)
+    x = 88;  // Centered: 128 - 40 = 88
+    id = set_sprite(id, x,      y, SPR_DIGIT + 2, 3);    // 2
+    id = set_sprite(id, x + 8,  y, SPR_DIGIT + 0, 3);    // 0
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
-    id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, x + 32, y, SPR_DIGIT + 2, 3);    // 2
-    id = set_sprite(id, x + 40, y, SPR_DIGIT + 6, 3);    // 6
-    id = set_sprite(id, x + 56, y, SPR_LETTER + 5, 3);   // F
-    id = set_sprite(id, x + 64, y, SPR_LETTER + 20, 3);  // U
-    id = set_sprite(id, x + 72, y, SPR_LETTER + 1, 3);   // B
-    id = set_sprite(id, x + 80, y, SPR_LETTER + 0, 3);   // A
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + 6, 3);    // 6
+    id = set_sprite(id, x + 40, y, SPR_LETTER + 5, 3);   // F
+    id = set_sprite(id, x + 48, y, SPR_LETTER + 20, 3);  // U
+    id = set_sprite(id, x + 56, y, SPR_LETTER + 1, 3);   // B
+    id = set_sprite(id, x + 64, y, SPR_LETTER + 0, 3);   // A
 
     // Hide rest
     while (id < 64) {
@@ -2739,8 +2756,9 @@ void main(void) {
     // Load palettes
     load_palettes();
 
-    // Draw initial road
+    // Draw initial road (then clear center line for title screen)
     draw_road();
+    clear_center_line();
 
     // Enable NMI and rendering
     PPU_CTRL = 0x88;  // NMI on, sprites at $1000
@@ -2907,6 +2925,7 @@ void main(void) {
                 draw_gameover();
                 if (pad_new & BTN_START) {
                     music_play(0);  // Back to title BGM
+                    clear_center_line();  // Remove dotted line for title
                     game_state = STATE_TITLE;
                 }
                 break;
@@ -2917,6 +2936,7 @@ void main(void) {
                 // Only accept START after animation plays (about 1.5 seconds)
                 if (win_timer > 90 && (pad_new & BTN_START)) {
                     music_play(0);  // Back to title BGM
+                    clear_center_line();  // Remove dotted line for title
                     game_state = STATE_TITLE;
                 }
                 break;
