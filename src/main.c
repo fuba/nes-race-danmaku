@@ -661,6 +661,8 @@ static unsigned char sfx_graze_timer;
 // Damage SFX timer and pitch
 static unsigned char sfx_damage_timer;
 static unsigned int sfx_damage_pitch;
+// Low HP warning beep timer
+static unsigned char sfx_lowhp_timer;
 
 // Play graze sound effect (short metallic scrape)
 static void sfx_graze(void) {
@@ -677,6 +679,7 @@ static void sfx_damage(void) {
 static void sfx_stop(void) {
     sfx_graze_timer = 0;
     sfx_damage_timer = 0;
+    sfx_lowhp_timer = 0;
     APU_NOI_VOL = 0x30;  // Silence noise channel
 }
 
@@ -699,6 +702,17 @@ static void update_sfx(void) {
         // Increase period = lower pitch (deflating effect)
         sfx_damage_pitch += 40;
         --sfx_damage_timer;
+    }
+    // Low HP warning beep - short high-pitched pip
+    if (sfx_lowhp_timer > 0) {
+        if (sfx_lowhp_timer > 2) {
+            // Beep on (high pitch, low volume)
+            APU_PL2_VOL = 0x34;  // Duty 12.5%, volume 4 (quiet)
+            APU_PL2_SWP = 0x00;
+            APU_PL2_LO = 0x7D;   // High pitch (~1000Hz)
+            APU_PL2_HI = 0x00;
+        }
+        --sfx_lowhp_timer;
     }
 }
 
@@ -1949,6 +1963,14 @@ static void update_game(void) {
     // Decrement invincibility AFTER all collision checks
     // This prevents "last frame of inv" vulnerability
     if (player_inv > 0) --player_inv;
+
+    // Low HP warning beep (when HP <= 3)
+    if (player_hp > 0 && player_hp <= 3 && sfx_lowhp_timer == 0) {
+        // Beep every 30 frames (~0.5 sec)
+        if ((frame_count & 0x1F) == 0) {
+            sfx_lowhp_timer = 5;  // Short pip duration
+        }
+    }
 
     // Update explosion animation
     if (explode_timer > 0) {
