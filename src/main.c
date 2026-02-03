@@ -69,7 +69,7 @@
 #define SCREEN_HEIGHT   240
 #define HUD_TOP_Y       8
 #define HUD_LINE        8
-#define HUD_BAND_BOTTOM 32  // Reserve top band for HUD to avoid sprite overflow
+#define HUD_BAND_BOTTOM 0   // No restriction - enemies visible at any Y
 
 // Player constants
 #define PLAYER_START_X  120
@@ -2227,10 +2227,9 @@ static void draw_game(void) {
 
     // === Game objects (may be culled if too many) ===
 
-    // Warning marker for next enemy (single up arrow)
-    // Position at Y=24 (between HUD top and game area)
+    // Warning marker for next enemy (single up arrow at top edge)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 24, 0x0A, 1);  // red (danger)
+        id = set_sprite(id, enemy_next_x + 4, 0, 0x0A, 1);  // red (danger), top of screen
     }
 
     // Bullets - danmaku (use remaining sprite slots)
