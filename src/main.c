@@ -2146,7 +2146,7 @@ static void draw_game(void) {
     // Warning marker for next enemy (single up arrow)
     // Position at Y=24 (between HUD top and game area)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 24, 0x0A, 2);  // yellow
+        id = set_sprite(id, enemy_next_x + 4, 24, 0x0A, 1);  // red (danger)
     }
 
     // Bullets - danmaku (use remaining sprite slots)
@@ -2199,11 +2199,11 @@ static void draw_title(void) {
     id = set_sprite(id, x + 16, y, SPR_LETTER + 6,  0);  // G
     id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  0);  // E
 
-    // "RACE" - bottom line, offset right (yellow)
-    id = set_sprite(id, x + 8,  y + 12, SPR_LETTER + 17, 2);  // R
-    id = set_sprite(id, x + 16, y + 12, SPR_LETTER + 0,  2);  // A
-    id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  2);  // C
-    id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  2);  // E
+    // "RACE" - bottom line, offset right (red)
+    id = set_sprite(id, x + 8,  y + 12, SPR_LETTER + 17, 1);  // R
+    id = set_sprite(id, x + 16, y + 12, SPR_LETTER + 0,  1);  // A
+    id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  1);  // C
+    id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  1);  // E
 
     // Blinking car below title
     if (frame_count & 0x20) {
@@ -2309,18 +2309,18 @@ static void draw_gameover(void) {
     unsigned char id = 0;
     unsigned char x = 88, y = 100;
 
-    // "GAME" (yellow)
-    id = set_sprite(id, x,      y, SPR_LETTER + 6,  2);  // G
-    id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  2);  // A
-    id = set_sprite(id, x + 16, y, SPR_LETTER + 12, 2);  // M
-    id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  2);  // E
+    // "GAME" (red)
+    id = set_sprite(id, x,      y, SPR_LETTER + 6,  1);  // G
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  1);  // A
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 12, 1);  // M
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  1);  // E
 
-    // "OVER" (yellow)
+    // "OVER" (red)
     x = 96; y = 116;
-    id = set_sprite(id, x,      y, SPR_LETTER + 14, 2);  // O
-    id = set_sprite(id, x + 8,  y, SPR_LETTER + 21, 2);  // V
-    id = set_sprite(id, x + 16, y, SPR_LETTER + 4,  2);  // E
-    id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
+    id = set_sprite(id, x,      y, SPR_LETTER + 14, 1);  // O
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 21, 1);  // V
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 4,  1);  // E
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 1);  // R
 
     // Hide rest
     while (id < 64) {
