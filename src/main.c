@@ -2110,8 +2110,9 @@ static void draw_game(void) {
     // === Game objects (may be culled if too many) ===
 
     // Warning marker for next enemy (single up arrow)
+    // Position at Y=24 (between HUD top and game area)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, HUD_BAND_BOTTOM + 4, 0x0A, 1);
+        id = set_sprite(id, enemy_next_x + 4, 24, 0x0A, 1);
     }
 
     // Bullets - danmaku (use remaining sprite slots)
