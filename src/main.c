@@ -67,6 +67,9 @@
 #define ROAD_LEFT       40
 #define ROAD_RIGHT      216
 #define SCREEN_HEIGHT   240
+#define HUD_TOP_Y       8
+#define HUD_LINE        8
+#define HUD_BAND_BOTTOM 32  // Reserve top band for HUD to avoid sprite overflow
 
 // Player constants
 #define PLAYER_START_X  120
@@ -1992,7 +1995,7 @@ static void draw_game(void) {
 
     // Enemy cars (4 sprites each) - color/design based on rank
     for (i = 0; i < MAX_ENEMIES; ++i) {
-        if (enemy_on[i]) {
+        if (enemy_on[i] && enemy_y[i] >= HUD_BAND_BOTTOM) {
             unsigned char tile, pal;
             unsigned char rank = enemy_rank[i];
 
@@ -2030,93 +2033,85 @@ static void draw_game(void) {
 
     // HUD - Position (3-4 sprites)
     if (position >= 10) {
-        id = set_sprite(id, 8, 8, SPR_DIGIT + 1, 3);              // "1"
-        id = set_sprite(id, 16, 8, SPR_DIGIT + (position - 10), 3); // 0,1,2
-        id = set_sprite(id, 24, 8, SPR_LETTER + 19, 3);  // T
-        id = set_sprite(id, 32, 8, SPR_LETTER + 7, 3);   // H
+        id = set_sprite(id, 8, HUD_TOP_Y, SPR_DIGIT + 1, 3);              // "1"
+        id = set_sprite(id, 16, HUD_TOP_Y, SPR_DIGIT + (position - 10), 3); // 0,1,2
+        id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 19, 3);  // T
+        id = set_sprite(id, 32, HUD_TOP_Y, SPR_LETTER + 7, 3);   // H
     } else {
-        id = set_sprite(id, 8, 8, SPR_DIGIT + position, 3);
+        id = set_sprite(id, 8, HUD_TOP_Y, SPR_DIGIT + position, 3);
         if (position == 1) {
-            id = set_sprite(id, 16, 8, SPR_LETTER + 18, 3);  // S
-            id = set_sprite(id, 24, 8, SPR_LETTER + 19, 3);  // T
+            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 18, 3);  // S
+            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 19, 3);  // T
         } else if (position == 2) {
-            id = set_sprite(id, 16, 8, SPR_LETTER + 13, 3);  // N
-            id = set_sprite(id, 24, 8, SPR_LETTER + 3, 3);   // D
+            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 13, 3);  // N
+            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 3, 3);   // D
         } else if (position == 3) {
-            id = set_sprite(id, 16, 8, SPR_LETTER + 17, 3);  // R
-            id = set_sprite(id, 24, 8, SPR_LETTER + 3, 3);   // D
+            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 17, 3);  // R
+            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 3, 3);   // D
         } else {
-            id = set_sprite(id, 16, 8, SPR_LETTER + 19, 3);  // T
-            id = set_sprite(id, 24, 8, SPR_LETTER + 7, 3);   // H
+            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 19, 3);  // T
+            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 7, 3);   // H
         }
     }
 
-    // HUD - HP (4 sprites) - bottom left to avoid overlap
+    // HUD Layout (redesigned to avoid sprite overflow):
+    // Row 1 (Y=8):   Position(left), Lap(center) - max 6 sprites
+    // Row 2 (Y=216): Progress indicator (car icon + Goal)
+    // Row 3 (Y=224): HP(left), Multiplier(center), Score(right)
+
+    // HUD - HP (3 sprites) - bottom left
     {
         unsigned char hp = player_hp;
+        if (hp > 99) hp = 99;  // Cap display at 99
         id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
-        id = set_sprite(id, 16, 224, SPR_DIGIT + (hp / 100), 3);
-        hp %= 100;
-        id = set_sprite(id, 24, 224, SPR_DIGIT + (hp / 10), 3);
-        id = set_sprite(id, 32, 224, SPR_DIGIT + (hp % 10), 3);
+        id = set_sprite(id, 16, 224, SPR_DIGIT + (hp / 10), 3);
+        id = set_sprite(id, 24, 224, SPR_DIGIT + (hp % 10), 3);
     }
 
-    // HUD - Multiplier "x" + 5 decimal digits
+    // HUD - Multiplier "x" + 3 digits (capped at 999) - bottom center
     {
         unsigned int m = score_multiplier;
-        id = set_sprite(id, 192, 8, SPR_LETTER + 23, 3);  // X
-        id = set_sprite(id, 200, 8, SPR_DIGIT + (m / 10000), 3);
-        m %= 10000;
-        id = set_sprite(id, 208, 8, SPR_DIGIT + (m / 1000), 3);
-        m %= 1000;
-        id = set_sprite(id, 216, 8, SPR_DIGIT + (m / 100), 3);
+        if (m > 999u) m = 999u;
+        id = set_sprite(id, 96, 224, SPR_LETTER + 23, 3);  // X
+        id = set_sprite(id, 104, 224, SPR_DIGIT + (m / 100), 3);
         m %= 100;
-        id = set_sprite(id, 224, 8, SPR_DIGIT + (m / 10), 3);
-        id = set_sprite(id, 232, 8, SPR_DIGIT + (m % 10), 3);
+        id = set_sprite(id, 112, 224, SPR_DIGIT + (m / 10), 3);
+        id = set_sprite(id, 120, 224, SPR_DIGIT + (m % 10), 3);
     }
 
-    // HUD - Score: 6 digits, 32-bit support (max 999,999)
+    // HUD - Score: 5 digits (max 99999) - bottom right
     {
+        unsigned int s;
         if (score_high > 0) {
-            // 32-bit score: use unsigned long for calculation
-            unsigned long full_score = ((unsigned long)score_high << 16) | score;
-            if (full_score > 999999UL) full_score = 999999UL;
-            id = set_sprite(id, 192, 20, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
-            id = set_sprite(id, 200, 20, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
-            id = set_sprite(id, 208, 20, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
-            id = set_sprite(id, 216, 20, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
-            id = set_sprite(id, 224, 20, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
-            id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
+            s = 99999u;  // Cap at 99999 for display
         } else {
-            // 16-bit score: fast path without unsigned long
-            unsigned int s = score;
-            id = set_sprite(id, 192, 20, SPR_DIGIT + 0, 3);  // Leading zero
-            id = set_sprite(id, 200, 20, SPR_DIGIT + (s / 10000), 3);
-            s %= 10000;
-            id = set_sprite(id, 208, 20, SPR_DIGIT + (s / 1000), 3);
-            s %= 1000;
-            id = set_sprite(id, 216, 20, SPR_DIGIT + (s / 100), 3);
-            s %= 100;
-            id = set_sprite(id, 224, 20, SPR_DIGIT + (s / 10), 3);
-            id = set_sprite(id, 232, 20, SPR_DIGIT + (s % 10), 3);
+            s = score;
+            if (s > 99999u) s = 99999u;
         }
+        id = set_sprite(id, 200, 224, SPR_DIGIT + (s / 10000), 3);
+        s %= 10000;
+        id = set_sprite(id, 208, 224, SPR_DIGIT + (s / 1000), 3);
+        s %= 1000;
+        id = set_sprite(id, 216, 224, SPR_DIGIT + (s / 100), 3);
+        s %= 100;
+        id = set_sprite(id, 224, 224, SPR_DIGIT + (s / 10), 3);
+        id = set_sprite(id, 232, 224, SPR_DIGIT + (s % 10), 3);
     }
 
-    // HUD - Lap counter "LX" at center-top (2 sprites, different Y to avoid scanline limit)
-    id = set_sprite(id, 120, 16, SPR_LETTER + 11, 3);  // L
-    id = set_sprite(id, 128, 16, SPR_DIGIT + lap_count + 1, 3);  // Current lap (1-3)
+    // HUD - Lap counter "LX" at center-top (2 sprites)
+    id = set_sprite(id, 120, HUD_TOP_Y, SPR_LETTER + 11, 3);  // L
+    id = set_sprite(id, 128, HUD_TOP_Y, SPR_DIGIT + lap_count + 1, 3);  // Current lap (1-3)
 
-    // Loop counter (shown when in 2nd loop or higher)
+    // Loop counter (shown when in 2nd loop or higher) - next to lap
     if (loop_count > 0) {
-        // Show loop number at center (周=loop)
-        id = set_sprite(id, 104, 16, SPR_DIGIT + loop_count + 1, 1);  // Loop number in red
+        id = set_sprite(id, 140, HUD_TOP_Y, SPR_DIGIT + loop_count + 1, 1);  // Loop number in red
     }
 
     // === Game objects (may be culled if too many) ===
 
     // Warning marker for next enemy (single up arrow)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 12, 0x0A, 1);
+        id = set_sprite(id, enemy_next_x + 4, HUD_BAND_BOTTOM + 4, 0x0A, 1);
     }
 
     // Bullets - danmaku (use remaining sprite slots)
@@ -2124,19 +2119,23 @@ static void draw_game(void) {
     // Even frames draw even-indexed bullets, odd frames draw odd-indexed bullets
     for (i = 0; i < MAX_BULLETS; ++i) {
         if (bullet_on[i] && id < 62 && ((i & 1) == (frame_count & 1))) {
-            id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 2);
+            unsigned char by = bullet_y[i];
+            if (by >= HUD_BAND_BOTTOM) {
+                id = set_sprite(id, bullet_x[i], by, SPR_BULLET, 2);
+            }
         }
     }
 
     // HUD - Simple progress indicator (car icon moving toward GOAL)
     // Simplified: distance 0-700 maps to position 80-168 (88 pixels)
     // car_pos = 80 + (distance * 88 / 700) = 80 + distance / 8 (approx)
+    // Y=216 to avoid conflict with bottom HUD at Y=224
     {
         unsigned char car_pos;
         car_pos = 80 + (unsigned char)(distance >> 3);  // distance / 8
         if (car_pos > 168) car_pos = 168;
-        id = set_sprite(id, car_pos, 224, SPR_CAR_ICON, 0);
-        id = set_sprite(id, 168, 224, SPR_LETTER + 6, 3);  // G (goal)
+        id = set_sprite(id, car_pos, 216, SPR_CAR_ICON, 0);
+        id = set_sprite(id, 168, 216, SPR_LETTER + 6, 3);  // G (goal)
     }
 
     // Hide remaining sprites
