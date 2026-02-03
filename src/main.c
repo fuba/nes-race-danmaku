@@ -2133,13 +2133,10 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - Lap counter "LX" at center-top (2 sprites)
-    id = set_sprite(id, 120, HUD_TOP_Y, SPR_LETTER + 11, 3);  // L
-    id = set_sprite(id, 128, HUD_TOP_Y, SPR_DIGIT + lap_count + 1, 3);  // Current lap (1-3)
-
-    // Loop counter (shown when in 2nd loop or higher) - next to lap
+    // Loop counter at center-top (shown when in 2nd loop or higher)
     if (loop_count > 0) {
-        id = set_sprite(id, 140, HUD_TOP_Y, SPR_DIGIT + loop_count + 1, 2);  // Loop number in yellow
+        id = set_sprite(id, 120, HUD_TOP_Y, SPR_LETTER + 11, 3);  // L
+        id = set_sprite(id, 128, HUD_TOP_Y, SPR_DIGIT + loop_count + 1, 2);  // Loop number in yellow
     }
 
     // === Game objects (may be culled if too many) ===
@@ -2162,16 +2159,39 @@ static void draw_game(void) {
         }
     }
 
-    // HUD - Simple progress indicator (car icon moving toward GOAL)
-    // Simplified: distance 0-700 maps to position 80-168 (88 pixels)
-    // car_pos = 80 + (distance * 88 / 700) = 80 + distance / 8 (approx)
-    // Y=216 to avoid conflict with bottom HUD at Y=224
+    // HUD - Vertical progress indicator on left side
+    // Shows total progress across all 3 laps (bottom to top)
+    // Y range: 200 (bottom) to 32 (top) = 168 pixels
+    // Total distance: 3 * 700 = 2100
     {
-        unsigned char car_pos;
-        car_pos = 80 + (unsigned char)(distance >> 3);  // distance / 8
-        if (car_pos > 168) car_pos = 168;
-        id = set_sprite(id, car_pos, 216, SPR_CAR_ICON, 0);
-        id = set_sprite(id, 168, 216, SPR_LETTER + 6, 3);  // G (goal)
+        unsigned int total_progress;
+        unsigned char car_y;
+        unsigned char marker_y1, marker_y2;
+
+        // Calculate total progress across all laps
+        total_progress = (unsigned int)lap_count * LAP_DISTANCE + distance;
+        if (total_progress > 2100u) total_progress = 2100u;
+
+        // Map to Y position: 200 - (progress * 168 / 2100)
+        // Simplified: 200 - (progress / 12.5) ≈ 200 - (progress * 2 / 25)
+        car_y = 200 - (unsigned char)((total_progress * 2u) / 25u);
+        if (car_y < 32) car_y = 32;
+
+        // Draw car icon at current progress position
+        id = set_sprite(id, 8, car_y, SPR_CAR_ICON, 0);
+
+        // Draw GOAL marker at top
+        id = set_sprite(id, 8, 24, SPR_LETTER + 6, 3);  // G (goal)
+
+        // Draw lap boundary markers (1/3 and 2/3 of the way)
+        // Lap 1 boundary: Y = 200 - 56 = 144
+        // Lap 2 boundary: Y = 200 - 112 = 88
+        marker_y1 = 144;  // End of lap 1
+        marker_y2 = 88;   // End of lap 2
+
+        // Show markers as horizontal lines (using bar sprites)
+        id = set_sprite(id, 4, marker_y1, SPR_BAR_FILL, 3);
+        id = set_sprite(id, 4, marker_y2, SPR_BAR_FILL, 3);
     }
 
     // Hide remaining sprites
