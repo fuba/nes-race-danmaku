@@ -2003,11 +2003,11 @@ static unsigned char check_collisions(void) {
             dx = abs_diff(player_x, enemy_x[i]);
             dy = abs_diff(player_y, enemy_y[i]);
 
-            // Graze zone: beside (dx < 18) OR front/back (dy < 24)
-            // But not in damage zone
+            // Graze zone: must be close beside enemy (side collision)
+            // dx 10-16: touching sides, dy < 18: vertically aligned
             if (!(dx < 10 && dy < 10) &&
                 car_graze_cooldown == 0 &&
-                ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
+                dx < 16 && dy < 18) {
                 // Deal 1 HP damage to enemy car
                 if (enemy_hp[i] > 0) {
                     --enemy_hp[i];
