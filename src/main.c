@@ -2068,66 +2068,67 @@ static void draw_game(void) {
         id = set_sprite(id, 224, HUD_TOP_Y, SPR_DIGIT + (hp % 10), 3);
     }
 
-    // HUD - Multiplier "x" + digits - bottom right row 1
-    // Show high digits (10000+) in red when multiplier > 9999
+    // HUD - Multiplier "x" + max 4 digits - bottom right row 1
+    // < 10000: x#### (5 sprites), >= 10000: xXXE# scientific (5 sprites)
     {
         unsigned int m = score_multiplier;
-        unsigned char mult_x = 184;
-        id = set_sprite(id, mult_x, 216, SPR_LETTER + 23, 3);  // X
+        unsigned char mult_x = 200;
+        id = set_sprite(id, mult_x, 216, SPR_LETTER + 23, 3);  // x prefix
         mult_x += 8;
 
-        if (m >= 10000u) {
-            // Show 10000s digit in red
-            id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 10000), 1);
-            mult_x += 8;
-            m %= 10000;
+        if (m < 10000u) {
+            // Normal 4-digit display (white)
+            id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 1000), 3);
+            m %= 1000;
+            id = set_sprite(id, mult_x + 8, 216, SPR_DIGIT + (m / 100), 3);
+            m %= 100;
+            id = set_sprite(id, mult_x + 16, 216, SPR_DIGIT + (m / 10), 3);
+            id = set_sprite(id, mult_x + 24, 216, SPR_DIGIT + (m % 10), 3);
+        } else {
+            // Scientific notation: XXE# (red)
+            unsigned char exp = 0;
+            while (m >= 100u) {
+                m /= 10;
+                exp++;
+            }
+            id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 10), 1);
+            id = set_sprite(id, mult_x + 8, 216, SPR_DIGIT + (m % 10), 1);
+            id = set_sprite(id, mult_x + 16, 216, SPR_LETTER + 4, 1);  // E
+            id = set_sprite(id, mult_x + 24, 216, SPR_DIGIT + exp, 1);
         }
-        // Show remaining 4 digits (or less if small)
-        id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 1000), 3);
-        m %= 1000;
-        id = set_sprite(id, mult_x + 8, 216, SPR_DIGIT + (m / 100), 3);
-        m %= 100;
-        id = set_sprite(id, mult_x + 16, 216, SPR_DIGIT + (m / 10), 3);
-        id = set_sprite(id, mult_x + 24, 216, SPR_DIGIT + (m % 10), 3);
     }
 
-    // HUD - Score: bottom right row 2
-    // If score_high > 0, reduce low digits to keep sprite count <= 6 on this scanline.
+    // HUD - Score: bottom right row 2 (max 4 sprites)
+    // Small scores: show 4 digits normally
+    // Large scores: use scientific notation XXE# (e.g., 12E6 = 12,000,000)
     {
-        unsigned char score_x = 200;
-        unsigned char low_digits = 5;
-        if (score_high > 0) {
-            low_digits = 4;
-            // Show score_high in red as prefix (up to 2 digits)
-            if (score_high >= 10) {
-                id = set_sprite(id, score_x, 224, SPR_DIGIT + (score_high / 10), 1);
-                score_x += 8;
+        unsigned char score_x = 208;
+        unsigned long full_score = ((unsigned long)score_high << 16) + score;
+
+        if (full_score < 10000u) {
+            // Normal 4-digit display (white)
+            id = set_sprite(id, score_x, 224, SPR_DIGIT + (full_score / 1000), 3);
+            full_score %= 1000;
+            id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (full_score / 100), 3);
+            full_score %= 100;
+            id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (full_score / 10), 3);
+            id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (full_score % 10), 3);
+        } else {
+            // Scientific notation: XXE# format (4 sprites)
+            // Find 2-digit mantissa and exponent
+            unsigned char exp = 0;
+            unsigned char mantissa;
+            while (full_score >= 100u) {
+                full_score /= 10;
+                exp++;
             }
-            id = set_sprite(id, score_x, 224, SPR_DIGIT + (score_high % 10), 1);
-            score_x += 8;
-        }
-        // Show lower 16-bit score in white (4-5 digits)
-        {
-            unsigned int s = score;
-            if (low_digits == 5) {
-                id = set_sprite(id, score_x, 224, SPR_DIGIT + (s / 10000), 3);
-                s %= 10000;
-                id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (s / 1000), 3);
-                s %= 1000;
-                id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (s / 100), 3);
-                s %= 100;
-                id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (s / 10), 3);
-                id = set_sprite(id, score_x + 32, 224, SPR_DIGIT + (s % 10), 3);
-            } else {
-                // Omit the ones digit to save one sprite when red prefix is visible.
-                id = set_sprite(id, score_x, 224, SPR_DIGIT + (s / 10000), 3);
-                s %= 10000;
-                id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (s / 1000), 3);
-                s %= 1000;
-                id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (s / 100), 3);
-                s %= 100;
-                id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (s / 10), 3);
-            }
+            mantissa = (unsigned char)full_score;
+
+            // Display in red (palette 1): MM E X
+            id = set_sprite(id, score_x, 224, SPR_DIGIT + (mantissa / 10), 1);
+            id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (mantissa % 10), 1);
+            id = set_sprite(id, score_x + 16, 224, SPR_LETTER + 4, 1);  // E
+            id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + exp, 1);
         }
     }
 
