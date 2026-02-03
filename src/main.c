@@ -986,10 +986,9 @@ static unsigned char nmi_enabled;
 // Wait for vblank using NMI flag (more reliable than PPU_STATUS)
 static void wait_vblank(void) {
     if (nmi_enabled) {
-        // Wait for NMI to set the flag
-        while (!nmi_flag);
-        // Clear the flag for next frame
+        // Clear flag FIRST to ensure we wait for the *next* VBlank
         nmi_flag = 0;
+        while (!nmi_flag);
     } else {
         // Fallback for early init before NMI is enabled
         while (!(PPU_STATUS & 0x80));
@@ -1137,6 +1136,8 @@ static void draw_road(void) {
     unsigned char row, col;
     unsigned char attr_row;
 
+    // Wait for VBlank before turning off PPU to avoid mid-frame glitch
+    wait_vblank();
     ppu_off();
 
     // Draw nametable (30 rows x 32 columns)
