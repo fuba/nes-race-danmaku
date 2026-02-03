@@ -1268,12 +1268,14 @@ static signed char calc_aim_dy(unsigned char by) {
 }
 
 // Spawn boss danmaku - aimed patterns towards player
+// Rank 1: Intense patterns, Rank 2: Moderate, Rank 3: Mild
 static void spawn_boss_danmaku(unsigned char i, unsigned char cx, unsigned char cy) {
-    unsigned char pattern, angle;
+    unsigned char pattern, angle, rank;
     signed char dx, dy, aim_dx, aim_dy;
 
+    rank = enemy_rank[i];
     // Boss pattern based on rank and timer
-    pattern = (bullet_timer + enemy_rank[i] * 64) & 0xFF;
+    pattern = (bullet_timer + rank * 64) & 0xFF;
 
     // Calculate base aim direction
     aim_dx = calc_aim_dx(cx);
@@ -1281,42 +1283,67 @@ static void spawn_boss_danmaku(unsigned char i, unsigned char cx, unsigned char 
     // Ensure some movement if directly aligned
     if (aim_dy == 0) aim_dy = (cy < player_y) ? 1 : -1;
 
-    // Pattern 1: Aimed spiral (every 16 frames)
-    // Spiral around the aimed direction
-    if ((pattern & 0x0F) == 0) {
-        angle = pattern >> 3;
-        // Rotate around aim direction
-        switch (angle & 0x03) {
-            case 0: dx = aim_dx;     dy = aim_dy + 1; break;
-            case 1: dx = aim_dx + 1; dy = aim_dy;     break;
-            case 2: dx = aim_dx;     dy = aim_dy - 1; break;
-            default: dx = aim_dx - 1; dy = aim_dy;    break;
+    // Rank 1 (Final Boss): Full intensity - all patterns
+    // Rank 2: Moderate intensity - fewer patterns, slower
+    // Rank 3: Mild intensity - simple patterns only
+
+    if (rank == 1) {
+        // Final Boss: Maximum intensity
+        // Pattern 1: Aimed spiral (every 12 frames)
+        if ((pattern & 0x0B) == 0) {
+            angle = pattern >> 3;
+            switch (angle & 0x03) {
+                case 0: dx = aim_dx;     dy = aim_dy + 1; break;
+                case 1: dx = aim_dx + 1; dy = aim_dy;     break;
+                case 2: dx = aim_dx;     dy = aim_dy - 1; break;
+                default: dx = aim_dx - 1; dy = aim_dy;    break;
+            }
+            spawn_bullet(cx, cy, dx, dy);
         }
-        spawn_bullet(cx, cy, dx, dy);
-    }
-
-    // Pattern 2: Aimed spread (every 24 frames)
-    // 3-way spread towards player
-    if ((pattern & 0x17) == 0) {
-        spawn_bullet(cx, cy, aim_dx, aim_dy);
-        spawn_bullet(cx, cy, aim_dx - 1, aim_dy);
-        spawn_bullet(cx, cy, aim_dx + 1, aim_dy);
-    }
-
-    // Pattern 3: Aimed burst (every 64 frames)
-    // Multiple shots towards player with slight spread
-    if ((pattern & 0x3F) == 0) {
-        spawn_bullet(cx, cy, aim_dx, aim_dy);
-        spawn_bullet(cx - 8, cy, aim_dx, aim_dy);
-        spawn_bullet(cx + 8, cy, aim_dx, aim_dy);
-    }
-
-    // Pattern 4: Aimed wave (every 12 frames)
-    // Wave that follows player
-    if ((pattern & 0x0B) == 0) {
-        // Add wave offset to aim
-        dx = aim_dx + (((bullet_timer >> 2) & 0x03) - 1);
-        spawn_bullet(cx, cy, dx, aim_dy);
+        // Pattern 2: 5-way spread (every 32 frames)
+        if ((pattern & 0x1F) == 0) {
+            spawn_bullet(cx, cy, aim_dx, aim_dy);
+            spawn_bullet(cx, cy, aim_dx - 1, aim_dy);
+            spawn_bullet(cx, cy, aim_dx + 1, aim_dy);
+            spawn_bullet(cx, cy, aim_dx - 2, aim_dy);
+            spawn_bullet(cx, cy, aim_dx + 2, aim_dy);
+        }
+        // Pattern 3: Aimed burst (every 48 frames)
+        if ((pattern & 0x2F) == 0) {
+            spawn_bullet(cx, cy, aim_dx, aim_dy);
+            spawn_bullet(cx - 8, cy, aim_dx, aim_dy);
+            spawn_bullet(cx + 8, cy, aim_dx, aim_dy);
+        }
+    } else if (rank == 2) {
+        // Rank 2: Moderate intensity
+        // Pattern 1: Aimed spiral (every 20 frames - slower)
+        if ((pattern & 0x13) == 0) {
+            angle = pattern >> 3;
+            switch (angle & 0x03) {
+                case 0: dx = aim_dx;     dy = aim_dy + 1; break;
+                case 1: dx = aim_dx + 1; dy = aim_dy;     break;
+                case 2: dx = aim_dx;     dy = aim_dy - 1; break;
+                default: dx = aim_dx - 1; dy = aim_dy;    break;
+            }
+            spawn_bullet(cx, cy, dx, dy);
+        }
+        // Pattern 2: 3-way spread (every 40 frames)
+        if ((pattern & 0x27) == 0) {
+            spawn_bullet(cx, cy, aim_dx, aim_dy);
+            spawn_bullet(cx, cy, aim_dx - 1, aim_dy);
+            spawn_bullet(cx, cy, aim_dx + 1, aim_dy);
+        }
+    } else {
+        // Rank 3: Mild intensity
+        // Simple aimed shots (every 24 frames)
+        if ((pattern & 0x17) == 0) {
+            spawn_bullet(cx, cy, aim_dx, aim_dy);
+        }
+        // Occasional 2-way (every 48 frames)
+        if ((pattern & 0x2F) == 0) {
+            spawn_bullet(cx, cy, aim_dx - 1, aim_dy);
+            spawn_bullet(cx, cy, aim_dx + 1, aim_dy);
+        }
     }
 }
 
@@ -1374,7 +1401,7 @@ static void spawn_danmaku(void) {
         cy = enemy_y[i] + 8;
 
         // Boss enemies (rank 1-3): special danmaku patterns
-        if (enemy_rank[i] < 3 && !enemy_passed[i]) {
+        if (enemy_rank[i] <= 3 && !enemy_passed[i]) {
             // Bosses fire continuously with beautiful patterns (no pause phase)
             spawn_boss_danmaku(i, cx, cy);
             continue;
@@ -1708,11 +1735,23 @@ static unsigned char count_enemies_ahead(void) {
     return count;
 }
 
-// Check if there's an active boss (rank 1-3) on screen
-static unsigned char has_active_boss(void) {
+// Check if there's any boss (rank 1-3) on screen - for music
+static unsigned char has_any_boss(void) {
     unsigned char i;
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (enemy_on[i] && !enemy_passed[i] && enemy_rank[i] <= 3) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Check if there's the final boss (rank 1) on screen
+// Rank 2 and 3 can appear together, but rank 1 appears alone
+static unsigned char has_final_boss(void) {
+    unsigned char i;
+    for (i = 0; i < MAX_ENEMIES; ++i) {
+        if (enemy_on[i] && !enemy_passed[i] && enemy_rank[i] == 1) {
             return 1;
         }
     }
@@ -1734,12 +1773,12 @@ static void update_enemy(void) {
     // e.g., position 3 means 2 cars ahead, so max 2 non-passed enemies
     enemies_ahead = count_enemies_ahead();
 
-    // Boss spawning rule: only one boss at a time
-    // Next enemy would be boss if position <= 4 (rank = position - 1 < 3)
+    // Boss spawning rule: rank 2 & 3 can appear together, rank 1 (final boss) appears alone
+    // Only block spawning if we're about to spawn rank 1 and rank 1 is already active
     if (enemies_ahead < position - 1 && enemies_ahead < MAX_ENEMIES && enemy_warn_timer == 0) {
-        // If next enemy would be a boss, check if there's already one
-        if (position <= 4 && has_active_boss()) {
-            // Don't spawn another boss yet
+        // If next enemy would be the final boss (rank 1), check if already present
+        if (position == 2 && has_final_boss()) {
+            // Don't spawn another final boss
         } else {
             prepare_enemy();
         }
@@ -1748,10 +1787,9 @@ static void update_enemy(void) {
         --enemy_warn_timer;
         if (enemy_warn_timer == 0) {
             // Re-check condition: only spawn if still needed
-            // Also check boss condition again
             if (count_enemies_ahead() < position - 1) {
-                if (position <= 4 && has_active_boss()) {
-                    // Cancel spawn - boss already active
+                if (position == 2 && has_final_boss()) {
+                    // Cancel spawn - final boss already active
                 } else {
                     spawn_enemy();
                 }
@@ -1882,7 +1920,7 @@ static void update_game(void) {
     took_damage = check_collisions();
 
     // Check boss state and switch music if needed
-    boss_now = has_active_boss();
+    boss_now = has_any_boss();
     if (boss_now && !boss_music_active) {
         // Boss appeared - switch to boss music
         boss_music_active = 1;
