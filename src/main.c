@@ -2079,23 +2079,31 @@ static void draw_game(void) {
         id = set_sprite(id, 224, 216, SPR_DIGIT + (m % 10), 3);
     }
 
-    // HUD - Score: 5 digits (max 99999) - bottom right row 2
+    // HUD - Score: bottom right row 2
+    // If score_high > 0, show high digits in red (palette 1)
     {
-        unsigned int s;
+        unsigned char score_x = 200;
         if (score_high > 0) {
-            s = 99999u;  // Cap at 99999 for display
-        } else {
-            s = score;
-            if (s > 99999u) s = 99999u;
+            // Show score_high in red as prefix (up to 2 digits)
+            if (score_high >= 10) {
+                id = set_sprite(id, score_x, 224, SPR_DIGIT + (score_high / 10), 1);
+                score_x += 8;
+            }
+            id = set_sprite(id, score_x, 224, SPR_DIGIT + (score_high % 10), 1);
+            score_x += 8;
         }
-        id = set_sprite(id, 200, 224, SPR_DIGIT + (s / 10000), 3);
-        s %= 10000;
-        id = set_sprite(id, 208, 224, SPR_DIGIT + (s / 1000), 3);
-        s %= 1000;
-        id = set_sprite(id, 216, 224, SPR_DIGIT + (s / 100), 3);
-        s %= 100;
-        id = set_sprite(id, 224, 224, SPR_DIGIT + (s / 10), 3);
-        id = set_sprite(id, 232, 224, SPR_DIGIT + (s % 10), 3);
+        // Show lower 16-bit score (5 digits in white)
+        {
+            unsigned int s = score;
+            id = set_sprite(id, score_x, 224, SPR_DIGIT + (s / 10000), 3);
+            s %= 10000;
+            id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (s / 1000), 3);
+            s %= 1000;
+            id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (s / 100), 3);
+            s %= 100;
+            id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (s / 10), 3);
+            id = set_sprite(id, score_x + 32, 224, SPR_DIGIT + (s % 10), 3);
+        }
     }
 
     // HUD - Lap counter "LX" at center-top (2 sprites)
