@@ -23,9 +23,11 @@ LDFLAGS = -C src/nrom.cfg
 
 # Default target
 all: build_dir $(ROM)
+	@echo "Copying to web/..."
+	cp $(ROM) web/edgerace.nes
 	@echo ""
 	@echo "=== Build Complete ==="
-	@ls -la $(ROM)
+	@ls -la $(ROM) web/edgerace.nes
 	@echo ""
 	@echo "Test with any NES emulator (FCEUX, Mesen, Nestopia, etc.)"
 

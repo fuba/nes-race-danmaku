@@ -539,15 +539,16 @@ PLAYER_CAR_BR = [
 ]
 
 # Enemy car (4 tiles for 16x16 sprite)
+# Center core area is white (color 3) to show hitbox
 ENEMY_CAR_TL = [
     "00011000",
     "00222200",
     "00222200",
     "02222220",
     "02222220",
-    "22222222",
-    "22222222",
-    "22122122",
+    "22222233",  # Core starts
+    "22222233",
+    "22122133",
 ]
 
 ENEMY_CAR_TR = [
@@ -556,15 +557,15 @@ ENEMY_CAR_TR = [
     "00222200",
     "02222220",
     "02222220",
-    "22222222",
-    "22222222",
-    "22122122",
+    "33222222",  # Core starts
+    "33222222",
+    "33122122",
 ]
 
 ENEMY_CAR_BL = [
-    "22111122",
-    "22222222",
-    "22222222",
+    "22111133",  # Core
+    "22222233",
+    "22222233",
     "02222220",
     "02222220",
     "00222200",
@@ -573,9 +574,9 @@ ENEMY_CAR_BL = [
 ]
 
 ENEMY_CAR_BR = [
-    "22111122",
-    "22222222",
-    "22222222",
+    "33111122",  # Core
+    "33222222",
+    "33222222",
     "02222220",
     "02222220",
     "00222200",
@@ -585,15 +586,16 @@ ENEMY_CAR_BR = [
 
 # Boss/Elite enemy car (4 tiles for 16x16 sprite)
 # More aggressive design with larger wings and spikes
+# Core area is white (color 3) to show hitbox
 BOSS_CAR_TL = [
     "10011001",  # Spikes on sides
     "11022011",  # Aggressive nose
     "11122211",  # Wide body
     "12222221",  # Large wings
     "22222222",  # Full width
-    "22222222",  # Body
-    "22233222",  # Core visible
-    "22233222",  # Core
+    "22222233",  # Core visible
+    "22222233",  # Core
+    "22233233",  # Core
 ]
 
 BOSS_CAR_TR = [
@@ -602,15 +604,15 @@ BOSS_CAR_TR = [
     "11222111",  # Wide body
     "12222221",  # Large wings
     "22222222",  # Full width
-    "22222222",  # Body
-    "22332222",  # Core visible
-    "22332222",  # Core
+    "33222222",  # Core visible
+    "33222222",  # Core
+    "33233222",  # Core
 ]
 
 BOSS_CAR_BL = [
-    "22233222",  # Core
-    "22233222",  # Core
-    "22222222",  # Body
+    "22233233",  # Core
+    "22222233",  # Core
+    "22222233",  # Core
     "22222222",  # Body
     "12222221",  # Large wings
     "11222211",  # Narrowing
@@ -619,9 +621,9 @@ BOSS_CAR_BL = [
 ]
 
 BOSS_CAR_BR = [
-    "22332222",  # Core
-    "22332222",  # Core
-    "22222222",  # Body
+    "33233222",  # Core
+    "33222222",  # Core
+    "33222222",  # Core
     "22222222",  # Body
     "12222221",  # Large wings
     "11222211",  # Narrowing
@@ -653,6 +655,18 @@ EXPLOSION = [
     "00100100",
 ]
 
+# Hitbox indicator (8x8 outlined rectangle)
+HITBOX = [
+    "11111111",
+    "10000001",
+    "10000001",
+    "10000001",
+    "10000001",
+    "10000001",
+    "10000001",
+    "11111111",
+]
+
 # Road edge marker (thick vertical stripe with dashes)
 ROAD_EDGE = [
     "33333300",
@@ -678,36 +692,39 @@ ARROW_UP = [
 ]
 
 # Bullet sprite (small diamond shape - danmaku style)
+# Center 4x4 area is white (color 3) to show hitbox
 BULLET = [
     "00011000",
     "00111100",
-    "01111110",
-    "11111111",
-    "11111111",
-    "01111110",
+    "01133110",
+    "11333311",
+    "11333311",
+    "01133110",
     "00111100",
     "00011000",
 ]
 
 # Bullet sprite 2 (small circle)
+# Center area is white (color 3) to show hitbox
 BULLET2 = [
     "00111100",
     "01111110",
-    "11111111",
-    "11111111",
-    "11111111",
-    "11111111",
+    "11133111",
+    "11333311",
+    "11333311",
+    "11133111",
     "01111110",
     "00111100",
 ]
 
 # Bullet sprite 3 (star shape)
+# Center is white (color 3)
 BULLET3 = [
     "00011000",
-    "00011000",
-    "11111111",
-    "01111110",
-    "00111100",
+    "00031000",
+    "11133111",
+    "01333110",
+    "00333100",
     "01100110",
     "11000011",
     "00000000",
@@ -954,6 +971,7 @@ def main():
         (0x0C, BULLET2),
         (0x0D, BULLET3),
         (0x0E, EXPLOSION),       # Explosion effect
+        (0x0F, HITBOX),          # Hitbox indicator
         # Boss/Elite enemy car (0x60-0x63)
         (0x60, BOSS_CAR_TL),
         (0x61, BOSS_CAR_TR),

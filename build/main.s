@@ -11,7 +11,9 @@
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 	.macpack	longbranch
 	.forceimport	__STARTUP__
+	.import		_nmi_flag
 	.export		_palette
+	.export		_music_update
 	.export		_main
 
 .segment	"RODATA"
@@ -66,10 +68,10 @@ _note_table:
 	.word	$0078
 	.word	$0071
 _racing_tri:
-	.byte	$04
-	.byte	$04
-	.byte	$10
-	.byte	$04
+	.byte	$00
+	.byte	$00
+	.byte	$0C
+	.byte	$00
 	.byte	$07
 	.byte	$07
 	.byte	$13
@@ -82,10 +84,10 @@ _racing_tri:
 	.byte	$07
 	.byte	$13
 	.byte	$07
-	.byte	$04
-	.byte	$04
-	.byte	$10
-	.byte	$04
+	.byte	$05
+	.byte	$05
+	.byte	$11
+	.byte	$05
 	.byte	$07
 	.byte	$07
 	.byte	$13
@@ -96,103 +98,763 @@ _racing_tri:
 	.byte	$0B
 	.byte	$0C
 	.byte	$0C
-	.byte	$0B
-	.byte	$09
+	.byte	$FF
+	.byte	$00
 _racing_pl1:
+	.byte	$18
+	.byte	$FF
 	.byte	$1C
+	.byte	$1F
+	.byte	$FF
+	.byte	$1F
+	.byte	$1C
+	.byte	$18
+	.byte	$21
 	.byte	$FF
 	.byte	$1F
 	.byte	$1C
 	.byte	$FF
-	.byte	$23
-	.byte	$21
+	.byte	$1A
+	.byte	$1C
 	.byte	$1F
-	.byte	$21
+	.byte	$1D
 	.byte	$FF
+	.byte	$21
 	.byte	$24
-	.byte	$21
 	.byte	$FF
 	.byte	$1F
 	.byte	$1C
 	.byte	$1A
 	.byte	$1C
-	.byte	$FF
-	.byte	$1F
 	.byte	$1C
-	.byte	$FF
-	.byte	$23
-	.byte	$21
 	.byte	$1F
-	.byte	$21
-	.byte	$21
-	.byte	$23
-	.byte	$23
+	.byte	$1F
 	.byte	$24
-	.byte	$24
-	.byte	$23
-	.byte	$21
+	.byte	$FF
+	.byte	$FF
+	.byte	$FF
 _racing_pl2:
+	.byte	$10
+	.byte	$10
+	.byte	$13
+	.byte	$10
 	.byte	$17
 	.byte	$17
+	.byte	$1A
+	.byte	$17
+	.byte	$18
+	.byte	$18
 	.byte	$1C
+	.byte	$18
+	.byte	$17
 	.byte	$17
 	.byte	$1A
+	.byte	$17
+	.byte	$15
+	.byte	$15
+	.byte	$18
+	.byte	$15
+	.byte	$17
+	.byte	$17
 	.byte	$1A
+	.byte	$17
+	.byte	$18
+	.byte	$18
+	.byte	$1C
+	.byte	$1C
 	.byte	$1F
-	.byte	$1A
-	.byte	$1C
-	.byte	$1C
-	.byte	$21
-	.byte	$1C
-	.byte	$1A
-	.byte	$1A
-	.byte	$1F
-	.byte	$1A
-	.byte	$17
-	.byte	$17
-	.byte	$1C
-	.byte	$17
-	.byte	$1A
-	.byte	$1A
-	.byte	$1F
-	.byte	$1A
-	.byte	$1C
-	.byte	$1C
-	.byte	$1E
-	.byte	$1E
-	.byte	$1F
-	.byte	$1F
-	.byte	$1E
-	.byte	$1C
+	.byte	$FF
+	.byte	$FF
+	.byte	$FF
 _racing_noise:
 	.byte	$01
-	.byte	$03
 	.byte	$00
 	.byte	$03
+	.byte	$00
 	.byte	$02
+	.byte	$00
 	.byte	$03
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$03
+	.byte	$00
+	.byte	$02
+	.byte	$00
+	.byte	$03
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$03
+	.byte	$00
+	.byte	$02
+	.byte	$00
+	.byte	$03
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$00
+	.byte	$00
+_racing2_tri:
+	.byte	$02
+	.byte	$02
+	.byte	$FF
+	.byte	$0E
+	.byte	$02
+	.byte	$02
+	.byte	$FF
+	.byte	$0E
+	.byte	$05
+	.byte	$05
+	.byte	$FF
+	.byte	$11
+	.byte	$09
+	.byte	$09
+	.byte	$FF
+	.byte	$15
+	.byte	$02
+	.byte	$02
+	.byte	$FF
+	.byte	$0E
+	.byte	$00
+	.byte	$00
+	.byte	$FF
+	.byte	$0C
+	.byte	$0A
+	.byte	$0A
+	.byte	$FF
+	.byte	$0A
+	.byte	$09
+	.byte	$09
+	.byte	$FF
+	.byte	$09
+_racing2_pl1:
+	.byte	$1A
+	.byte	$FF
+	.byte	$1D
+	.byte	$FF
+	.byte	$21
+	.byte	$FF
+	.byte	$1F
+	.byte	$1D
+	.byte	$1C
+	.byte	$FF
+	.byte	$1F
+	.byte	$FF
+	.byte	$21
+	.byte	$FF
+	.byte	$FF
+	.byte	$FF
+	.byte	$1A
+	.byte	$1D
+	.byte	$21
+	.byte	$1F
+	.byte	$1D
+	.byte	$1C
+	.byte	$1A
+	.byte	$FF
+	.byte	$18
+	.byte	$FF
+	.byte	$1A
+	.byte	$FF
+	.byte	$1C
+	.byte	$FF
+	.byte	$FF
+	.byte	$FF
+_racing2_pl2:
+	.byte	$15
+	.byte	$1A
+	.byte	$1D
+	.byte	$15
+	.byte	$1A
+	.byte	$1D
+	.byte	$15
+	.byte	$1A
+	.byte	$13
+	.byte	$18
+	.byte	$1C
+	.byte	$13
+	.byte	$18
+	.byte	$1C
+	.byte	$13
+	.byte	$18
+	.byte	$15
+	.byte	$1A
+	.byte	$1D
+	.byte	$15
+	.byte	$13
+	.byte	$18
+	.byte	$1C
+	.byte	$13
+	.byte	$11
+	.byte	$16
+	.byte	$1A
+	.byte	$11
+	.byte	$10
+	.byte	$15
+	.byte	$19
+	.byte	$10
+_racing2_noise:
+	.byte	$01
+	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$00
+	.byte	$00
 	.byte	$00
 	.byte	$03
 	.byte	$01
-	.byte	$03
+	.byte	$00
 	.byte	$00
 	.byte	$03
 	.byte	$02
-	.byte	$03
+	.byte	$00
 	.byte	$00
 	.byte	$03
 	.byte	$01
+	.byte	$00
+	.byte	$00
 	.byte	$03
+	.byte	$00
+	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$00
+	.byte	$00
+_racing3_tri:
+	.byte	$04
+	.byte	$FF
+	.byte	$04
+	.byte	$10
+	.byte	$04
+	.byte	$FF
+	.byte	$04
+	.byte	$10
+	.byte	$07
+	.byte	$FF
+	.byte	$07
+	.byte	$13
+	.byte	$09
+	.byte	$FF
+	.byte	$0B
+	.byte	$17
+	.byte	$04
+	.byte	$FF
+	.byte	$04
+	.byte	$10
+	.byte	$02
+	.byte	$FF
+	.byte	$02
+	.byte	$0E
+	.byte	$00
+	.byte	$FF
+	.byte	$0B
+	.byte	$FF
+	.byte	$04
+	.byte	$04
+	.byte	$10
+	.byte	$04
+_racing3_pl1:
+	.byte	$1C
+	.byte	$FF
+	.byte	$1F
+	.byte	$1C
+	.byte	$23
+	.byte	$FF
+	.byte	$21
+	.byte	$1F
+	.byte	$1F
+	.byte	$FF
+	.byte	$23
+	.byte	$1F
+	.byte	$21
+	.byte	$FF
+	.byte	$23
+	.byte	$21
+	.byte	$1C
+	.byte	$1F
+	.byte	$23
+	.byte	$28
+	.byte	$26
+	.byte	$FF
+	.byte	$24
+	.byte	$23
+	.byte	$21
+	.byte	$FF
+	.byte	$1F
+	.byte	$FF
+	.byte	$1C
+	.byte	$FF
+	.byte	$FF
+	.byte	$FF
+_racing3_pl2:
+	.byte	$17
+	.byte	$1C
+	.byte	$1F
+	.byte	$17
+	.byte	$1C
+	.byte	$1F
+	.byte	$17
+	.byte	$1C
+	.byte	$1A
+	.byte	$1F
+	.byte	$23
+	.byte	$1A
+	.byte	$1C
+	.byte	$21
+	.byte	$24
+	.byte	$1C
+	.byte	$17
+	.byte	$1C
+	.byte	$1F
+	.byte	$23
+	.byte	$15
+	.byte	$1A
+	.byte	$1E
+	.byte	$15
+	.byte	$10
+	.byte	$15
+	.byte	$18
+	.byte	$10
+	.byte	$17
+	.byte	$FF
+	.byte	$FF
+	.byte	$FF
+_racing3_noise:
+	.byte	$01
+	.byte	$00
 	.byte	$00
 	.byte	$03
 	.byte	$02
-	.byte	$03
 	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$02
+	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$02
+	.byte	$00
+	.byte	$00
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$00
+	.byte	$01
+	.byte	$00
+	.byte	$00
+	.byte	$00
+_boss1_tri:
+	.byte	$09
+	.byte	$09
+	.byte	$15
+	.byte	$09
+	.byte	$09
+	.byte	$09
+	.byte	$15
+	.byte	$09
+	.byte	$07
+	.byte	$07
+	.byte	$13
+	.byte	$07
+	.byte	$05
+	.byte	$05
+	.byte	$04
+	.byte	$04
+	.byte	$09
+	.byte	$09
+	.byte	$15
+	.byte	$09
+	.byte	$09
+	.byte	$09
+	.byte	$15
+	.byte	$09
+	.byte	$07
+	.byte	$07
+	.byte	$05
+	.byte	$05
+	.byte	$04
+	.byte	$04
+	.byte	$10
+	.byte	$04
+_boss1_pl1:
+	.byte	$21
+	.byte	$24
+	.byte	$28
+	.byte	$24
+	.byte	$21
+	.byte	$24
+	.byte	$28
+	.byte	$24
+	.byte	$1F
+	.byte	$23
+	.byte	$26
+	.byte	$23
+	.byte	$1D
+	.byte	$21
+	.byte	$24
+	.byte	$28
+	.byte	$21
+	.byte	$24
+	.byte	$28
+	.byte	$2B
+	.byte	$28
+	.byte	$24
+	.byte	$21
+	.byte	$24
+	.byte	$1F
+	.byte	$23
+	.byte	$1D
+	.byte	$21
+	.byte	$1C
+	.byte	$1C
+	.byte	$28
+	.byte	$1C
+_boss1_pl2:
+	.byte	$1C
+	.byte	$21
+	.byte	$24
+	.byte	$21
+	.byte	$1C
+	.byte	$21
+	.byte	$24
+	.byte	$21
+	.byte	$1A
+	.byte	$1F
+	.byte	$23
+	.byte	$1F
+	.byte	$18
+	.byte	$1D
+	.byte	$21
+	.byte	$24
+	.byte	$1C
+	.byte	$21
+	.byte	$24
+	.byte	$28
+	.byte	$24
+	.byte	$21
+	.byte	$1C
+	.byte	$21
+	.byte	$1A
+	.byte	$1F
+	.byte	$18
+	.byte	$1D
+	.byte	$17
+	.byte	$17
+	.byte	$23
+	.byte	$17
+_boss1_noise:
+	.byte	$01
+	.byte	$03
+	.byte	$02
 	.byte	$03
 	.byte	$01
 	.byte	$03
 	.byte	$02
 	.byte	$03
+	.byte	$01
+	.byte	$03
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$03
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$03
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$03
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+_boss2_tri:
+	.byte	$02
+	.byte	$0E
+	.byte	$02
+	.byte	$0E
+	.byte	$02
+	.byte	$0E
+	.byte	$02
+	.byte	$0E
+	.byte	$00
+	.byte	$0C
+	.byte	$00
+	.byte	$0C
+	.byte	$0A
+	.byte	$16
+	.byte	$09
+	.byte	$15
+	.byte	$02
+	.byte	$0E
+	.byte	$02
+	.byte	$0E
+	.byte	$04
+	.byte	$10
+	.byte	$05
+	.byte	$11
+	.byte	$07
+	.byte	$13
+	.byte	$09
+	.byte	$15
+	.byte	$02
+	.byte	$0E
+	.byte	$02
+	.byte	$0E
+_boss2_pl1:
+	.byte	$26
+	.byte	$21
+	.byte	$26
+	.byte	$29
+	.byte	$26
+	.byte	$21
+	.byte	$26
+	.byte	$29
+	.byte	$24
+	.byte	$1F
+	.byte	$24
+	.byte	$28
+	.byte	$22
+	.byte	$1D
+	.byte	$21
+	.byte	$24
+	.byte	$26
+	.byte	$29
+	.byte	$2D
+	.byte	$29
+	.byte	$28
+	.byte	$2B
+	.byte	$29
+	.byte	$28
+	.byte	$26
+	.byte	$24
+	.byte	$22
+	.byte	$21
+	.byte	$26
+	.byte	$FF
+	.byte	$26
+	.byte	$26
+_boss2_pl2:
+	.byte	$1D
+	.byte	$1A
+	.byte	$1D
+	.byte	$21
+	.byte	$1D
+	.byte	$1A
+	.byte	$1D
+	.byte	$21
+	.byte	$1C
+	.byte	$18
+	.byte	$1C
+	.byte	$1F
+	.byte	$1A
+	.byte	$16
+	.byte	$1A
+	.byte	$1D
+	.byte	$1D
+	.byte	$21
+	.byte	$26
+	.byte	$21
+	.byte	$1F
+	.byte	$23
+	.byte	$21
+	.byte	$1F
+	.byte	$1D
+	.byte	$1C
+	.byte	$1A
+	.byte	$19
+	.byte	$1A
+	.byte	$FF
+	.byte	$1A
+	.byte	$1A
+_boss2_noise:
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$00
+	.byte	$01
+	.byte	$01
+_boss3_tri:
+	.byte	$04
+	.byte	$10
+	.byte	$04
+	.byte	$10
+	.byte	$04
+	.byte	$10
+	.byte	$04
+	.byte	$10
+	.byte	$04
+	.byte	$10
+	.byte	$04
+	.byte	$10
+	.byte	$07
+	.byte	$13
+	.byte	$09
+	.byte	$15
+	.byte	$0B
+	.byte	$17
+	.byte	$0B
+	.byte	$17
+	.byte	$09
+	.byte	$15
+	.byte	$07
+	.byte	$13
+	.byte	$06
+	.byte	$12
+	.byte	$07
+	.byte	$13
+	.byte	$04
+	.byte	$04
+	.byte	$10
+	.byte	$04
+_boss3_pl1:
+	.byte	$28
+	.byte	$23
+	.byte	$28
+	.byte	$2B
+	.byte	$28
+	.byte	$23
+	.byte	$28
+	.byte	$2B
+	.byte	$28
+	.byte	$2B
+	.byte	$2F
+	.byte	$2B
+	.byte	$28
+	.byte	$2B
+	.byte	$2D
+	.byte	$2F
+	.byte	$23
+	.byte	$27
+	.byte	$2A
+	.byte	$2F
+	.byte	$2D
+	.byte	$2A
+	.byte	$27
+	.byte	$2A
+	.byte	$2A
+	.byte	$2B
+	.byte	$2A
+	.byte	$2B
+	.byte	$28
+	.byte	$28
+	.byte	$28
+	.byte	$28
+_boss3_pl2:
+	.byte	$1F
+	.byte	$1C
+	.byte	$1F
+	.byte	$23
+	.byte	$1F
+	.byte	$1C
+	.byte	$1F
+	.byte	$23
+	.byte	$1F
+	.byte	$23
+	.byte	$28
+	.byte	$23
+	.byte	$1F
+	.byte	$23
+	.byte	$24
+	.byte	$28
+	.byte	$1B
+	.byte	$1E
+	.byte	$23
+	.byte	$27
+	.byte	$24
+	.byte	$21
+	.byte	$1E
+	.byte	$21
+	.byte	$21
+	.byte	$23
+	.byte	$21
+	.byte	$23
+	.byte	$1F
+	.byte	$1F
+	.byte	$1F
+	.byte	$1F
+_boss3_noise:
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
+	.byte	$01
+	.byte	$02
 	.byte	$01
 	.byte	$02
 	.byte	$01
@@ -398,6 +1060,57 @@ _gameover_pl2:
 	.byte	$10
 	.byte	$FF
 	.byte	$FF
+_epilogue_tri:
+	.byte	$0C
+	.byte	$0C
+	.byte	$0C
+	.byte	$0C
+	.byte	$07
+	.byte	$07
+	.byte	$07
+	.byte	$07
+	.byte	$09
+	.byte	$09
+	.byte	$09
+	.byte	$09
+	.byte	$04
+	.byte	$04
+	.byte	$04
+	.byte	$04
+_epilogue_pl1:
+	.byte	$1C
+	.byte	$1F
+	.byte	$24
+	.byte	$FF
+	.byte	$26
+	.byte	$24
+	.byte	$23
+	.byte	$FF
+	.byte	$24
+	.byte	$28
+	.byte	$21
+	.byte	$FF
+	.byte	$1F
+	.byte	$1D
+	.byte	$1C
+	.byte	$FF
+_epilogue_pl2:
+	.byte	$18
+	.byte	$1C
+	.byte	$1F
+	.byte	$FF
+	.byte	$17
+	.byte	$15
+	.byte	$13
+	.byte	$FF
+	.byte	$15
+	.byte	$18
+	.byte	$1C
+	.byte	$FF
+	.byte	$10
+	.byte	$0E
+	.byte	$0C
+	.byte	$FF
 _palette:
 	.byte	$0F
 	.byte	$00
@@ -424,31 +1137,13 @@ _palette:
 	.byte	$16
 	.byte	$26
 	.byte	$0F
-	.byte	$07
-	.byte	$17
-	.byte	$27
+	.byte	$28
+	.byte	$38
+	.byte	$30
 	.byte	$0F
 	.byte	$30
 	.byte	$30
 	.byte	$30
-_sin_table:
-	.byte	$00
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$00
-	.byte	$FF
-	.byte	$FE
-	.byte	$FF
-_cos_table:
-	.byte	$02
-	.byte	$01
-	.byte	$00
-	.byte	$FF
-	.byte	$FE
-	.byte	$FF
-	.byte	$00
-	.byte	$01
 
 .segment	"BSS"
 
@@ -473,55 +1168,101 @@ _player_hp:
 _player_inv:
 	.res	1,$00
 _enemy_x:
-	.res	1,$00
+	.res	3,$00
 _enemy_y:
-	.res	1,$00
-_enemy_speed:
-	.res	1,$00
+	.res	3,$00
 _enemy_on:
-	.res	1,$00
+	.res	3,$00
+_enemy_passed:
+	.res	3,$00
+_enemy_rank:
+	.res	3,$00
 _enemy_next_x:
 	.res	1,$00
 _enemy_warn_timer:
+	.res	1,$00
+_enemy_slot:
+	.res	1,$00
+_explode_x:
+	.res	1,$00
+_explode_y:
+	.res	1,$00
+_explode_timer:
 	.res	1,$00
 _position:
 	.res	1,$00
 _lap_count:
 	.res	1,$00
+_loop_count:
+	.res	1,$00
 _score:
+	.res	2,$00
+_score_high:
 	.res	2,$00
 _distance:
 	.res	2,$00
-_obs_x:
-	.res	4,$00
-_obs_y:
-	.res	4,$00
-_obs_on:
-	.res	4,$00
+_score_multiplier:
+	.res	2,$00
+_graze_count:
+	.res	1,$00
+_car_graze_cooldown:
+	.res	1,$00
+_boost_remaining:
+	.res	1,$00
+_boost_active:
+	.res	1,$00
+_boss_music_active:
+	.res	1,$00
 _bullet_x:
-	.res	16,$00
+	.res	48,$00
 _bullet_y:
-	.res	16,$00
+	.res	48,$00
 _bullet_dx:
-	.res	16,$00
+	.res	48,$00
 _bullet_dy:
-	.res	16,$00
+	.res	48,$00
 _bullet_on:
-	.res	16,$00
+	.res	48,$00
 _bullet_timer:
 	.res	1,$00
-_pit_timer:
+_bullet_next:
+	.res	1,$00
+_burst_phase:
 	.res	1,$00
 _rnd_seed:
 	.res	1,$00
 _win_timer:
 	.res	1,$00
+_loop_clear_timer:
+	.res	1,$00
 _confetti_x:
-	.res	12,$00
+	.res	8,$00
 _confetti_y:
-	.res	12,$00
+	.res	8,$00
 _confetti_color:
-	.res	12,$00
+	.res	8,$00
+.segment	"SAVE"
+_save_magic:
+	.res	1,$00
+_high_scores:
+	.res	6,$00
+_high_scores_high:
+	.res	6,$00
+_high_names:
+	.res	9,$00
+_max_loop:
+	.res	1,$00
+.segment	"BSS"
+_name_entry_pos:
+	.res	1,$00
+_name_entry_char:
+	.res	1,$00
+_entry_name:
+	.res	3,$00
+_new_score_rank:
+	.res	1,$00
+_title_select_loop:
+	.res	1,$00
 _music_enabled:
 	.res	1,$00
 _music_frame:
@@ -532,6 +1273,8 @@ _music_tempo:
 	.res	1,$00
 _current_track:
 	.res	1,$00
+_music_intensity:
+	.res	1,$00
 _tri_note:
 	.res	1,$00
 _pl1_note:
@@ -540,421 +1283,612 @@ _pl2_note:
 	.res	1,$00
 _noise_on:
 	.res	1,$00
+_sfx_graze_timer:
+	.res	1,$00
+_sfx_damage_timer:
+	.res	1,$00
+_sfx_damage_pitch:
+	.res	2,$00
+_nmi_enabled:
+	.res	1,$00
 _pattern_phase:
 	.res	1,$00
 _pattern_type:
 	.res	1,$00
 
 ; ---------------------------------------------------------------
-; void __near__ init_apu (void)
+; void __near__ do_game_over (void)
 ; ---------------------------------------------------------------
 
 .segment	"CODE"
 
-.proc	_init_apu: near
+.proc	_do_game_over: near
 
 .segment	"CODE"
 
 ;
-; APU_STATUS = 0x0F;  // Enable pulse1, pulse2, triangle, noise
+; sfx_stop();
 ;
-	lda     #$0F
-	sta     $4015
+	jsr     _sfx_stop
 ;
-; APU_FRAME = 0x40;
+; explode_x = player_x;
 ;
-	lda     #$40
-	sta     $4017
+	lda     _player_x
+	sta     _explode_x
 ;
-; APU_PL1_VOL = 0x30;  // Silence, constant volume
+; explode_y = player_y;
 ;
-	lda     #$30
-	sta     $4000
+	lda     _player_y
+	sta     _explode_y
 ;
-; APU_PL2_VOL = 0x30;
-;
-	sta     $4004
-;
-; APU_TRI_LIN = 0x80;  // Silence triangle
-;
-	lda     #$80
-	sta     $4008
-;
-; APU_NOI_VOL = 0x30;
-;
-	lda     #$30
-	sta     $400C
-;
-; music_enabled = 1;
-;
-	lda     #$01
-	sta     _music_enabled
-;
-; music_frame = 0;
+; explode_timer = 0;
 ;
 	lda     #$00
-	sta     _music_frame
+	sta     _explode_timer
 ;
-; music_pos = 0;
+; game_state = STATE_EXPLODE;
 ;
-	sta     _music_pos
+	lda     #$07
+	sta     _game_state
 ;
-; music_tempo = 8;  // 8 frames per beat = ~7.5 BPS at 60fps
+; music_play(3);  // Game over music during explosion
+;
+	lda     #$03
+	jmp     _music_play
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ do_finish_lose (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_do_finish_lose: near
+
+.segment	"CODE"
+
+;
+; sfx_stop();
+;
+	jsr     _sfx_stop
+;
+; explode_timer = 0;
+;
+	lda     #$00
+	sta     _explode_timer
+;
+; game_state = STATE_FINISH;
 ;
 	lda     #$08
-	sta     _music_tempo
+	sta     _game_state
 ;
-; current_track = 0;
+; music_play(3);  // Game over music
 ;
-	lda     #$00
-	sta     _current_track
-;
-; }
-;
-	rts
+	lda     #$03
+	jmp     _music_play
 
 .endproc
 
 ; ---------------------------------------------------------------
-; void __near__ play_triangle (unsigned char)
+; void __near__ finish_game_over (void)
 ; ---------------------------------------------------------------
 
 .segment	"CODE"
 
-.proc	_play_triangle: near
+.proc	_finish_game_over: near
 
 .segment	"CODE"
 
 ;
-; static void play_triangle(unsigned char note) {
+; new_score_rank = check_high_score(score_high, score);
 ;
-	jsr     pusha
+	lda     _score_high
+	ldx     _score_high+1
+	jsr     pushax
+	lda     _score
+	ldx     _score+1
+	jsr     _check_high_score
+	sta     _new_score_rank
 ;
-; if (note == NOTE_REST || note >= 48) {
+; if (new_score_rank < NUM_HIGH_SCORES) {
 ;
-	jsr     decsp2
-	ldy     #$02
-	lda     (sp),y
-	cmp     #$FF
-	beq     L0A84
-	cmp     #$30
-	bcs     L0A84
-	ldx     #$00
-	jmp     L0A86
-;
-; APU_TRI_LIN = 0x00;  // Silence
-;
-L0A84:	lda     #$00
-	sta     $4008
-;
-; return;
-;
-	jmp     incsp3
-;
-; period = note_table[note];
-;
-L0A86:	lda     (sp),y
-	asl     a
-	bcc     L0A83
-	inx
-	clc
-L0A83:	adc     #<(_note_table)
-	sta     ptr1
-	txa
-	adc     #>(_note_table)
-	sta     ptr1+1
-	dey
-	lda     (ptr1),y
-	tax
-	dey
-	lda     (ptr1),y
-	jsr     stax0sp
-;
-; APU_TRI_LIN = 0xFF;  // Max linear counter (sustain)
-;
-	lda     #$FF
-	sta     $4008
-;
-; APU_TRI_LO = (unsigned char)(period & 0xFF);
-;
-	ldy     #$00
-	lda     (sp),y
-	sta     $400A
-;
-; APU_TRI_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
-;
-	iny
-	lda     (sp),y
-	and     #$07
-	ora     #$F8
-	sta     $400B
-;
-; }
-;
-	jmp     incsp3
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ play_pulse1 (unsigned char)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_play_pulse1: near
-
-.segment	"CODE"
-
-;
-; static void play_pulse1(unsigned char note) {
-;
-	jsr     pusha
-;
-; if (note == NOTE_REST || note >= 48) {
-;
-	jsr     decsp2
-	ldy     #$02
-	lda     (sp),y
-	cmp     #$FF
-	beq     L0A89
-	cmp     #$30
-	bcs     L0A89
-	ldx     #$00
-	jmp     L0A8B
-;
-; APU_PL1_VOL = 0x30;  // Silence
-;
-L0A89:	lda     #$30
-	sta     $4000
-;
-; return;
-;
-	jmp     incsp3
-;
-; period = note_table[note];
-;
-L0A8B:	lda     (sp),y
-	asl     a
-	bcc     L0A88
-	inx
-	clc
-L0A88:	adc     #<(_note_table)
-	sta     ptr1
-	txa
-	adc     #>(_note_table)
-	sta     ptr1+1
-	dey
-	lda     (ptr1),y
-	tax
-	dey
-	lda     (ptr1),y
-	jsr     stax0sp
-;
-; APU_PL1_VOL = 0xBF;  // 50% duty, constant volume, max volume
-;
-	lda     #$BF
-	sta     $4000
-;
-; APU_PL1_SWP = 0x00;  // No sweep
-;
-	lda     #$00
-	sta     $4001
-;
-; APU_PL1_LO = (unsigned char)(period & 0xFF);
-;
-	tay
-	lda     (sp),y
-	sta     $4002
-;
-; APU_PL1_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
-;
-	iny
-	lda     (sp),y
-	and     #$07
-	ora     #$F8
-	sta     $4003
-;
-; }
-;
-	jmp     incsp3
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ play_pulse2 (unsigned char)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_play_pulse2: near
-
-.segment	"CODE"
-
-;
-; static void play_pulse2(unsigned char note) {
-;
-	jsr     pusha
-;
-; if (note == NOTE_REST || note >= 48) {
-;
-	jsr     decsp2
-	ldy     #$02
-	lda     (sp),y
-	cmp     #$FF
-	beq     L0A8E
-	cmp     #$30
-	bcs     L0A8E
-	ldx     #$00
-	jmp     L0A90
-;
-; APU_PL2_VOL = 0x30;  // Silence
-;
-L0A8E:	lda     #$30
-	sta     $4004
-;
-; return;
-;
-	jmp     incsp3
-;
-; period = note_table[note];
-;
-L0A90:	lda     (sp),y
-	asl     a
-	bcc     L0A8D
-	inx
-	clc
-L0A8D:	adc     #<(_note_table)
-	sta     ptr1
-	txa
-	adc     #>(_note_table)
-	sta     ptr1+1
-	dey
-	lda     (ptr1),y
-	tax
-	dey
-	lda     (ptr1),y
-	jsr     stax0sp
-;
-; APU_PL2_VOL = 0x7A;  // 25% duty, constant volume, medium volume
-;
-	lda     #$7A
-	sta     $4004
-;
-; APU_PL2_SWP = 0x00;  // No sweep
-;
-	lda     #$00
-	sta     $4005
-;
-; APU_PL2_LO = (unsigned char)(period & 0xFF);
-;
-	tay
-	lda     (sp),y
-	sta     $4006
-;
-; APU_PL2_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
-;
-	iny
-	lda     (sp),y
-	and     #$07
-	ora     #$F8
-	sta     $4007
-;
-; }
-;
-	jmp     incsp3
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ play_noise (unsigned char)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_play_noise: near
-
-.segment	"CODE"
-
-;
-; static void play_noise(unsigned char type) {
-;
-	jsr     pusha
-;
-; switch (type) {
-;
-	ldy     #$00
-	lda     (sp),y
-;
-; }
-;
-	beq     L0A92
-	cmp     #$01
-	beq     L0A93
-	cmp     #$02
-	beq     L0A94
 	cmp     #$03
-	beq     L0A95
-	jmp     incsp1
+	bcs     L16B8
 ;
-; APU_NOI_VOL = 0x30;
-;
-L0A92:	lda     #$30
-	sta     $400C
-;
-; break;
-;
-	jmp     incsp1
-;
-; APU_NOI_VOL = 0x3F;  // Constant, max volume
-;
-L0A93:	lda     #$3F
-	sta     $400C
-;
-; APU_NOI_LO = 0x0C;   // Low pitch
-;
-	lda     #$0C
-	sta     $400E
-;
-; APU_NOI_HI = 0x18;
-;
-	lda     #$18
-;
-; break;
-;
-	jmp     L0A91
-;
-; APU_NOI_VOL = 0x3A;  // Constant, medium volume
-;
-L0A94:	lda     #$3A
-	sta     $400C
-;
-; APU_NOI_LO = 0x05;   // Mid pitch, mode bit
+; game_state = STATE_HIGHSCORE;
 ;
 	lda     #$05
-	sta     $400E
+	sta     _game_state
 ;
-; APU_NOI_HI = 0x28;
+; init_name_entry(new_score_rank);
 ;
-	lda     #$28
+	lda     _new_score_rank
+	jsr     _init_name_entry
 ;
-; break;
+; music_play(4);  // Epilogue music for score entry
 ;
-	jmp     L0A91
+	lda     #$04
+	jmp     _music_play
 ;
-; APU_NOI_VOL = 0x34;  // Constant, low volume
+; game_state = STATE_GAMEOVER;
 ;
-L0A95:	lda     #$34
-	sta     $400C
+L16B8:	lda     #$02
+	sta     _game_state
 ;
-; APU_NOI_LO = 0x02;   // High pitch
+; music_stop();  // Silence after retire
 ;
+	jmp     _music_stop
+
+.endproc
+
+; ---------------------------------------------------------------
+; unsigned char __near__ check_high_score (unsigned int, unsigned int)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_check_high_score: near
+
+.segment	"CODE"
+
+;
+; static unsigned char check_high_score(unsigned int new_score_high, unsigned int new_score_low) {
+;
+	jsr     pushax
+;
+; for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+;
+	jsr     decsp1
+	lda     #$00
+	tay
+L16BB:	sta     (sp),y
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$03
+	bcs     L16BE
+;
+; if (score_greater(new_score_high, new_score_low,
+;
+	jsr     decsp6
+	ldy     #$0A
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	ldy     #$04
+	sta     (sp),y
+	iny
+	txa
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	iny
+	txa
+	sta     (sp),y
+;
+; high_scores_high[i], high_scores[i])) {
+;
+	ldy     #$06
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L16BC
+	inx
+	clc
+L16BC:	adc     #<(_high_scores_high)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores_high)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	sta     (sp),y
+	iny
+	txa
+	sta     (sp),y
+	ldy     #$06
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L16BD
+	inx
+	clc
+L16BD:	adc     #<(_high_scores)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	jsr     _score_greater
+	tax
+	beq     L0A4A
+;
+; return i;
+;
+	ldx     #$00
+	lda     (sp,x)
+	jmp     incsp5
+;
+; for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+;
+L0A4A:	tay
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L16BB
+;
+; return 255;  // Not a high score
+;
+L16BE:	lda     #$FF
+;
+; }
+;
+	jmp     incsp5
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ insert_high_score (unsigned char, unsigned int, unsigned int)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_insert_high_score: near
+
+.segment	"CODE"
+
+;
+; unsigned int new_score_low) {
+;
+	jsr     pushax
+;
+; for (i = NUM_HIGH_SCORES - 1; i > rank; --i) {
+;
+	jsr     decsp1
 	lda     #$02
-	sta     $400E
+	ldy     #$00
+L16C4:	sta     (sp),y
+	ldx     #$00
+	lda     (sp),y
+	sec
+	ldy     #$05
+	sbc     (sp),y
+	sta     tmp1
+	lda     tmp1
+	jeq     L16CA
+	jcc     L16CA
 ;
-; APU_NOI_HI = 0x08;
+; high_scores[i] = high_scores[i - 1];
 ;
-	lda     #$08
-L0A91:	sta     $400F
+	lda     (sp,x)
+	asl     a
+	bcc     L16C5
+	inx
+	clc
+L16C5:	adc     #<(_high_scores)
+	tay
+	txa
+	adc     #>(_high_scores)
+	tax
+	tya
+	jsr     pushax
+	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	bcs     L0A67
+	dex
+L0A67:	stx     tmp1
+	asl     a
+	rol     tmp1
+	clc
+	adc     #<(_high_scores)
+	sta     ptr1
+	lda     tmp1
+	adc     #>(_high_scores)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	jsr     staxspidx
+;
+; high_scores_high[i] = high_scores_high[i - 1];
+;
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L16C6
+	inx
+	clc
+L16C6:	adc     #<(_high_scores_high)
+	tay
+	txa
+	adc     #>(_high_scores_high)
+	tax
+	tya
+	jsr     pushax
+	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	bcs     L0A6C
+	dex
+L0A6C:	stx     tmp1
+	asl     a
+	rol     tmp1
+	clc
+	adc     #<(_high_scores_high)
+	sta     ptr1
+	lda     tmp1
+	adc     #>(_high_scores_high)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	jsr     staxspidx
+;
+; high_names[i][0] = high_names[i - 1][0];
+;
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	tay
+	txa
+	adc     #>(_high_names)
+	tax
+	tya
+	jsr     pushax
+	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	bcs     L0A72
+	dex
+L0A72:	jsr     mulax3
+	sta     ptr1
+	txa
+	clc
+	adc     #>(_high_names)
+	sta     ptr1+1
+	ldy     #<(_high_names)
+	lda     (ptr1),y
+	ldy     #$00
+	jsr     staspidx
+;
+; high_names[i][1] = high_names[i - 1][1];
+;
+	ldx     #$00
+	lda     (sp,x)
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	tay
+	txa
+	adc     #>(_high_names)
+	tax
+	tya
+	jsr     pushax
+	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	bcs     L0A79
+	dex
+L0A79:	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	jsr     staspidx
+;
+; high_names[i][2] = high_names[i - 1][2];
+;
+	ldx     #$00
+	lda     (sp,x)
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	tay
+	txa
+	adc     #>(_high_names)
+	tax
+	tya
+	jsr     pushax
+	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	bcs     L0A80
+	dex
+L0A80:	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     (ptr1),y
+	jsr     staspidx
+;
+; for (i = NUM_HIGH_SCORES - 1; i > rank; --i) {
+;
+	ldy     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	jmp     L16C4
+;
+; high_scores[rank] = new_score_low;
+;
+L16CA:	lda     (sp),y
+	asl     a
+	bcc     L16C7
+	inx
+	clc
+L16C7:	adc     #<(_high_scores)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores)
+	sta     ptr1+1
+	ldy     #$02
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	dey
+	sta     (ptr1),y
+	iny
+	txa
+	sta     (ptr1),y
+;
+; high_scores_high[rank] = new_score_high;
+;
+	ldy     #$05
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L16C8
+	inx
+	clc
+L16C8:	adc     #<(_high_scores_high)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores_high)
+	sta     ptr1+1
+	dey
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	ldy     #$00
+	sta     (ptr1),y
+	iny
+	txa
+	sta     (ptr1),y
+;
+; high_names[rank][0] = entry_name[0];
+;
+	ldy     #$05
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     _entry_name
+	ldy     #$00
+	sta     (ptr1),y
+;
+; high_names[rank][1] = entry_name[1];
+;
+	ldy     #$05
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     _entry_name+1
+	ldy     #$01
+	sta     (ptr1),y
+;
+; high_names[rank][2] = entry_name[2];
+;
+	ldy     #$05
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     _entry_name+2
+	ldy     #$02
+	sta     (ptr1),y
+;
+; }
+;
+	jmp     incsp6
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ init_name_entry (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_init_name_entry: near
+
+.segment	"CODE"
+
+;
+; static void init_name_entry(unsigned char rank) {
+;
+	jsr     pusha
+;
+; new_score_rank = rank;
+;
+	ldy     #$00
+	lda     (sp),y
+	sta     _new_score_rank
+;
+; name_entry_pos = 0;
+;
+	tya
+	sta     _name_entry_pos
+;
+; name_entry_char = 0;
+;
+	sta     _name_entry_char
+;
+; entry_name[0] = 0;
+;
+	sta     _entry_name
+;
+; entry_name[1] = 0;
+;
+	sta     _entry_name+1
+;
+; entry_name[2] = 0;
+;
+	sta     _entry_name+2
 ;
 ; }
 ;
@@ -998,47 +1932,1096 @@ L0A91:	sta     $400F
 ;
 ; }
 ;
-	beq     L0A97
+	beq     L16CC
 	cmp     #$01
-	beq     L0A98
+	beq     L16CD
 	cmp     #$02
-	beq     L0A99
+	beq     L16D1
 	cmp     #$03
-	beq     L0A9A
+	beq     L16D2
+	cmp     #$04
+	beq     L16D3
+	cmp     #$05
+	beq     L16D4
+	cmp     #$06
+	beq     L16D5
+	cmp     #$07
+	beq     L16D6
 	jmp     incsp1
 ;
-; music_tempo = 8;   // Strong, steady tempo
+; music_tempo = 12;  // Slower, more majestic
 ;
-L0A97:	lda     #$08
+L16CC:	lda     #$0C
+	sta     _music_tempo
 ;
-; break;
+; music_intensity = 0;
 ;
-	jmp     L0A96
-;
-; music_tempo = 6;   // Fast!
-;
-L0A98:	lda     #$06
+	sty     _music_intensity
 ;
 ; break;
 ;
-	jmp     L0A96
+	jmp     incsp1
 ;
-; music_tempo = 10;  // Medium
+; switch (music_intensity) {
 ;
-L0A99:	lda     #$0A
+L16CD:	lda     _music_intensity
+;
+; }
+;
+	beq     L16CE
+	cmp     #$01
+	beq     L16CF
+	jmp     L16D0
+;
+; case 0:  music_tempo = 10; break;  // Loop 1: Relaxed
+;
+L16CE:	lda     #$0A
+	jmp     L16CB
+;
+; case 1:  music_tempo = 9;  break;  // Loop 2: Moderate
+;
+L16CF:	lda     #$09
+	jmp     L16CB
+;
+; default: music_tempo = 8;  break;  // Loop 3: Intense
+;
+L16D0:	lda     #$08
+	jmp     L16CB
+;
+; music_tempo = 14;
+;
+L16D1:	lda     #$0E
+	sta     _music_tempo
+;
+; music_intensity = 0;
+;
+	sty     _music_intensity
 ;
 ; break;
 ;
-	jmp     L0A96
+	jmp     incsp1
 ;
-; music_tempo = 16;  // Very slow, sad
+; music_tempo = 20;  // Slower, more dramatic
 ;
-L0A9A:	lda     #$10
-L0A96:	sta     _music_tempo
+L16D2:	lda     #$14
+	sta     _music_tempo
+;
+; music_intensity = 0;
+;
+	sty     _music_intensity
+;
+; break;
+;
+	jmp     incsp1
+;
+; music_tempo = 16;
+;
+L16D3:	lda     #$10
+	sta     _music_tempo
+;
+; music_intensity = 0;
+;
+	sty     _music_intensity
+;
+; break;
+;
+	jmp     incsp1
+;
+; music_tempo = 8;
+;
+L16D4:	lda     #$08
+;
+; break;
+;
+	jmp     L16CB
+;
+; music_tempo = 7;
+;
+L16D5:	lda     #$07
+;
+; break;
+;
+	jmp     L16CB
+;
+; music_tempo = 6;
+;
+L16D6:	lda     #$06
+L16CB:	sta     _music_tempo
 ;
 ; }
 ;
 	jmp     incsp1
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ music_stop (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_music_stop: near
+
+.segment	"CODE"
+
+;
+; APU_PL1_VOL = 0x30;
+;
+	lda     #$30
+	sta     $4000
+;
+; APU_PL2_VOL = 0x30;
+;
+	sta     $4004
+;
+; APU_TRI_LIN = 0x00;
+;
+	lda     #$00
+	sta     $4008
+;
+; APU_NOI_VOL = 0x30;
+;
+	lda     #$30
+	sta     $400C
+;
+; }
+;
+	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ update_loop_palette (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_update_loop_palette: near
+
+.segment	"CODE"
+
+;
+; if (loop_count == 0) {
+;
+	jsr     decsp2
+	lda     _loop_count
+	bne     L16D8
+;
+; grass_hue = 0x09;  // Green (day)
+;
+	lda     #$09
+;
+; } else if ((loop_count & 1) == 1) {
+;
+	jmp     L16DD
+L16D8:	lda     _loop_count
+	and     #$01
+	cmp     #$01
+	bne     L16D9
+;
+; grass_hue = 0x17;  // Yellow-orange (evening)
+;
+	lda     #$17
+	ldy     #$01
+	sta     (sp),y
+;
+; road_hue = 0x07;   // Orange-brown
+;
+	lda     #$07
+;
+; } else {
+;
+	jmp     L16DA
+;
+; grass_hue = 0x01;  // Blue (night)
+;
+L16D9:	lda     #$01
+L16DD:	ldy     #$01
+	sta     (sp),y
+;
+; road_hue = 0x00;   // Gray-blue
+;
+	lda     #$00
+L16DA:	dey
+	sta     (sp),y
+;
+; ppu_addr(0x3F00);
+;
+	ldx     #$3F
+	tya
+	jsr     _ppu_addr
+;
+; PPU_DATA = 0x0F;              // Background color (black)
+;
+	lda     #$0F
+	sta     $2007
+;
+; PPU_DATA = road_hue;          // Dark
+;
+	ldy     #$00
+	lda     (sp),y
+	sta     $2007
+;
+; PPU_DATA = road_hue + 0x10;   // Medium
+;
+	lda     (sp),y
+	clc
+	adc     #$10
+	sta     $2007
+;
+; PPU_DATA = road_hue + 0x20;   // Light
+;
+	lda     (sp),y
+	clc
+	adc     #$20
+	sta     $2007
+;
+; ppu_addr(0x3F04);
+;
+	ldx     #$3F
+	lda     #$04
+	jsr     _ppu_addr
+;
+; PPU_DATA = 0x0F;              // Background color (black)
+;
+	lda     #$0F
+	sta     $2007
+;
+; PPU_DATA = grass_hue;         // Dark
+;
+	ldy     #$01
+	lda     (sp),y
+	sta     $2007
+;
+; PPU_DATA = grass_hue + 0x10;  // Medium
+;
+	lda     (sp),y
+	clc
+	adc     #$10
+	sta     $2007
+;
+; PPU_DATA = grass_hue + 0x20;  // Light
+;
+	lda     (sp),y
+	clc
+	adc     #$20
+	sta     $2007
+;
+; PPU_SCROLL = 0;
+;
+	lda     #$00
+	sta     $2005
+;
+; PPU_SCROLL = 0;
+;
+	sta     $2005
+;
+; }
+;
+	jmp     incsp2
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ init_apu (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_init_apu: near
+
+.segment	"CODE"
+
+;
+; APU_STATUS = 0x00;
+;
+	lda     #$00
+	sta     $4015
+;
+; APU_PL1_VOL = 0x30;  // Silence pulse 1
+;
+	lda     #$30
+	sta     $4000
+;
+; APU_PL1_SWP = 0x00;
+;
+	lda     #$00
+	sta     $4001
+;
+; APU_PL1_LO = 0x00;
+;
+	sta     $4002
+;
+; APU_PL1_HI = 0x00;
+;
+	sta     $4003
+;
+; APU_PL2_VOL = 0x30;  // Silence pulse 2
+;
+	lda     #$30
+	sta     $4004
+;
+; APU_PL2_SWP = 0x00;
+;
+	lda     #$00
+	sta     $4005
+;
+; APU_PL2_LO = 0x00;
+;
+	sta     $4006
+;
+; APU_PL2_HI = 0x00;
+;
+	sta     $4007
+;
+; APU_TRI_LIN = 0x80;  // Halt triangle linear counter
+;
+	lda     #$80
+	sta     $4008
+;
+; APU_TRI_LO = 0x00;
+;
+	lda     #$00
+	sta     $400A
+;
+; APU_TRI_HI = 0x00;
+;
+	sta     $400B
+;
+; APU_NOI_VOL = 0x30;  // Silence noise
+;
+	lda     #$30
+	sta     $400C
+;
+; APU_NOI_LO = 0x00;
+;
+	lda     #$00
+	sta     $400E
+;
+; APU_NOI_HI = 0x00;
+;
+	sta     $400F
+;
+; APU_FRAME = 0x40;
+;
+	lda     #$40
+	sta     $4017
+;
+; APU_STATUS = 0x0F;  // Enable pulse1, pulse2, triangle, noise
+;
+	lda     #$0F
+	sta     $4015
+;
+; music_enabled = 1;
+;
+	lda     #$01
+	sta     _music_enabled
+;
+; music_frame = 0;
+;
+	lda     #$00
+	sta     _music_frame
+;
+; music_pos = 0;
+;
+	sta     _music_pos
+;
+; music_tempo = 8;  // 8 frames per beat = ~7.5 BPS at 60fps
+;
+	lda     #$08
+	sta     _music_tempo
+;
+; current_track = 0;
+;
+	lda     #$00
+	sta     _current_track
+;
+; }
+;
+	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ sfx_graze (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_sfx_graze: near
+
+.segment	"CODE"
+
+;
+; sfx_graze_timer = 8;  // 8 frames duration
+;
+	lda     #$08
+	sta     _sfx_graze_timer
+;
+; }
+;
+	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ sfx_damage (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_sfx_damage: near
+
+.segment	"CODE"
+
+;
+; sfx_damage_timer = 20;  // 20 frames duration
+;
+	lda     #$14
+	sta     _sfx_damage_timer
+;
+; sfx_damage_pitch = 200; // Start at mid-high pitch
+;
+	ldx     #$00
+	lda     #$C8
+	sta     _sfx_damage_pitch
+	stx     _sfx_damage_pitch+1
+;
+; }
+;
+	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ sfx_stop (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_sfx_stop: near
+
+.segment	"CODE"
+
+;
+; sfx_graze_timer = 0;
+;
+	lda     #$00
+	sta     _sfx_graze_timer
+;
+; sfx_damage_timer = 0;
+;
+	sta     _sfx_damage_timer
+;
+; APU_NOI_VOL = 0x30;  // Silence noise channel
+;
+	lda     #$30
+	sta     $400C
+;
+; }
+;
+	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ update_sfx (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_update_sfx: near
+
+.segment	"CODE"
+
+;
+; if (sfx_graze_timer > 0) {
+;
+	lda     _sfx_graze_timer
+	beq     L16DE
+;
+; APU_NOI_VOL = 0x3F;
+;
+	lda     #$3F
+	sta     $400C
+;
+; APU_NOI_LO = 0x82;
+;
+	lda     #$82
+	sta     $400E
+;
+; APU_NOI_HI = 0x08;
+;
+	lda     #$08
+	sta     $400F
+;
+; --sfx_graze_timer;
+;
+	dec     _sfx_graze_timer
+;
+; if (sfx_damage_timer > 0) {
+;
+L16DE:	lda     _sfx_damage_timer
+	beq     L04D6
+;
+; APU_PL2_VOL = 0xBF;  // Duty 50%, volume 15
+;
+	lda     #$BF
+	sta     $4004
+;
+; APU_PL2_LO = (unsigned char)(sfx_damage_pitch & 0xFF);
+;
+	lda     _sfx_damage_pitch
+	sta     $4006
+;
+; APU_PL2_HI = (unsigned char)((sfx_damage_pitch >> 8) & 0x07) | 0x08;
+;
+	lda     _sfx_damage_pitch+1
+	and     #$07
+	ora     #$08
+	sta     $4007
+;
+; sfx_damage_pitch += 40;
+;
+	lda     #$28
+	clc
+	adc     _sfx_damage_pitch
+	sta     _sfx_damage_pitch
+	bcc     L04E6
+	inc     _sfx_damage_pitch+1
+;
+; --sfx_damage_timer;
+;
+L04E6:	dec     _sfx_damage_timer
+;
+; }
+;
+L04D6:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ play_triangle (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_play_triangle: near
+
+.segment	"CODE"
+
+;
+; static void play_triangle(unsigned char note) {
+;
+	jsr     pusha
+;
+; if (note == NOTE_REST || note >= 48) {
+;
+	jsr     decsp2
+	ldy     #$02
+	lda     (sp),y
+	cmp     #$FF
+	beq     L16E2
+	cmp     #$30
+	bcs     L16E2
+	ldx     #$00
+	jmp     L16E4
+;
+; APU_TRI_LIN = 0x00;
+;
+L16E2:	lda     #$00
+	sta     $4008
+;
+; return;
+;
+	jmp     L16E0
+;
+; period = note_table[note];
+;
+L16E4:	lda     (sp),y
+	asl     a
+	bcc     L16E1
+	inx
+	clc
+L16E1:	adc     #<(_note_table)
+	sta     ptr1
+	txa
+	adc     #>(_note_table)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	jsr     stax0sp
+;
+; APU_TRI_LIN = 0xFF;
+;
+	lda     #$FF
+	sta     $4008
+;
+; APU_TRI_LO = (unsigned char)(period & 0xFF);
+;
+	ldy     #$00
+	lda     (sp),y
+	sta     $400A
+;
+; APU_TRI_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
+;
+	iny
+	lda     (sp),y
+	and     #$07
+	ora     #$F8
+L16E0:	sta     $400B
+;
+; }
+;
+	jmp     incsp3
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ play_pulse1 (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_play_pulse1: near
+
+.segment	"CODE"
+
+;
+; static void play_pulse1(unsigned char note) {
+;
+	jsr     pusha
+;
+; if (note == NOTE_REST || note >= 48) {
+;
+	jsr     decsp3
+	ldy     #$03
+	lda     (sp),y
+	cmp     #$FF
+	beq     L16E8
+	cmp     #$30
+	bcs     L16E8
+	ldx     #$00
+	jmp     L16EA
+;
+; APU_PL1_VOL = 0x30;  // Silence
+;
+L16E8:	lda     #$30
+	sta     $4000
+;
+; return;
+;
+	jmp     incsp4
+;
+; period = note_table[note];
+;
+L16EA:	lda     (sp),y
+	asl     a
+	bcc     L16E7
+	inx
+	clc
+L16E7:	adc     #<(_note_table)
+	sta     ptr1
+	txa
+	adc     #>(_note_table)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	iny
+	jsr     staxysp
+;
+; switch (music_intensity) {
+;
+	lda     _music_intensity
+;
+; }
+;
+	beq     L16EB
+	cmp     #$01
+	beq     L16EC
+	jmp     L16ED
+;
+; case 0:  vol = 0xBF; break;  // 50% duty, max vol
+;
+L16EB:	lda     #$BF
+	jmp     L16EE
+;
+; case 1:  vol = 0x7F; break;  // 25% duty, max vol
+;
+L16EC:	lda     #$7F
+	jmp     L16EE
+;
+; default: vol = 0x3F; break;  // 12.5% duty, max vol (distorted!)
+;
+L16ED:	lda     #$3F
+L16EE:	ldy     #$00
+	sta     (sp),y
+;
+; APU_PL1_VOL = vol;
+;
+	sta     $4000
+;
+; APU_PL1_SWP = 0x00;
+;
+	sty     $4001
+;
+; APU_PL1_LO = (unsigned char)(period & 0xFF);
+;
+	iny
+	lda     (sp),y
+	sta     $4002
+;
+; APU_PL1_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
+;
+	iny
+	lda     (sp),y
+	and     #$07
+	ora     #$F8
+	sta     $4003
+;
+; }
+;
+	jmp     incsp4
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ play_pulse2 (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_play_pulse2: near
+
+.segment	"CODE"
+
+;
+; static void play_pulse2(unsigned char note) {
+;
+	jsr     pusha
+;
+; if (note == NOTE_REST || note >= 48) {
+;
+	jsr     decsp3
+	ldy     #$03
+	lda     (sp),y
+	cmp     #$FF
+	beq     L16F2
+	cmp     #$30
+	bcs     L16F2
+	ldx     #$00
+	jmp     L16F4
+;
+; APU_PL2_VOL = 0x30;  // Silence
+;
+L16F2:	lda     #$30
+	sta     $4004
+;
+; return;
+;
+	jmp     incsp4
+;
+; period = note_table[note];
+;
+L16F4:	lda     (sp),y
+	asl     a
+	bcc     L16F1
+	inx
+	clc
+L16F1:	adc     #<(_note_table)
+	sta     ptr1
+	txa
+	adc     #>(_note_table)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	iny
+	jsr     staxysp
+;
+; switch (music_intensity) {
+;
+	lda     _music_intensity
+;
+; }
+;
+	beq     L16F5
+	cmp     #$01
+	beq     L16F6
+	jmp     L16F7
+;
+; case 0:  vol = 0x7A; break;  // 25% duty, med vol (clean)
+;
+L16F5:	lda     #$7A
+	jmp     L16F8
+;
+; case 1:  vol = 0x3C; break;  // 12.5% duty, med vol (harsh)
+;
+L16F6:	lda     #$3C
+	jmp     L16F8
+;
+; default: vol = 0x3F; break;  // 12.5% duty, max vol (chaos!)
+;
+L16F7:	lda     #$3F
+L16F8:	ldy     #$00
+	sta     (sp),y
+;
+; APU_PL2_VOL = vol;
+;
+	sta     $4004
+;
+; APU_PL2_SWP = 0x00;
+;
+	sty     $4005
+;
+; APU_PL2_LO = (unsigned char)(period & 0xFF);
+;
+	iny
+	lda     (sp),y
+	sta     $4006
+;
+; APU_PL2_HI = (unsigned char)((period >> 8) & 0x07) | 0xF8;
+;
+	iny
+	lda     (sp),y
+	and     #$07
+	ora     #$F8
+	sta     $4007
+;
+; }
+;
+	jmp     incsp4
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ play_noise (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_play_noise: near
+
+.segment	"CODE"
+
+;
+; static void play_noise(unsigned char type) {
+;
+	jsr     pusha
+;
+; switch (type) {
+;
+	ldy     #$00
+	lda     (sp),y
+;
+; }
+;
+	beq     L16FA
+	cmp     #$01
+	beq     L16FB
+	cmp     #$02
+	beq     L16FC
+	cmp     #$03
+	beq     L16FD
+	jmp     incsp1
+;
+; APU_NOI_VOL = 0x30;
+;
+L16FA:	lda     #$30
+	sta     $400C
+;
+; break;
+;
+	jmp     incsp1
+;
+; APU_NOI_VOL = 0x3F;  // Constant, max volume
+;
+L16FB:	lda     #$3F
+	sta     $400C
+;
+; APU_NOI_LO = 0x0C;   // Low pitch
+;
+	lda     #$0C
+	sta     $400E
+;
+; APU_NOI_HI = 0x18;
+;
+	lda     #$18
+;
+; break;
+;
+	jmp     L16F9
+;
+; APU_NOI_VOL = 0x3A;  // Constant, medium volume
+;
+L16FC:	lda     #$3A
+	sta     $400C
+;
+; APU_NOI_LO = 0x05;   // Mid pitch, mode bit
+;
+	lda     #$05
+	sta     $400E
+;
+; APU_NOI_HI = 0x28;
+;
+	lda     #$28
+;
+; break;
+;
+	jmp     L16F9
+;
+; APU_NOI_VOL = 0x34;  // Constant, low volume
+;
+L16FD:	lda     #$34
+	sta     $400C
+;
+; APU_NOI_LO = 0x02;   // High pitch
+;
+	lda     #$02
+	sta     $400E
+;
+; APU_NOI_HI = 0x08;
+;
+	lda     #$08
+L16F9:	sta     $400F
+;
+; }
+;
+	jmp     incsp1
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ music_set_intensity (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_music_set_intensity: near
+
+.segment	"CODE"
+
+;
+; static void music_set_intensity(unsigned char intensity) {
+;
+	jsr     pusha
+;
+; music_intensity = intensity;
+;
+	ldy     #$00
+	lda     (sp),y
+	sta     _music_intensity
+;
+; if (current_track == TRACK_RACING) {
+;
+	lda     _current_track
+	cmp     #$01
+	bne     L05BA
+;
+; switch (intensity) {
+;
+	lda     (sp),y
+;
+; }
+;
+	beq     L16FF
+	cmp     #$01
+	beq     L1700
+	jmp     L1701
+;
+; case 0:  music_tempo = 10; break;  // Loop 1
+;
+L16FF:	lda     #$0A
+	jmp     L16FE
+;
+; case 1:  music_tempo = 9;  break;  // Loop 2
+;
+L1700:	lda     #$09
+	jmp     L16FE
+;
+; default: music_tempo = 8;  break;  // Loop 3
+;
+L1701:	lda     #$08
+L16FE:	sta     _music_tempo
+;
+; music_pos = 0;  // Reset to sync with new track
+;
+	sty     _music_pos
+;
+; }
+;
+L05BA:	jmp     incsp1
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ music_pause (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_music_pause: near
+
+.segment	"CODE"
+
+;
+; music_enabled = 0;
+;
+	lda     #$00
+	sta     _music_enabled
+;
+; APU_PL1_VOL = 0x30;
+;
+	lda     #$30
+	sta     $4000
+;
+; APU_PL2_VOL = 0x30;
+;
+	sta     $4004
+;
+; APU_TRI_LIN = 0x00;
+;
+	lda     #$00
+	sta     $4008
+;
+; APU_NOI_VOL = 0x30;
+;
+	lda     #$30
+	sta     $400C
+;
+; }
+;
+	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ music_resume (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_music_resume: near
+
+.segment	"CODE"
+
+;
+; music_enabled = 1;
+;
+	lda     #$01
+	sta     _music_enabled
+;
+; }
+;
+	rts
 
 .endproc
 
@@ -1058,7 +3041,7 @@ L0A96:	sta     _music_tempo
 	ldy     #$09
 	jsr     subysp
 	lda     _music_enabled
-	jeq     L02AC
+	jeq     L067E
 ;
 ; ++music_frame;
 ;
@@ -1068,7 +3051,7 @@ L0A96:	sta     _music_tempo
 ;
 	lda     _music_frame
 	cmp     _music_tempo
-	jcc     L02AC
+	jcc     L067E
 ;
 ; music_frame = 0;
 ;
@@ -1081,18 +3064,26 @@ L0A96:	sta     _music_tempo
 ;
 ; }
 ;
-	beq     L0A9F
+	beq     L1706
 	cmp     #$01
-	beq     L0AA0
+	beq     L1707
 	cmp     #$02
-	beq     L0AA1
+	jeq     L1708
 	cmp     #$03
-	beq     L0AA2
-	jmp     L02AC
+	jeq     L1709
+	cmp     #$04
+	jeq     L170A
+	cmp     #$05
+	jeq     L170B
+	cmp     #$06
+	jeq     L170C
+	cmp     #$07
+	jeq     L170D
+	jmp     L067E
 ;
 ; len = TITLE_LEN;
 ;
-L0A9F:	lda     #$20
+L1706:	lda     #$20
 	ldy     #$08
 	sta     (sp),y
 ;
@@ -1114,20 +3105,41 @@ L0A9F:	lda     #$20
 ;
 	lda     #<(_title_pl2)
 	ldx     #>(_title_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = 0;
+;
+	ldy     #$00
+	tya
+	sta     (sp),y
+	iny
+	sta     (sp),y
 ;
 ; break;
 ;
-	jmp     L0AA9
+	jmp     L05F5
 ;
 ; len = RACING_LEN;
 ;
-L0AA0:	lda     #$20
+L1707:	lda     #$20
 	ldy     #$08
 	sta     (sp),y
 ;
+; switch (music_intensity) {
+;
+	lda     _music_intensity
+;
+; }
+;
+	beq     L060A
+	cmp     #$01
+	beq     L0614
+	jmp     L061D
+;
 ; tri_data = racing_tri;
 ;
-	lda     #<(_racing_tri)
+L060A:	lda     #<(_racing_tri)
 	ldx     #>(_racing_tri)
 	ldy     #$06
 	jsr     staxysp
@@ -1150,15 +3162,74 @@ L0AA0:	lda     #$20
 ;
 	lda     #<(_racing_noise)
 	ldx     #>(_racing_noise)
-	jsr     stax0sp
 ;
 ; break;
 ;
-	jmp     L026B
+	jmp     L170F
+;
+; tri_data = racing2_tri;
+;
+L0614:	lda     #<(_racing2_tri)
+	ldx     #>(_racing2_tri)
+	ldy     #$06
+	jsr     staxysp
+;
+; pl1_data = racing2_pl1;
+;
+	lda     #<(_racing2_pl1)
+	ldx     #>(_racing2_pl1)
+	ldy     #$04
+	jsr     staxysp
+;
+; pl2_data = racing2_pl2;
+;
+	lda     #<(_racing2_pl2)
+	ldx     #>(_racing2_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = racing2_noise;
+;
+	lda     #<(_racing2_noise)
+	ldx     #>(_racing2_noise)
+;
+; break;
+;
+	jmp     L170F
+;
+; tri_data = racing3_tri;
+;
+L061D:	lda     #<(_racing3_tri)
+	ldx     #>(_racing3_tri)
+	ldy     #$06
+	jsr     staxysp
+;
+; pl1_data = racing3_pl1;
+;
+	lda     #<(_racing3_pl1)
+	ldx     #>(_racing3_pl1)
+	ldy     #$04
+	jsr     staxysp
+;
+; pl2_data = racing3_pl2;
+;
+	lda     #<(_racing3_pl2)
+	ldx     #>(_racing3_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = racing3_noise;
+;
+	lda     #<(_racing3_noise)
+	ldx     #>(_racing3_noise)
+;
+; break;
+;
+	jmp     L170F
 ;
 ; len = WIN_LEN;
 ;
-L0AA1:	lda     #$10
+L1708:	lda     #$10
 	ldy     #$08
 	sta     (sp),y
 ;
@@ -1180,14 +3251,24 @@ L0AA1:	lda     #$10
 ;
 	lda     #<(_win_pl2)
 	ldx     #>(_win_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = 0;
+;
+	ldy     #$00
+	tya
+	sta     (sp),y
+	iny
+	sta     (sp),y
 ;
 ; break;
 ;
-	jmp     L0AA9
+	jmp     L05F5
 ;
 ; len = GAMEOVER_LEN;
 ;
-L0AA2:	lda     #$10
+L1709:	lda     #$10
 	ldy     #$08
 	sta     (sp),y
 ;
@@ -1209,7 +3290,7 @@ L0AA2:	lda     #$10
 ;
 	lda     #<(_gameover_pl2)
 	ldx     #>(_gameover_pl2)
-L0AA9:	ldy     #$02
+	ldy     #$02
 	jsr     staxysp
 ;
 ; noise_data = 0;
@@ -1220,9 +3301,157 @@ L0AA9:	ldy     #$02
 	iny
 	sta     (sp),y
 ;
+; break;
+;
+	jmp     L05F5
+;
+; len = EPILOGUE_LEN;
+;
+L170A:	lda     #$10
+	ldy     #$08
+	sta     (sp),y
+;
+; tri_data = epilogue_tri;
+;
+	lda     #<(_epilogue_tri)
+	ldx     #>(_epilogue_tri)
+	ldy     #$06
+	jsr     staxysp
+;
+; pl1_data = epilogue_pl1;
+;
+	lda     #<(_epilogue_pl1)
+	ldx     #>(_epilogue_pl1)
+	ldy     #$04
+	jsr     staxysp
+;
+; pl2_data = epilogue_pl2;
+;
+	lda     #<(_epilogue_pl2)
+	ldx     #>(_epilogue_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = 0;
+;
+	ldy     #$00
+	tya
+	sta     (sp),y
+	iny
+	sta     (sp),y
+;
+; break;
+;
+	jmp     L05F5
+;
+; len = BOSS_LEN;
+;
+L170B:	lda     #$20
+	ldy     #$08
+	sta     (sp),y
+;
+; tri_data = boss1_tri;
+;
+	lda     #<(_boss1_tri)
+	ldx     #>(_boss1_tri)
+	ldy     #$06
+	jsr     staxysp
+;
+; pl1_data = boss1_pl1;
+;
+	lda     #<(_boss1_pl1)
+	ldx     #>(_boss1_pl1)
+	ldy     #$04
+	jsr     staxysp
+;
+; pl2_data = boss1_pl2;
+;
+	lda     #<(_boss1_pl2)
+	ldx     #>(_boss1_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = boss1_noise;
+;
+	lda     #<(_boss1_noise)
+	ldx     #>(_boss1_noise)
+;
+; break;
+;
+	jmp     L170F
+;
+; len = BOSS_LEN;
+;
+L170C:	lda     #$20
+	ldy     #$08
+	sta     (sp),y
+;
+; tri_data = boss2_tri;
+;
+	lda     #<(_boss2_tri)
+	ldx     #>(_boss2_tri)
+	ldy     #$06
+	jsr     staxysp
+;
+; pl1_data = boss2_pl1;
+;
+	lda     #<(_boss2_pl1)
+	ldx     #>(_boss2_pl1)
+	ldy     #$04
+	jsr     staxysp
+;
+; pl2_data = boss2_pl2;
+;
+	lda     #<(_boss2_pl2)
+	ldx     #>(_boss2_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = boss2_noise;
+;
+	lda     #<(_boss2_noise)
+	ldx     #>(_boss2_noise)
+;
+; break;
+;
+	jmp     L170F
+;
+; len = BOSS_LEN;
+;
+L170D:	lda     #$20
+	ldy     #$08
+	sta     (sp),y
+;
+; tri_data = boss3_tri;
+;
+	lda     #<(_boss3_tri)
+	ldx     #>(_boss3_tri)
+	ldy     #$06
+	jsr     staxysp
+;
+; pl1_data = boss3_pl1;
+;
+	lda     #<(_boss3_pl1)
+	ldx     #>(_boss3_pl1)
+	ldy     #$04
+	jsr     staxysp
+;
+; pl2_data = boss3_pl2;
+;
+	lda     #<(_boss3_pl2)
+	ldx     #>(_boss3_pl2)
+	ldy     #$02
+	jsr     staxysp
+;
+; noise_data = boss3_noise;
+;
+	lda     #<(_boss3_noise)
+	ldx     #>(_boss3_noise)
+L170F:	jsr     stax0sp
+;
 ; play_triangle(tri_data[music_pos]);
 ;
-L026B:	ldy     #$07
+L05F5:	ldy     #$07
 	lda     (sp),y
 	tax
 	dey
@@ -1265,7 +3494,7 @@ L026B:	ldy     #$07
 	lda     (sp),y
 	dey
 	ora     (sp),y
-	beq     L02A6
+	beq     L0678
 ;
 ; play_noise(noise_data[music_pos]);
 ;
@@ -1282,14 +3511,14 @@ L026B:	ldy     #$07
 ;
 ; ++music_pos;
 ;
-L02A6:	inc     _music_pos
+L0678:	inc     _music_pos
 ;
 ; if (music_pos >= len) {
 ;
 	lda     _music_pos
 	ldy     #$08
 	cmp     (sp),y
-	bcc     L02AC
+	bcc     L067E
 ;
 ; music_pos = 0;
 ;
@@ -1298,7 +3527,7 @@ L02A6:	inc     _music_pos
 ;
 ; }
 ;
-L02AC:	ldy     #$09
+L067E:	ldy     #$09
 	jmp     addysp
 
 .endproc
@@ -1314,11 +3543,30 @@ L02AC:	ldy     #$09
 .segment	"CODE"
 
 ;
+; if (nmi_enabled) {
+;
+	lda     _nmi_enabled
+	beq     L1710
+;
+; while (!nmi_flag);
+;
+L0685:	lda     _nmi_flag
+	beq     L0685
+;
+; nmi_flag = 0;
+;
+	lda     #$00
+	sta     _nmi_flag
+;
+; } else {
+;
+	rts
+;
 ; while (!(PPU_STATUS & 0x80));
 ;
-L0AAA:	lda     $2002
+L1710:	lda     $2002
 	and     #$80
-	beq     L0AAA
+	beq     L1710
 ;
 ; }
 ;
@@ -1404,6 +3652,63 @@ L0AAA:	lda     $2002
 .endproc
 
 ; ---------------------------------------------------------------
+; void __near__ add_score (unsigned int)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_add_score: near
+
+.segment	"CODE"
+
+;
+; static void add_score(unsigned int points) {
+;
+	jsr     pushax
+;
+; unsigned int old_score = score;
+;
+	lda     _score
+	ldx     _score+1
+	jsr     pushax
+;
+; score += points;
+;
+	ldy     #$03
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	clc
+	adc     _score
+	sta     _score
+	txa
+	adc     _score+1
+	sta     _score+1
+;
+; if (score < old_score) {
+;
+	lda     _score
+	ldy     #$00
+	cmp     (sp),y
+	lda     _score+1
+	iny
+	sbc     (sp),y
+	bcs     L06A9
+;
+; ++score_high;
+;
+	inc     _score_high
+	bne     L06A9
+	inc     _score_high+1
+;
+; }
+;
+L06A9:	jmp     incsp4
+
+.endproc
+
+; ---------------------------------------------------------------
 ; unsigned char __near__ read_pad (void)
 ; ---------------------------------------------------------------
 
@@ -1433,9 +3738,9 @@ L0AAA:	lda     $2002
 ; for (i = 0; i < 8; ++i) {
 ;
 	tay
-L0AAB:	sta     (sp),y
+L1711:	sta     (sp),y
 	cmp     #$08
-	bcs     L02D1
+	bcs     L06B6
 ;
 ; result <<= 1;
 ;
@@ -1457,11 +3762,11 @@ L0AAB:	sta     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AAB
+	jmp     L1711
 ;
 ; return result;
 ;
-L02D1:	iny
+L06B6:	iny
 	ldx     #$00
 	lda     (sp),y
 ;
@@ -1517,13 +3822,13 @@ L02D1:	iny
 ;
 	ldx     #$00
 	lda     _rnd_seed
-	bne     L0AAC
+	bne     L1712
 	lda     #$2A
 	sta     _rnd_seed
 ;
 ; return rnd_seed;
 ;
-L0AAC:	lda     _rnd_seed
+L1712:	lda     _rnd_seed
 ;
 ; }
 ;
@@ -1551,9 +3856,9 @@ L0AAC:	lda     _rnd_seed
 ; for (i = 0; i < MAX_CONFETTI; ++i) {
 ;
 	tay
-L0AAD:	sta     (sp),y
-	cmp     #$0C
-	bcs     L0829
+L1713:	sta     (sp),y
+	cmp     #$08
+	bcs     L1167
 ;
 ; confetti_x[i] = 32 + (rnd() & 0x7F) + (rnd() & 0x3F);  // Spread across screen
 ;
@@ -1561,17 +3866,17 @@ L0AAD:	sta     (sp),y
 	ldx     #>(_confetti_x)
 	clc
 	adc     (sp),y
-	bcc     L0832
+	bcc     L1170
 	inx
-L0832:	jsr     pushax
+L1170:	jsr     pushax
 	jsr     _rnd
 	ldx     #$00
 	and     #$7F
 	clc
 	adc     #$20
-	bcc     L0835
+	bcc     L1173
 	inx
-L0835:	jsr     pushax
+L1173:	jsr     pushax
 	jsr     _rnd
 	and     #$3F
 	jsr     tosadda0
@@ -1585,9 +3890,9 @@ L0835:	jsr     pushax
 	ldy     #$00
 	clc
 	adc     (sp),y
-	bcc     L0839
+	bcc     L1177
 	inx
-L0839:	jsr     pushax
+L1177:	jsr     pushax
 	jsr     _rnd
 	and     #$1F
 	ldy     #$00
@@ -1600,9 +3905,9 @@ L0839:	jsr     pushax
 	ldy     #$00
 	clc
 	adc     (sp),y
-	bcc     L083D
+	bcc     L117B
 	inx
-L083D:	jsr     pushax
+L117B:	jsr     pushax
 	jsr     _rnd
 	and     #$03
 	ldy     #$00
@@ -1614,11 +3919,11 @@ L083D:	jsr     pushax
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AAD
+	jmp     L1713
 ;
 ; }
 ;
-L0829:	jmp     incsp1
+L1167:	jmp     incsp1
 
 .endproc
 
@@ -1638,9 +3943,9 @@ L0829:	jmp     incsp1
 	jsr     decsp1
 	lda     #$00
 	tay
-L0AAE:	sta     (sp),y
+L1714:	sta     (sp),y
 	cmp     #$40
-	bcs     L02F0
+	bcs     L06D5
 ;
 ; OAM[i * 4] = 0xFF;
 ;
@@ -1659,11 +3964,11 @@ L0AAE:	sta     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AAE
+	jmp     L1714
 ;
 ; }
 ;
-L02F0:	jmp     incsp1
+L06D5:	jmp     incsp1
 
 .endproc
 
@@ -1682,77 +3987,102 @@ L02F0:	jmp     incsp1
 ;
 	jsr     pusha
 ;
-; unsigned char idx = id * 4;
+; if (id >= 64) return id;
 ;
-	ldy     #$04
+	jsr     decsp2
+	ldy     #$06
 	lda     (sp),y
-	asl     a
-	asl     a
-	jsr     pusha
+	cmp     #$40
+	ldx     #$00
+	bcc     L1716
+	lda     (sp),y
+	jmp     incsp7
+;
+; idx = id * 4;
+;
+L1716:	lda     (sp),y
+	jsr     shlax2
+	jsr     stax0sp
 ;
 ; OAM[idx] = y;
 ;
+	lda     #$00
+	tay
+	clc
+	adc     (sp),y
+	sta     ptr1
+	lda     #$02
+	iny
+	adc     (sp),y
+	sta     ptr1+1
+	ldy     #$04
+	lda     (sp),y
 	ldy     #$00
-	lda     (sp),y
-	tax
-	ldy     #$03
-	lda     (sp),y
-	sta     $0200,x
+	sta     (ptr1),y
 ;
 ; OAM[idx + 1] = tile;
 ;
-	ldx     #$00
-	lda     (sp,x)
+	iny
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
 	clc
 	adc     #$01
-	bcc     L0305
+	bcc     L06ED
 	inx
-L0305:	inx
+L06ED:	inx
 	inx
 	sta     ptr1
 	stx     ptr1+1
-	dey
+	ldy     #$03
 	lda     (sp),y
 	ldy     #$00
 	sta     (ptr1),y
 ;
 ; OAM[idx + 2] = attr;
 ;
-	ldx     #$00
+	iny
+	lda     (sp),y
+	tax
+	dey
 	lda     (sp),y
 	clc
 	adc     #$02
-	bcc     L030A
+	bcc     L06F2
 	inx
-L030A:	inx
+L06F2:	inx
 	inx
 	sta     ptr1
 	stx     ptr1+1
-	iny
+	ldy     #$02
 	lda     (sp),y
-	dey
+	ldy     #$00
 	sta     (ptr1),y
 ;
 ; OAM[idx + 3] = x;
 ;
-	ldx     #$00
+	iny
+	lda     (sp),y
+	tax
+	dey
 	lda     (sp),y
 	clc
 	adc     #$03
-	bcc     L030F
+	bcc     L06F7
 	inx
-L030F:	inx
+L06F7:	inx
 	inx
 	sta     ptr1
 	stx     ptr1+1
-	ldy     #$04
+	ldy     #$05
 	lda     (sp),y
 	ldy     #$00
 	sta     (ptr1),y
 ;
 ; return id + 1;
 ;
-	ldy     #$05
+	ldy     #$06
 	lda     (sp),y
 	clc
 	adc     #$01
@@ -1760,7 +4090,7 @@ L030F:	inx
 ;
 ; }
 ;
-	jmp     incsp6
+	jmp     incsp7
 
 .endproc
 
@@ -1926,9 +4256,9 @@ L030F:	inx
 ;
 	lda     #$00
 	tay
-L0AAF:	sta     (sp),y
+L1717:	sta     (sp),y
 	cmp     #$20
-	bcs     L033C
+	bcs     L0724
 ;
 ; PPU_DATA = palette[i];
 ;
@@ -1943,11 +4273,11 @@ L0AAF:	sta     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AAF
+	jmp     L1717
 ;
 ; }
 ;
-L033C:	jmp     incsp1
+L0724:	jmp     incsp1
 
 .endproc
 
@@ -1971,9 +4301,9 @@ L033C:	jmp     incsp1
 ;
 	lda     #$00
 	ldy     #$02
-L0AB2:	sta     (sp),y
+L171A:	sta     (sp),y
 	cmp     #$1E
-	bcs     L034B
+	bcs     L0770
 ;
 ; ppu_addr(0x2000 + (unsigned int)row * 32);
 ;
@@ -1995,44 +4325,44 @@ L0AB2:	sta     (sp),y
 ;
 	lda     #$00
 	ldy     #$01
-L0AB1:	sta     (sp),y
+L1719:	sta     (sp),y
 	cmp     #$20
-	bcs     L034C
+	bcs     L0771
 ;
-; if (col < 8 || col >= 24) {
+; if (col < 5 || col >= 27) {
 ;
 	lda     (sp),y
-	cmp     #$08
-	bcc     L0AB4
-	cmp     #$18
-	bcc     L0AB6
+	cmp     #$05
+	bcc     L171C
+	cmp     #$1B
+	bcc     L171E
 ;
 ; PPU_DATA = TILE_GRASS;
 ;
-L0AB4:	lda     #$02
+L171C:	lda     #$02
 ;
 ; } else if (col == 15 || col == 16) {
 ;
-	jmp     L0AB0
-L0AB6:	lda     (sp),y
+	jmp     L1718
+L171E:	lda     (sp),y
 	cmp     #$0F
-	beq     L0AB7
+	beq     L171F
 	cmp     #$10
-	bne     L0ABA
+	bne     L1722
 ;
 ; PPU_DATA = ((row & 1) == 0) ? TILE_LINE : TILE_ROAD;
 ;
-L0AB7:	iny
+L171F:	iny
 	lda     (sp),y
 	and     #$01
-	bne     L0ABA
+	bne     L1722
 	lda     #$03
-	jmp     L0AB0
+	jmp     L1718
 ;
 ; PPU_DATA = TILE_ROAD;
 ;
-L0ABA:	lda     #$01
-L0AB0:	sta     $2007
+L1722:	lda     #$01
+L1718:	sta     $2007
 ;
 ; for (col = 0; col < 32; ++col) {
 ;
@@ -2040,19 +4370,19 @@ L0AB0:	sta     $2007
 	clc
 	tya
 	adc     (sp),y
-	jmp     L0AB1
+	jmp     L1719
 ;
 ; for (row = 0; row < 30; ++row) {
 ;
-L034C:	iny
+L0771:	iny
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AB2
+	jmp     L171A
 ;
 ; ppu_addr(0x23C0);
 ;
-L034B:	ldx     #$23
+L0770:	ldx     #$23
 	lda     #$C0
 	jsr     _ppu_addr
 ;
@@ -2060,17 +4390,18 @@ L034B:	ldx     #$23
 ;
 	lda     #$00
 	tay
-L0AB3:	sta     (sp),y
+L171B:	sta     (sp),y
 	cmp     #$08
-	bcs     L0377
+	bcs     L079C
 ;
 ; PPU_DATA = 0x55;  // Columns 0-3: grass
 ;
 	lda     #$55
 	sta     $2007
 ;
-; PPU_DATA = 0x55;  // Columns 4-7: grass
+; PPU_DATA = 0x05;  // Columns 4-7: grass/road border
 ;
+	lda     #$05
 	sta     $2007
 ;
 ; PPU_DATA = 0x00;  // Columns 8-11: road
@@ -2090,13 +4421,14 @@ L0AB3:	sta     (sp),y
 ;
 	sta     $2007
 ;
-; PPU_DATA = 0x55;  // Columns 24-27: grass
+; PPU_DATA = 0x50;  // Columns 24-27: road/grass border
 ;
-	lda     #$55
+	lda     #$50
 	sta     $2007
 ;
 ; PPU_DATA = 0x55;  // Columns 28-31: grass
 ;
+	lda     #$55
 	sta     $2007
 ;
 ; for (attr_row = 0; attr_row < 8; ++attr_row) {
@@ -2104,11 +4436,11 @@ L0AB3:	sta     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AB3
+	jmp     L171B
 ;
 ; ppu_on();
 ;
-L0377:	jsr     _ppu_on
+L079C:	jsr     _ppu_on
 ;
 ; }
 ;
@@ -2127,27 +4459,27 @@ L0377:	jsr     _ppu_on
 .segment	"CODE"
 
 ;
-; enemy_next_x = ROAD_LEFT + 16 + (rnd() & 0x3F);
+; enemy_next_x = ROAD_LEFT + 8 + (rnd() & 0x7F);
 ;
 	jsr     _rnd
-	and     #$3F
+	and     #$7F
 	clc
-	adc     #$50
+	adc     #$30
 	sta     _enemy_next_x
 ;
 ; if (enemy_next_x > ROAD_RIGHT - 24) {
 ;
-	cmp     #$A9
-	bcc     L0ABB
+	cmp     #$C1
+	bcc     L1723
 ;
 ; enemy_next_x = ROAD_RIGHT - 24;
 ;
-	lda     #$A8
+	lda     #$C0
 	sta     _enemy_next_x
 ;
-; enemy_warn_timer = 60;  // 1 second warning
+; enemy_warn_timer = 120;  // 2 second warning
 ;
-L0ABB:	lda     #$3C
+L1723:	lda     #$78
 	sta     _enemy_warn_timer
 ;
 ; }
@@ -2167,128 +4499,77 @@ L0ABB:	lda     #$3C
 .segment	"CODE"
 
 ;
-; enemy_x = enemy_next_x;
+; unsigned char slot = enemy_slot;
 ;
+	lda     _enemy_slot
+	jsr     pusha
+;
+; enemy_x[slot] = enemy_next_x;
+;
+	ldy     #$00
+	lda     (sp),y
+	tay
 	lda     _enemy_next_x
-	sta     _enemy_x
+	sta     _enemy_x,y
 ;
-; enemy_y = 8;  // Start just below top of screen (ahead of player)
+; enemy_y[slot] = 8;  // Start just below top of screen
 ;
+	ldy     #$00
+	lda     (sp),y
+	tay
 	lda     #$08
-	sta     _enemy_y
+	sta     _enemy_y,y
 ;
-; enemy_speed = 1;  // Moves down slowly (player catches up via scroll)
+; enemy_on[slot] = 1;
 ;
+	ldy     #$00
+	lda     (sp),y
+	tay
 	lda     #$01
-	sta     _enemy_speed
+	sta     _enemy_on,y
 ;
-; enemy_on = 1;
+; enemy_passed[slot] = 0;
 ;
-	sta     _enemy_on
+	ldy     #$00
+	lda     (sp),y
+	tay
+	lda     #$00
+	sta     _enemy_passed,y
+;
+; enemy_rank[slot] = position - 1;  // This enemy is one position ahead
+;
+	lda     #<(_enemy_rank)
+	ldx     #>(_enemy_rank)
+	ldy     #$00
+	clc
+	adc     (sp),y
+	bcc     L07DB
+	inx
+L07DB:	sta     ptr1
+	stx     ptr1+1
+	lda     _position
+	sec
+	sbc     #$01
+	sta     (ptr1),y
 ;
 ; enemy_warn_timer = 0;
 ;
-	lda     #$00
-	sta     _enemy_warn_timer
+	sty     _enemy_warn_timer
+;
+; ++enemy_slot;
+;
+	inc     _enemy_slot
+;
+; if (enemy_slot >= MAX_ENEMIES) enemy_slot = 0;
+;
+	lda     _enemy_slot
+	cmp     #$03
+	bcc     L07E1
+	sty     _enemy_slot
 ;
 ; }
 ;
-	rts
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ spawn_obstacle (void)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_spawn_obstacle: near
-
-.segment	"CODE"
-
-;
-; for (i = 0; i < 4; ++i) {
-;
-	jsr     decsp1
-	lda     #$00
-	tay
-L0ABC:	sta     (sp),y
-	cmp     #$04
-	bcs     L03AF
-;
-; if (!obs_on[i]) {
-;
-	lda     (sp),y
-	tay
-	lda     _obs_on,y
-	bne     L03B0
-;
-; obs_x[i] = ROAD_LEFT + 8 + (rnd() & 0x7F);
-;
-	lda     #<(_obs_x)
-	ldx     #>(_obs_x)
-	ldy     #$00
-	clc
-	adc     (sp),y
-	bcc     L03BC
-	inx
-L03BC:	jsr     pushax
-	jsr     _rnd
-	and     #$7F
-	clc
-	adc     #$48
-	ldy     #$00
-	jsr     staspidx
-;
-; if (obs_x[i] > ROAD_RIGHT - 16) {
-;
-	ldy     #$00
-	lda     (sp),y
-	tay
-	lda     _obs_x,y
-	cmp     #$B1
-	bcc     L03C0
-;
-; obs_x[i] = ROAD_RIGHT - 16;
-;
-	ldy     #$00
-	lda     (sp),y
-	tay
-	lda     #$B0
-	sta     _obs_x,y
-;
-; obs_y[i] = 0;
-;
-L03C0:	ldy     #$00
-	lda     (sp),y
-	tay
-	lda     #$00
-	sta     _obs_y,y
-;
-; obs_on[i] = 1;
-;
-	tay
-	lda     (sp),y
-	tay
-	lda     #$01
-	sta     _obs_on,y
-;
-; break;
-;
-	jmp     incsp1
-;
-; for (i = 0; i < 4; ++i) {
-;
-L03B0:	ldy     #$00
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0ABC
-;
-; }
-;
-L03AF:	jmp     incsp1
+L07E1:	jmp     incsp1
 
 .endproc
 
@@ -2314,7 +4595,7 @@ L03AF:	jmp     incsp1
 	lda     (sp),y
 	dey
 	cmp     (sp),y
-	bcc     L0ABF
+	bcc     L1726
 	iny
 	lda     (sp),y
 	sec
@@ -2324,7 +4605,7 @@ L03AF:	jmp     incsp1
 ;
 ; return b - a;
 ;
-L0ABF:	lda     (sp),y
+L1726:	lda     (sp),y
 	sec
 	iny
 	sbc     (sp),y
@@ -2350,93 +4631,697 @@ L0ABF:	lda     (sp),y
 ;
 	jsr     pusha
 ;
-; for (i = 0; i < MAX_BULLETS; ++i) {
+; bullet_x[bullet_next] = x;
 ;
-	jsr     decsp1
-	lda     #$00
-	tay
-L0AC0:	sta     (sp),y
-	cmp     #$10
-	bcs     L03D7
-;
-; if (!bullet_on[i]) {
-;
-	lda     (sp),y
-	tay
-	lda     _bullet_on,y
-	bne     L03D8
-;
-; bullet_x[i] = x;
-;
-	tay
-	lda     (sp),y
-	tax
-	ldy     #$04
-	lda     (sp),y
-	sta     _bullet_x,x
-;
-; bullet_y[i] = y;
-;
-	ldy     #$00
-	lda     (sp),y
-	tax
 	ldy     #$03
 	lda     (sp),y
-	sta     _bullet_y,x
+	ldy     _bullet_next
+	sta     _bullet_x,y
 ;
-; bullet_dx[i] = dx;
+; bullet_y[bullet_next] = y;
+;
+	ldy     #$02
+	lda     (sp),y
+	ldy     _bullet_next
+	sta     _bullet_y,y
+;
+; bullet_dx[bullet_next] = dx;
 ;
 	lda     #<(_bullet_dx)
 	ldx     #>(_bullet_dx)
-	ldy     #$00
 	clc
-	adc     (sp),y
-	bcc     L03EC
+	adc     _bullet_next
+	bcc     L07F5
 	inx
-L03EC:	sta     ptr1
+L07F5:	sta     ptr1
 	stx     ptr1+1
-	ldy     #$02
-	lda     (sp),y
-	ldy     #$00
-	sta     (ptr1),y
-;
-; bullet_dy[i] = dy;
-;
-	lda     #<(_bullet_dy)
-	ldx     #>(_bullet_dy)
-	clc
-	adc     (sp),y
-	bcc     L03F1
-	inx
-L03F1:	sta     ptr1
-	stx     ptr1+1
-	iny
+	ldy     #$01
 	lda     (sp),y
 	dey
 	sta     (ptr1),y
 ;
-; bullet_on[i] = 1;
+; if (dy > 0) {
 ;
 	lda     (sp),y
-	tay
+	sec
+	sbc     #$01
+	bvs     L07FB
+	eor     #$80
+L07FB:	bpl     L172B
+;
+; dy += (loop_count / 3);  // Moving down
+;
+	lda     _loop_count
+	jsr     pusha0
+	lda     #$03
+	jsr     tosudiva0
+	cmp     #$80
+	ldy     #$00
+	clc
+	adc     (sp),y
+	sta     (sp),y
+;
+; if (dy > 5) dy = 5;  // Cap at 5
+;
+	sec
+	sbc     #$06
+	bvs     L0804
+	eor     #$80
+L0804:	bpl     L0807
+	lda     #$05
+;
+; } else if (dy < 0) {
+;
+	jmp     L1727
+L172B:	lda     (sp),y
+	asl     a
+	bcc     L0807
+;
+; dy -= (loop_count / 3);  // Moving up (more negative)
+;
+	lda     _loop_count
+	jsr     pusha0
+	lda     #$03
+	jsr     tosudiva0
+	cmp     #$80
+	ldy     #$00
+	eor     #$FF
+	sec
+	adc     (sp),y
+	sta     (sp),y
+;
+; if (dy < -5) dy = -5;
+;
+	sec
+	sbc     #$FB
+	bvc     L0813
+	eor     #$80
+L0813:	bpl     L0807
+	lda     #$FB
+L1727:	sta     (sp),y
+;
+; bullet_dy[bullet_next] = dy;
+;
+L0807:	lda     #<(_bullet_dy)
+	ldx     #>(_bullet_dy)
+	clc
+	adc     _bullet_next
+	bcc     L0818
+	inx
+L0818:	sta     ptr1
+	stx     ptr1+1
+	lda     (sp),y
+	sta     (ptr1),y
+;
+; bullet_on[bullet_next] = 1;
+;
+	ldy     _bullet_next
 	lda     #$01
 	sta     _bullet_on,y
 ;
-; break;
+; ++bullet_next;
 ;
-	jmp     incsp5
+	inc     _bullet_next
 ;
-; for (i = 0; i < MAX_BULLETS; ++i) {
+; if (bullet_next >= MAX_BULLETS) {
 ;
-L03D8:	ldy     #$00
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0AC0
+	lda     _bullet_next
+	cmp     #$30
+	bcc     L0820
+;
+; bullet_next = 0;
+;
+	lda     #$00
+	sta     _bullet_next
 ;
 ; }
 ;
-L03D7:	jmp     incsp5
+L0820:	jmp     incsp4
+
+.endproc
+
+; ---------------------------------------------------------------
+; signed char __near__ calc_aim_dx (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_calc_aim_dx: near
+
+.segment	"CODE"
+
+;
+; static signed char calc_aim_dx(unsigned char bx) {
+;
+	jsr     pusha
+;
+; unsigned char px = player_x + 8;
+;
+	lda     _player_x
+	clc
+	adc     #$08
+	jsr     pusha
+;
+; if (px > bx + 24) return 2;
+;
+	ldx     #$00
+	lda     (sp,x)
+	jsr     pusha0
+	ldy     #$03
+	lda     (sp),y
+	clc
+	adc     #$18
+	bcc     L0829
+	ldx     #$01
+L0829:	jsr     tosicmp
+	bcc     L0827
+	beq     L0827
+	ldx     #$00
+	lda     #$02
+	jmp     incsp2
+;
+; if (px > bx + 8) return 1;
+;
+L0827:	ldx     #$00
+	lda     (sp,x)
+	jsr     pusha0
+	ldy     #$03
+	lda     (sp),y
+	clc
+	adc     #$08
+	bcc     L082D
+	ldx     #$01
+L082D:	jsr     tosicmp
+	bcc     L082B
+	beq     L082B
+	ldx     #$00
+	lda     #$01
+	jmp     incsp2
+;
+; if (px + 24 < bx) return -2;
+;
+L082B:	ldx     #$00
+	lda     (sp,x)
+	clc
+	adc     #$18
+	bcc     L0831
+	inx
+L0831:	ldy     #$01
+	cmp     (sp),y
+	txa
+	sbc     #$00
+	bcs     L082F
+	ldx     #$FF
+	lda     #$FE
+	jmp     incsp2
+;
+; if (px + 8 < bx) return -1;
+;
+L082F:	ldx     #$00
+	lda     (sp,x)
+	clc
+	adc     #$08
+	bcc     L0835
+	inx
+L0835:	ldy     #$01
+	cmp     (sp),y
+	txa
+	sbc     #$00
+	bcs     L0833
+	ldx     #$FF
+	txa
+	jmp     incsp2
+;
+; return 0;
+;
+L0833:	ldx     #$00
+	txa
+;
+; }
+;
+	jmp     incsp2
+
+.endproc
+
+; ---------------------------------------------------------------
+; signed char __near__ calc_aim_dy (unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_calc_aim_dy: near
+
+.segment	"CODE"
+
+;
+; static signed char calc_aim_dy(unsigned char by) {
+;
+	jsr     pusha
+;
+; unsigned char py = player_y + 8;
+;
+	lda     _player_y
+	clc
+	adc     #$08
+	jsr     pusha
+;
+; if (py > by + 24) return 2;
+;
+	ldx     #$00
+	lda     (sp,x)
+	jsr     pusha0
+	ldy     #$03
+	lda     (sp),y
+	clc
+	adc     #$18
+	bcc     L083D
+	ldx     #$01
+L083D:	jsr     tosicmp
+	bcc     L083B
+	beq     L083B
+	ldx     #$00
+	lda     #$02
+	jmp     incsp2
+;
+; if (py > by + 8) return 1;
+;
+L083B:	ldx     #$00
+	lda     (sp,x)
+	jsr     pusha0
+	ldy     #$03
+	lda     (sp),y
+	clc
+	adc     #$08
+	bcc     L0841
+	ldx     #$01
+L0841:	jsr     tosicmp
+	bcc     L083F
+	beq     L083F
+	ldx     #$00
+	lda     #$01
+	jmp     incsp2
+;
+; if (py + 24 < by) return -2;
+;
+L083F:	ldx     #$00
+	lda     (sp,x)
+	clc
+	adc     #$18
+	bcc     L0845
+	inx
+L0845:	ldy     #$01
+	cmp     (sp),y
+	txa
+	sbc     #$00
+	bcs     L0843
+	ldx     #$FF
+	lda     #$FE
+	jmp     incsp2
+;
+; if (py + 8 < by) return -1;
+;
+L0843:	ldx     #$00
+	lda     (sp,x)
+	clc
+	adc     #$08
+	bcc     L0849
+	inx
+L0849:	ldy     #$01
+	cmp     (sp),y
+	txa
+	sbc     #$00
+	bcs     L0847
+	ldx     #$FF
+	txa
+	jmp     incsp2
+;
+; return 0;
+;
+L0847:	ldx     #$00
+	txa
+;
+; }
+;
+	jmp     incsp2
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ spawn_boss_danmaku (unsigned char, unsigned char, unsigned char)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_spawn_boss_danmaku: near
+
+.segment	"CODE"
+
+;
+; static void spawn_boss_danmaku(unsigned char i, unsigned char cx, unsigned char cy) {
+;
+	jsr     pusha
+;
+; pattern = (bullet_timer + enemy_rank[i] * 64) & 0xFF;
+;
+	jsr     decsp6
+	ldy     #$08
+	lda     (sp),y
+	tay
+	lda     _enemy_rank,y
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	clc
+	adc     _bullet_timer
+	ldy     #$05
+	sta     (sp),y
+;
+; aim_dx = calc_aim_dx(cx);
+;
+	ldy     #$07
+	lda     (sp),y
+	jsr     _calc_aim_dx
+	ldy     #$01
+	sta     (sp),y
+;
+; aim_dy = calc_aim_dy(cy);
+;
+	ldy     #$06
+	lda     (sp),y
+	jsr     _calc_aim_dy
+	ldy     #$00
+	sta     (sp),y
+;
+; if (aim_dy == 0) aim_dy = (cy < player_y) ? 1 : -1;
+;
+	lda     (sp),y
+	bne     L0858
+	ldy     #$06
+	lda     (sp),y
+	cmp     _player_y
+	bcs     L085E
+	lda     #$01
+	jmp     L1731
+L085E:	lda     #$FF
+L1731:	cmp     #$80
+	ldy     #$00
+	sta     (sp),y
+;
+; if ((pattern & 0x0F) == 0) {
+;
+L0858:	ldy     #$05
+	lda     (sp),y
+	and     #$0F
+	jne     L1733
+;
+; angle = pattern >> 3;
+;
+	lda     (sp),y
+	lsr     a
+	lsr     a
+	lsr     a
+	dey
+	sta     (sp),y
+;
+; switch (angle & 0x03) {
+;
+	and     #$03
+;
+; }
+;
+	beq     L086D
+	cmp     #$01
+	beq     L0877
+	cmp     #$02
+	beq     L0881
+	jmp     L088A
+;
+; case 0: dx = aim_dx;     dy = aim_dy + 1; break;
+;
+L086D:	ldy     #$01
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$00
+	lda     (sp),y
+	clc
+	adc     #$01
+	cmp     #$80
+	jmp     L1738
+;
+; case 1: dx = aim_dx + 1; dy = aim_dy;     break;
+;
+L0877:	tay
+	lda     (sp),y
+	clc
+	adc     #$01
+	jmp     L173D
+;
+; case 2: dx = aim_dx;     dy = aim_dy - 1; break;
+;
+L0881:	ldy     #$01
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$00
+	lda     (sp),y
+	sec
+	sbc     #$01
+	cmp     #$80
+	jmp     L1738
+;
+; default: dx = aim_dx - 1; dy = aim_dy;    break;
+;
+L088A:	ldy     #$01
+	lda     (sp),y
+	sec
+	sbc     #$01
+L173D:	cmp     #$80
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$00
+	lda     (sp),y
+L1738:	ldy     #$02
+	sta     (sp),y
+;
+; spawn_bullet(cx, cy, dx, dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; if ((pattern & 0x17) == 0) {
+;
+	ldy     #$05
+L1733:	lda     (sp),y
+	and     #$17
+	bne     L1735
+;
+; spawn_bullet(cx, cy, aim_dx, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; spawn_bullet(cx, cy, aim_dx - 1, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	sec
+	sbc     #$01
+	cmp     #$80
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; spawn_bullet(cx, cy, aim_dx + 1, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	clc
+	adc     #$01
+	cmp     #$80
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; if ((pattern & 0x3F) == 0) {
+;
+	ldy     #$05
+L1735:	lda     (sp),y
+	and     #$3F
+	bne     L1737
+;
+; spawn_bullet(cx, cy, aim_dx, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; spawn_bullet(cx - 8, cy, aim_dx, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	sec
+	sbc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; spawn_bullet(cx + 8, cy, aim_dx, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; if ((pattern & 0x0B) == 0) {
+;
+	ldy     #$05
+L1737:	lda     (sp),y
+	and     #$0B
+	bne     L08C6
+;
+; dx = aim_dx + (((bullet_timer >> 2) & 0x03) - 1);
+;
+	ldy     #$01
+	tax
+	lda     (sp),y
+	bpl     L08CC
+	dex
+L08CC:	sta     ptr1
+	stx     ptr1+1
+	lda     _bullet_timer
+	lsr     a
+	lsr     a
+	ldx     #$00
+	and     #$03
+	sec
+	sbc     #$01
+	bcs     L08D0
+	dex
+L08D0:	clc
+	adc     ptr1
+	pha
+	txa
+	adc     ptr1+1
+	pla
+	cmp     #$80
+	ldy     #$03
+	sta     (sp),y
+;
+; spawn_bullet(cx, cy, dx, aim_dy);
+;
+	jsr     decsp3
+	ldy     #$0A
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$03
+	lda     (sp),y
+	jsr     _spawn_bullet
+;
+; }
+;
+L08C6:	ldy     #$09
+	jmp     addysp
 
 .endproc
 
@@ -2451,49 +5336,14 @@ L03D7:	jmp     incsp5
 .segment	"CODE"
 
 ;
-; if (!enemy_on) return;
-;
-	jsr     decsp6
-	lda     _enemy_on
-	bne     L0ADF
-;
-; }
-;
-	jmp     incsp6
-;
-; if (enemy_y < 24) return;  // Don't shoot while entering screen
-;
-L0ADF:	lda     _enemy_y
-	cmp     #$18
-	bcs     L0AE0
-;
-; }
-;
-	jmp     incsp6
-;
-; cx = enemy_x + 8;  // Center X
-;
-L0AE0:	lda     _enemy_x
-	clc
-	adc     #$08
-	ldy     #$05
-	sta     (sp),y
-;
-; cy = enemy_y + 16; // Bullet spawn Y
-;
-	lda     _enemy_y
-	clc
-	adc     #$10
-	dey
-	sta     (sp),y
-;
 ; ++bullet_timer;
 ;
+	jsr     decsp6
 	inc     _bullet_timer
 ;
 ; if (bullet_timer == 0) {
 ;
-	bne     L0AC7
+	bne     L1740
 ;
 ; pattern_type = (pattern_type + 1) & 0x07;
 ;
@@ -2503,694 +5353,367 @@ L0AE0:	lda     _enemy_x
 	and     #$07
 	sta     _pattern_type
 ;
-; pattern_phase = 0;
+; ++burst_phase;
 ;
+L1740:	inc     _burst_phase
+;
+; if (burst_phase >= 80) burst_phase = 0;
+;
+	lda     _burst_phase
+	cmp     #$50
+	bcc     L1741
 	lda     #$00
-	sta     _pattern_phase
+	sta     _burst_phase
 ;
-; switch (pattern_type) {
+; if (position == 1) {
 ;
-L0AC7:	lda     _pattern_type
-;
-; }
-;
-	beq     L0AC8
+L1741:	lda     _position
 	cmp     #$01
-	jeq     L0ACD
-	cmp     #$02
-	jeq     L0AD0
-	cmp     #$03
-	jeq     L0AD2
-	cmp     #$04
-	jeq     L0AD3
-	cmp     #$05
-	jeq     L0AD5
-	cmp     #$06
-	jeq     L0AD9
-	cmp     #$07
-	jeq     L0ADB
-	jmp     incsp6
+	jne     L1744
 ;
-; if ((bullet_timer & 0x07) == 0) {
+; if (burst_phase >= 56) return;
 ;
-L0AC8:	lda     _bullet_timer
-	and     #$07
-	beq     L0AE1
+	lda     _burst_phase
+	cmp     #$38
+	bcc     L174D
 ;
 ; }
 ;
 	jmp     incsp6
 ;
-; angle_idx = (pattern_phase) & 0x07;
+; if ((bullet_timer & 0x17) == 0) {
 ;
-L0AE1:	lda     _pattern_phase
-	and     #$07
-	ldy     #$00
+L174D:	lda     _bullet_timer
+	and     #$17
+	bne     L1742
+;
+; cx = 80 + ((bullet_timer >> 2) & 0x3F);
+;
+	lda     _bullet_timer
+	lsr     a
+	lsr     a
+	and     #$3F
+	clc
+	adc     #$50
+	ldy     #$04
 	sta     (sp),y
 ;
-; dx = cos_table[angle_idx];
+; dx = calc_aim_dx(cx);
 ;
-	lda     #<(_cos_table)
-	ldx     #>(_cos_table)
-	clc
-	adc     (sp),y
-	bcc     L0AC9
-	inx
-L0AC9:	jsr     ldaidx
+	jsr     _calc_aim_dx
 	ldy     #$02
 	sta     (sp),y
 ;
-; dy = 1 + ((sin_table[angle_idx] + 2) >> 1);  // 1-2 speed
-;
-	lda     #<(_sin_table)
-	ldx     #>(_sin_table)
-	ldy     #$00
-	clc
-	adc     (sp),y
-	bcc     L0ACA
-	inx
-L0ACA:	jsr     ldaidx
-	clc
-	adc     #$02
-	bcc     L0434
-	inx
-L0434:	jsr     asrax1
-	clc
-	adc     #$01
-	cmp     #$80
-	iny
-	sta     (sp),y
-;
-; spawn_bullet(cx, cy, dx, dy);
+; spawn_bullet(cx, 236, dx, -2);
 ;
 	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
 	ldy     #$07
 	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$00
-	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	jsr     _spawn_bullet
-;
-; angle_idx = (pattern_phase + 4) & 0x07;
-;
-	lda     _pattern_phase
-	clc
-	adc     #$04
-	and     #$07
-	ldy     #$00
-	sta     (sp),y
-;
-; dx = cos_table[angle_idx];
-;
-	lda     #<(_cos_table)
-	ldx     #>(_cos_table)
-	clc
-	adc     (sp),y
-	bcc     L0ACB
-	inx
-L0ACB:	jsr     ldaidx
 	ldy     #$02
 	sta     (sp),y
-;
-; dy = 1 + ((sin_table[angle_idx] + 2) >> 1);
-;
-	lda     #<(_sin_table)
-	ldx     #>(_sin_table)
-	ldy     #$00
-	clc
-	adc     (sp),y
-	bcc     L0ACC
-	inx
-L0ACC:	jsr     ldaidx
-	clc
-	adc     #$02
-	bcc     L044A
-	inx
-L044A:	jsr     asrax1
-	clc
-	adc     #$01
-	cmp     #$80
-	iny
-	sta     (sp),y
-;
-; spawn_bullet(cx, cy, dx, dy);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$00
-	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	jsr     _spawn_bullet
-;
-; ++pattern_phase;
-;
-	inc     _pattern_phase
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x1F) == 0) {
-;
-L0ACD:	lda     _bullet_timer
-	and     #$1F
-	beq     L0AE2
-;
-; }
-;
-	jmp     incsp6
-;
-; for (i = 0; i < 6; ++i) {
-;
-L0AE2:	dey
-L0AC4:	sta     (sp),y
-	cmp     #$06
-	bcs     L0ACF
-;
-; angle_idx = (i + pattern_phase) & 0x07;
-;
-	lda     (sp),y
-	clc
-	adc     _pattern_phase
-	and     #$07
-	ldy     #$00
-	sta     (sp),y
-;
-; dx = cos_table[angle_idx];
-;
-	lda     #<(_cos_table)
-	ldx     #>(_cos_table)
-	clc
-	adc     (sp),y
-	bcc     L0ACE
-	inx
-L0ACE:	jsr     ldaidx
-	ldy     #$02
-	sta     (sp),y
-;
-; dy = 1;
-;
-	lda     #$01
+	lda     #$EC
 	dey
 	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	lda     #$FE
+	jsr     _spawn_bullet
 ;
-; spawn_bullet(cx, cy, dx, dy);
+; if ((bullet_timer & 0x17) == 12) {
+;
+L1742:	lda     _bullet_timer
+	and     #$17
+	cmp     #$0C
+	bne     L1743
+;
+; cx = 176 - ((bullet_timer >> 2) & 0x3F);
+;
+	lda     #$B0
+	jsr     pusha0
+	lda     _bullet_timer
+	lsr     a
+	lsr     a
+	and     #$3F
+	jsr     tossuba0
+	ldy     #$04
+	sta     (sp),y
+;
+; dx = calc_aim_dx(cx);
+;
+	jsr     _calc_aim_dx
+	ldy     #$02
+	sta     (sp),y
+;
+; spawn_bullet(cx, 236, dx, -2);
 ;
 	jsr     decsp3
-	ldy     #$08
+	ldy     #$07
 	lda     (sp),y
 	ldy     #$02
 	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
+	lda     #$EC
+	dey
 	sta     (sp),y
 	ldy     #$05
 	lda     (sp),y
 	ldy     #$00
 	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
+	lda     #$FE
 	jsr     _spawn_bullet
 ;
-; for (i = 0; i < 6; ++i) {
+; if ((bullet_timer & 0x2F) == 0) {
 ;
-	ldy     #$03
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0AC4
-;
-; ++pattern_phase;
-;
-L0ACF:	inc     _pattern_phase
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x0F) == 0) {
-;
-L0AD0:	lda     _bullet_timer
-	and     #$0F
-	beq     L0AE3
+L1743:	lda     _bullet_timer
+	and     #$2F
+	beq     L174E
 ;
 ; }
 ;
 	jmp     incsp6
 ;
-; angle_idx = pattern_phase & 0x07;
+; cx = ROAD_LEFT + 64;
 ;
-L0AE3:	lda     _pattern_phase
-	and     #$07
-	ldy     #$00
+L174E:	lda     #$68
+	ldy     #$04
 	sta     (sp),y
 ;
-; dx = cos_table[angle_idx];
+; dx = calc_aim_dx(cx);
 ;
-	lda     #<(_cos_table)
-	ldx     #>(_cos_table)
-	clc
-	adc     (sp),y
-	bcc     L0AD1
-	inx
-L0AD1:	jsr     ldaidx
+	jsr     _calc_aim_dx
 	ldy     #$02
 	sta     (sp),y
 ;
-; spawn_bullet(cx - 8, cy, dx, 1);
+; spawn_bullet(cx, 232, dx, -3);
 ;
 	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	sec
-	sbc     #$08
-	ldy     #$02
-	sta     (sp),y
 	ldy     #$07
 	lda     (sp),y
-	ldy     #$01
+	ldy     #$02
+	sta     (sp),y
+	lda     #$E8
+	dey
 	sta     (sp),y
 	ldy     #$05
 	lda     (sp),y
 	ldy     #$00
 	sta     (sp),y
-	lda     #$01
+	lda     #$FD
 	jsr     _spawn_bullet
 ;
-; dx = cos_table[(angle_idx + 4) & 0x07];
-;
-	ldy     #$00
-	lda     (sp),y
-	clc
-	adc     #$04
-	and     #$07
-	clc
-	adc     #<(_cos_table)
-	tay
-	lda     #$00
-	adc     #>(_cos_table)
-	tax
-	tya
-	ldy     #$00
-	jsr     ldaidx
-	ldy     #$02
-	sta     (sp),y
-;
-; spawn_bullet(cx + 8, cy, dx, 1);
+; spawn_bullet(cx + 32, 232, calc_aim_dx(cx + 32), -3);
 ;
 	jsr     decsp3
-	ldy     #$08
+	ldy     #$07
 	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	lda     #$E8
+	dey
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$20
+	jsr     _calc_aim_dx
+	ldy     #$00
+	sta     (sp),y
+	lda     #$FD
+	jsr     _spawn_bullet
+;
+; return;
+;
+	jmp     incsp6
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L1744:	lda     #$00
+	ldy     #$05
+L173F:	sta     (sp),y
+	cmp     #$03
+	bcc     L174F
+;
+; }
+;
+	jmp     incsp6
+;
+; if (!enemy_on[i]) continue;
+;
+L174F:	lda     (sp),y
+	tay
+	lda     _enemy_on,y
+	jeq     L0921
+;
+; if (enemy_y[i] < 24 && enemy_y[i] < player_y) continue;
+;
+	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	cmp     #$18
+	bcs     L092B
+	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	cmp     _player_y
+	jcc     L0921
+;
+; cx = enemy_x[i] + 8;
+;
+L092B:	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
 	clc
 	adc     #$08
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$00
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; ++pattern_phase;
-;
-	inc     _pattern_phase
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x3F) == 0) {
-;
-L0AD2:	lda     _bullet_timer
-	and     #$3F
-	beq     L0AE4
-;
-; }
-;
-	jmp     incsp6
-;
-; spawn_bullet(cx, cy, 0, 2);       // Down
-;
-L0AE4:	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$00
-	dey
-	sta     (sp),y
-	lda     #$02
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, 2, 1);       // Down-right
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$02
-	dey
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, 2, -1);      // Up-right (but still moves down overall)
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$02
-	dey
-	sta     (sp),y
-	lda     #$FF
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, -2, 1);      // Down-left
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$FE
-	dey
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, -2, -1);     // Up-left
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$FE
-	dey
-	sta     (sp),y
-	lda     #$FF
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, 0, 1);       // Slow down
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$00
-	dey
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x0F) == 0) {
-;
-L0AD3:	lda     _bullet_timer
-	and     #$0F
-	beq     L0AE5
-;
-; }
-;
-	jmp     incsp6
-;
-; angle_idx = pattern_phase & 0x07;
-;
-L0AE5:	lda     _pattern_phase
-	and     #$07
-	ldy     #$00
+	ldy     #$04
 	sta     (sp),y
 ;
-; dx = sin_table[angle_idx];
+; cy = enemy_y[i] + 8;
 ;
-	lda     #<(_sin_table)
-	ldx     #>(_sin_table)
-	clc
-	adc     (sp),y
-	bcc     L0AD4
-	inx
-L0AD4:	jsr     ldaidx
-	ldy     #$02
-	sta     (sp),y
-;
-; spawn_bullet(cx - 16, cy, dx, 1);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	sec
-	sbc     #$10
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$00
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; dx = sin_table[(angle_idx + 4) & 0x07];
-;
-	ldy     #$00
-	lda     (sp),y
-	clc
-	adc     #$04
-	and     #$07
-	clc
-	adc     #<(_sin_table)
-	tay
-	lda     #$00
-	adc     #>(_sin_table)
-	tax
-	tya
-	ldy     #$00
-	jsr     ldaidx
-	ldy     #$02
-	sta     (sp),y
-;
-; spawn_bullet(cx + 16, cy, dx, 1);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	clc
-	adc     #$10
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$00
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; ++pattern_phase;
-;
-	inc     _pattern_phase
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x3F) == 0) {
-;
-L0AD5:	lda     _bullet_timer
-	and     #$3F
-	beq     L0AE6
-;
-; }
-;
-	jmp     incsp6
-;
-; for (i = 0; i < 8; ++i) {
-;
-L0AE6:	dey
-L0AC5:	sta     (sp),y
-	cmp     #$08
-	bcs     L0AD8
-;
-; angle_idx = (i + pattern_phase) & 0x07;
-;
-	lda     (sp),y
-	clc
-	adc     _pattern_phase
-	and     #$07
-	ldy     #$00
-	sta     (sp),y
-;
-; dx = cos_table[angle_idx];
-;
-	lda     #<(_cos_table)
-	ldx     #>(_cos_table)
-	clc
-	adc     (sp),y
-	bcc     L0AD6
-	inx
-L0AD6:	jsr     ldaidx
-	ldy     #$02
-	sta     (sp),y
-;
-; dy = (sin_table[angle_idx] >> 1) + 1;  // Mostly downward
-;
-	lda     #<(_sin_table)
-	ldx     #>(_sin_table)
-	ldy     #$00
-	clc
-	adc     (sp),y
-	bcc     L0AD7
-	inx
-L0AD7:	jsr     ldaidx
-	jsr     asrax1
-	clc
-	adc     #$01
-	cmp     #$80
 	iny
-	sta     (sp),y
-;
-; spawn_bullet(cx, cy, dx, dy);
-;
-	jsr     decsp3
-	ldy     #$08
 	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$00
-	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	jsr     _spawn_bullet
-;
-; for (i = 0; i < 8; ++i) {
-;
+	tay
+	lda     _enemy_y,y
+	clc
+	adc     #$08
 	ldy     #$03
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0AC5
-;
-; pattern_phase += 1;
-;
-L0AD8:	inc     _pattern_phase
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x0B) == 0) {  // Prime-ish interval
-;
-L0AD9:	lda     _bullet_timer
-	and     #$0B
-	beq     L0AE7
-;
-; }
-;
-	jmp     incsp6
-;
-; angle_idx = (pattern_phase * 5) & 0x07;  // Golden angle approx
-;
-L0AE7:	tax
-	lda     _pattern_phase
-	jsr     mulax5
-	and     #$07
-	ldy     #$00
 	sta     (sp),y
 ;
-; dx = cos_table[angle_idx];
+; if (enemy_rank[i] < 3 && !enemy_passed[i]) {
 ;
-	lda     #<(_cos_table)
-	ldx     #>(_cos_table)
-	clc
-	adc     (sp),y
-	bcc     L0ADA
-	inx
-L0ADA:	jsr     ldaidx
+	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _enemy_rank,y
+	cmp     #$03
+	bcs     L1749
+	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _enemy_passed,y
+	bne     L1749
+;
+; spawn_boss_danmaku(i, cx, cy);
+;
+	jsr     decsp2
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	jsr     _spawn_boss_danmaku
+;
+; continue;
+;
+	jmp     L0921
+;
+; if (burst_phase >= 48) continue;
+;
+L1749:	lda     _burst_phase
+	cmp     #$30
+	jcs     L0921
+;
+; dx = calc_aim_dx(cx);
+;
+	ldy     #$04
+	lda     (sp),y
+	jsr     _calc_aim_dx
 	ldy     #$02
 	sta     (sp),y
 ;
-; dy = 1;
+; dy = (enemy_y[i] > player_y) ? -3 : 3;
 ;
-	lda     #$01
+	ldy     #$05
+	lda     (sp),y
+	tay
+	ldx     #$00
+	lda     _enemy_y,y
+	sec
+	sbc     _player_y
+	bcc     L174A
+	beq     L174A
+	lda     #$FD
+	jmp     L0955
+L174A:	lda     #$03
+L0955:	cmp     #$80
+	ldy     #$01
+	sta     (sp),y
+;
+; mask = 0x17;
+;
+	lda     #$17
 	dey
 	sta     (sp),y
+;
+; if (loop_count >= 2) mask = 0x0F;
+;
+	lda     _loop_count
+	cmp     #$02
+	bcc     L174B
+	lda     #$0F
+	sta     (sp),y
+;
+; if (loop_count >= 3) mask = 0x0B;
+;
+L174B:	lda     _loop_count
+	cmp     #$03
+	bcc     L095E
+	lda     #$0B
+	sta     (sp),y
+;
+; if (dy < 0) mask |= 0x10;  // Slower when shooting up
+;
+L095E:	iny
+	lda     (sp),y
+	asl     a
+	bcc     L174C
+	dey
+	lda     (sp),y
+	ora     #$10
+	sta     (sp),y
+;
+; if (((bullet_timer + (i << 3)) & mask) == 0) {
+;
+L174C:	ldy     #$05
+	lda     (sp),y
+	jsr     aslax3
+	clc
+	adc     _bullet_timer
+	bcc     L173E
+	inx
+L173E:	sta     ptr1
+	stx     ptr1+1
+	ldx     #$00
+	lda     (sp,x)
+	and     ptr1
+	pha
+	txa
+	and     ptr1+1
+	tax
+	pla
+	cpx     #$00
+	bne     L0921
+	cmp     #$00
+	bne     L0921
 ;
 ; spawn_bullet(cx, cy, dx, dy);
 ;
 	jsr     decsp3
-	ldy     #$08
+	ldy     #$07
 	lda     (sp),y
 	ldy     #$02
 	sta     (sp),y
-	ldy     #$07
+	ldy     #$06
 	lda     (sp),y
 	ldy     #$01
 	sta     (sp),y
@@ -3202,138 +5725,13 @@ L0ADA:	jsr     ldaidx
 	lda     (sp),y
 	jsr     _spawn_bullet
 ;
-; ++pattern_phase;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
 ;
-	inc     _pattern_phase
-;
-; break;
-;
-	jmp     incsp6
-;
-; if ((bullet_timer & 0x1F) == 0) {
-;
-L0ADB:	lda     _bullet_timer
-	and     #$1F
-	beq     L0AE8
-;
-; }
-;
-	jmp     incsp6
-;
-; spawn_bullet(cx, cy, 0, 2);
-;
-L0AE8:	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$00
-	dey
-	sta     (sp),y
-	lda     #$02
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, 0, 1);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$00
-	dey
-	sta     (sp),y
+L0921:	ldy     #$05
+	clc
 	lda     #$01
-	jsr     _spawn_bullet
-;
-; if (pattern_phase & 1) {
-;
-	lda     _pattern_phase
-	and     #$01
-	beq     L0518
-;
-; spawn_bullet(cx, cy, 2, 1);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$02
-	dey
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, -2, 1);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$FE
-;
-; } else {
-;
-	jmp     L0ADE
-;
-; spawn_bullet(cx, cy, 1, 1);
-;
-L0518:	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	tya
-	dey
-	sta     (sp),y
-	jsr     _spawn_bullet
-;
-; spawn_bullet(cx, cy, -1, 1);
-;
-	jsr     decsp3
-	ldy     #$08
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$07
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$FF
-L0ADE:	dey
-	sta     (sp),y
-	lda     #$01
-	jsr     _spawn_bullet
-;
-; ++pattern_phase;
-;
-	inc     _pattern_phase
-;
-; }
-;
-	jmp     incsp6
+	adc     (sp),y
+	jmp     L173F
 
 .endproc
 
@@ -3350,62 +5748,83 @@ L0ADE:	dey
 ;
 ; for (i = 0; i < MAX_BULLETS; ++i) {
 ;
-	jsr     decsp3
+	jsr     decsp4
 	lda     #$00
-	ldy     #$02
-L0AE9:	sta     (sp),y
-	cmp     #$10
-	bcc     L0AEB
+	ldy     #$03
+L1750:	sta     (sp),y
+	cmp     #$30
+	bcc     L1757
 ;
 ; }
 ;
-	jmp     incsp3
+	jmp     incsp4
 ;
-; if (bullet_on[i]) {
+; if (!bullet_on[i]) continue;
 ;
-L0AEB:	lda     (sp),y
+L1757:	lda     (sp),y
 	tay
 	lda     _bullet_on,y
-	beq     L0533
+	jeq     L0975
+;
+; by = bullet_y[i];
+;
+	ldy     #$03
+	lda     (sp),y
+	tay
+	lda     _bullet_y,y
+	ldy     #$00
+	sta     (sp),y
+;
+; if ((frame_count & 1) && (by < 40 || by > 200)) {
+;
+	lda     _frame_count
+	and     #$01
+	beq     L0983
+	lda     (sp),y
+	cmp     #$28
+	bcc     L0975
+	cmp     #$C9
+;
+; continue;
+;
+	bcs     L0975
 ;
 ; nx = bullet_x[i] + bullet_dx[i];
 ;
-	ldy     #$02
+L0983:	ldy     #$03
 	lda     (sp),y
 	tay
 	lda     _bullet_x,y
 	jsr     pusha0
 	lda     #<(_bullet_dx)
 	ldx     #>(_bullet_dx)
-	ldy     #$04
+	ldy     #$05
 	clc
 	adc     (sp),y
-	bcc     L0542
+	bcc     L098F
 	inx
-L0542:	ldy     #$00
+L098F:	ldy     #$00
 	jsr     ldaidx
 	jsr     tosaddax
-	ldy     #$01
+	ldy     #$02
 	sta     (sp),y
 ;
-; ny = bullet_y[i] + bullet_dy[i];
+; ny = by + bullet_dy[i];
 ;
-	iny
-	lda     (sp),y
-	tay
-	lda     _bullet_y,y
+	ldx     #$00
+	lda     (sp,x)
 	jsr     pusha0
 	lda     #<(_bullet_dy)
 	ldx     #>(_bullet_dy)
-	ldy     #$04
+	ldy     #$05
 	clc
 	adc     (sp),y
-	bcc     L0548
+	bcc     L0993
 	inx
-L0548:	ldy     #$00
+L0993:	ldy     #$00
 	jsr     ldaidx
 	jsr     tosaddax
-	ldy     #$00
+	ldy     #$01
 	sta     (sp),y
 ;
 ; if (nx < 8 || nx > 248 || ny > 240) {
@@ -3413,17 +5832,17 @@ L0548:	ldy     #$00
 	iny
 	lda     (sp),y
 	cmp     #$08
-	bcc     L0AEA
+	bcc     L1756
 	cmp     #$F9
-	bcs     L0AEA
+	bcs     L1756
 	dey
 	lda     (sp),y
 	cmp     #$F1
-	bcc     L0549
+	bcc     L0994
 ;
 ; bullet_on[i] = 0;
 ;
-L0AEA:	ldy     #$02
+L1756:	ldy     #$03
 	lda     (sp),y
 	tay
 	lda     #$00
@@ -3431,11 +5850,11 @@ L0AEA:	ldy     #$02
 ;
 ; } else {
 ;
-	jmp     L0533
+	jmp     L0975
 ;
 ; bullet_x[i] = nx;
 ;
-L0549:	ldy     #$02
+L0994:	ldy     #$03
 	lda     (sp),y
 	tax
 	dey
@@ -3447,22 +5866,22 @@ L0549:	ldy     #$02
 	iny
 	lda     (sp),y
 	tax
-	ldy     #$00
+	ldy     #$01
 	lda     (sp),y
 	sta     _bullet_y,x
 ;
 ; for (i = 0; i < MAX_BULLETS; ++i) {
 ;
-L0533:	ldy     #$02
+L0975:	ldy     #$03
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AE9
+	jmp     L1750
 
 .endproc
 
 ; ---------------------------------------------------------------
-; void __near__ check_bullet_collisions (void)
+; unsigned char __near__ check_bullet_collisions (void)
 ; ---------------------------------------------------------------
 
 .segment	"CODE"
@@ -3472,68 +5891,119 @@ L0533:	ldy     #$02
 .segment	"CODE"
 
 ;
-; if (player_inv > 0) return;
+; unsigned char graze_found = 0;
 ;
-	jsr     decsp3
+	jsr     decsp5
+	lda     #$00
+	jsr     pusha
+;
+; if (player_inv > 0) return 0;
+;
 	lda     _player_inv
-	bne     L055D
+	jne     L1762
 ;
-; for (i = 0; i < MAX_BULLETS; ++i) {
-;
-	ldy     #$02
-L0AEC:	sta     (sp),y
-	cmp     #$10
-	bcs     L055D
-;
-; if (bullet_on[i]) {
-;
-	lda     (sp),y
-	tay
-	lda     _bullet_on,y
-	beq     L055E
-;
-; dx = abs_diff(player_x + 8, bullet_x[i]);
+; player_cx = player_x + 8;
 ;
 	lda     _player_x
 	clc
 	adc     #$08
-	jsr     pusha
-	ldy     #$03
-	lda     (sp),y
-	tay
-	lda     _bullet_x,y
-	jsr     _abs_diff
-	ldy     #$01
+	ldy     #$02
 	sta     (sp),y
 ;
-; dy = abs_diff(player_y + 8, bullet_y[i]);
+; player_cy = player_y + 8;
 ;
 	lda     _player_y
 	clc
 	adc     #$08
-	jsr     pusha
-	ldy     #$03
+	dey
+	sta     (sp),y
+;
+; for (i = 0; i < MAX_BULLETS; ++i) {
+;
+	lda     #$00
+	ldy     #$05
+L1759:	sta     (sp),y
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$30
+	jcs     L09B0
+;
+; if (!bullet_on[i]) continue;
+;
+	tay
+	lda     _bullet_on,y
+	jeq     L09B1
+;
+; dx = (player_cx >= bullet_x[i]) ? (player_cx - bullet_x[i]) : (bullet_x[i] - player_cx);
+;
+	ldy     #$02
+	lda     (sp),y
+	jsr     pusha0
+	ldy     #$07
+	lda     (sp),y
+	tay
+	lda     _bullet_x,y
+	jsr     tosicmp0
+	bcc     L09C0
+	ldy     #$02
+	lda     (sp),y
+	jsr     pusha0
+	ldy     #$07
+	lda     (sp),y
+	tay
+	lda     _bullet_x,y
+	jsr     tossuba0
+	jmp     L09C5
+L09C0:	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _bullet_x,y
+	sec
+	ldy     #$02
+	sbc     (sp),y
+L09C5:	ldy     #$04
+	sta     (sp),y
+;
+; dy = (player_cy >= bullet_y[i]) ? (player_cy - bullet_y[i]) : (bullet_y[i] - player_cy);
+;
+	ldy     #$01
+	lda     (sp),y
+	jsr     pusha0
+	ldy     #$07
 	lda     (sp),y
 	tay
 	lda     _bullet_y,y
-	jsr     _abs_diff
-	ldy     #$00
+	jsr     tosicmp0
+	bcc     L09CF
+	ldy     #$01
+	lda     (sp),y
+	jsr     pusha0
+	ldy     #$07
+	lda     (sp),y
+	tay
+	lda     _bullet_y,y
+	jsr     tossuba0
+	jmp     L09D4
+L09CF:	ldy     #$05
+	lda     (sp),y
+	tay
+	lda     _bullet_y,y
+	sec
+	ldy     #$01
+	sbc     (sp),y
+L09D4:	ldy     #$03
 	sta     (sp),y
 ;
-; if (dx < 10 && dy < 10) {
+; if (dx < 4 && dy < 4) {
 ;
 	iny
 	lda     (sp),y
-	cmp     #$0A
-	bcs     L055E
+	cmp     #$04
+	bcs     L1763
 	dey
 	lda     (sp),y
-	cmp     #$0A
-	bcs     L055E
-;
-; --player_hp;
-;
-	dec     _player_hp
+	cmp     #$04
+	bcs     L09D9
 ;
 ; player_inv = 60;
 ;
@@ -3542,34 +6012,386 @@ L0AEC:	sta     (sp),y
 ;
 ; bullet_on[i] = 0;
 ;
-	ldy     #$02
+	ldy     #$05
 	lda     (sp),y
 	tay
-	lda     #$00
+	ldx     #$00
+	txa
 	sta     _bullet_on,y
 ;
-; if (player_hp == 0) {
+; if (score > 0) --score;
 ;
+	lda     _score
+	ora     _score+1
+	beq     L175D
+	lda     _score
+	sec
+	sbc     #$01
+	sta     _score
+	bcs     L175D
+	dec     _score+1
+;
+; score_multiplier = 1;
+;
+L175D:	lda     #$01
+	sta     _score_multiplier
+	stx     _score_multiplier+1
+;
+; graze_count = 0;
+;
+	stx     _graze_count
+;
+; sfx_damage();
+;
+	jsr     _sfx_damage
+;
+; if (player_hp > 0) --player_hp;
+;
+	ldx     #$00
 	lda     _player_hp
-	bne     L055E
+	beq     L175E
+	dec     _player_hp
 ;
-; game_state = STATE_GAMEOVER; music_play(3);
+; if (player_hp == 0) do_game_over();
 ;
-	lda     #$03
-	sta     _game_state
-	jsr     _music_play
+L175E:	lda     _player_hp
+	bne     L175F
+	jsr     _do_game_over
+;
+; return 1;
+;
+	ldx     #$00
+L175F:	lda     #$01
+	jmp     incsp6
+;
+; if (dx < 10 && dy < 10) {
+;
+L09D9:	iny
+L1763:	lda     (sp),y
+	cmp     #$0A
+	bcs     L09B1
+	dey
+	lda     (sp),y
+	cmp     #$0A
+	bcs     L09B1
+;
+; graze_found = 1;
+;
+	lda     #$01
+	ldy     #$00
+	sta     (sp),y
 ;
 ; for (i = 0; i < MAX_BULLETS; ++i) {
 ;
-L055E:	ldy     #$02
+L09B1:	ldy     #$05
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AEC
+	jmp     L1759
+;
+; if (graze_found) {
+;
+L09B0:	lda     (sp,x)
+	beq     L09A4
+;
+; add_score(score_multiplier * (1 << loop_count));
+;
+	lda     _score_multiplier
+	ldx     _score_multiplier+1
+	jsr     pushax
+	ldy     _loop_count
+	lda     #$01
+	ldx     #$00
+	jsr     aslaxy
+	jsr     tosumulax
+	jsr     _add_score
+;
+; if (score_multiplier < 65535u) ++score_multiplier;
+;
+	lda     _score_multiplier+1
+	cmp     #$FF
+	bne     L0A01
+	lda     _score_multiplier
+	cmp     #$FF
+L0A01:	bcs     L09FF
+	inc     _score_multiplier
+	bne     L09FF
+	inc     _score_multiplier+1
+;
+; ++graze_count;
+;
+L09FF:	inc     _graze_count
+;
+; if (graze_count >= 20) {  // 20 grazes for +1 HP (balanced recovery)
+;
+	lda     _graze_count
+	cmp     #$14
+	bcc     L0A09
+;
+; graze_count = 0;
+;
+	lda     #$00
+	sta     _graze_count
+;
+; if (player_hp < PLAYER_MAX_HP) ++player_hp;
+;
+	lda     _player_hp
+	cmp     #$64
+	bcs     L0A09
+	inc     _player_hp
+;
+; sfx_graze();
+;
+L0A09:	jsr     _sfx_graze
+;
+; return 0;
+;
+L1762:	ldx     #$00
+	txa
 ;
 ; }
 ;
-L055D:	jmp     incsp3
+L09A4:	jmp     incsp6
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ init_save (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_init_save: near
+
+.segment	"CODE"
+
+;
+; unsigned char sram_ok = 1;
+;
+	jsr     decsp1
+	lda     #$01
+	jsr     pusha
+;
+; *((volatile unsigned char*)0x6100) = 0xAA;
+;
+	lda     #$AA
+	sta     $6100
+;
+; if (!sram_ok || save_magic != SAVE_MAGIC) {
+;
+	ldy     #$00
+	lda     (sp),y
+	beq     L1769
+	lda     _save_magic
+	cmp     #$52
+	jeq     L176D
+;
+; save_magic = SAVE_MAGIC;
+;
+L1769:	lda     #$52
+	sta     _save_magic
+;
+; for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+;
+	tya
+	iny
+L1766:	sta     (sp),y
+	cmp     #$03
+	bcs     L176A
+;
+; high_scores[i] = 0;
+;
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L1767
+	inx
+	clc
+L1767:	adc     #<(_high_scores)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores)
+	sta     ptr1+1
+	lda     #$00
+	dey
+	sta     (ptr1),y
+	iny
+	sta     (ptr1),y
+;
+; high_scores_high[i] = 0;
+;
+	tax
+	lda     (sp),y
+	asl     a
+	bcc     L1768
+	inx
+	clc
+L1768:	adc     #<(_high_scores_high)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores_high)
+	sta     ptr1+1
+	lda     #$00
+	dey
+	sta     (ptr1),y
+	iny
+	sta     (ptr1),y
+;
+; high_names[i][0] = 0;  // A
+;
+	tax
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     #$00
+	dey
+	sta     (ptr1),y
+;
+; high_names[i][1] = 0;  // A
+;
+	iny
+	tax
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     #$00
+	sta     (ptr1),y
+;
+; high_names[i][2] = 0;  // A
+;
+	tax
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	lda     #$00
+	iny
+	sta     (ptr1),y
+;
+; for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+;
+	dey
+	clc
+	tya
+	adc     (sp),y
+	jmp     L1766
+;
+; max_loop = 0;  // No loops completed yet
+;
+L176A:	lda     #$00
+	sta     _max_loop
+;
+; if (title_select_loop > max_loop) {
+;
+L176D:	lda     _title_select_loop
+	sec
+	sbc     _max_loop
+	bcc     L176C
+	beq     L176C
+;
+; title_select_loop = 0;
+;
+	lda     #$00
+	sta     _title_select_loop
+;
+; title_select_loop = 0;  // Default to starting from loop 1
+;
+L176C:	lda     #$00
+	sta     _title_select_loop
+;
+; }
+;
+	jmp     incsp2
+
+.endproc
+
+; ---------------------------------------------------------------
+; unsigned char __near__ score_greater (unsigned int, unsigned int, unsigned int, unsigned int)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_score_greater: near
+
+.segment	"CODE"
+
+;
+; unsigned int b_high, unsigned int b_low) {
+;
+	jsr     pushax
+;
+; if (a_high > b_high) return 1;
+;
+	ldy     #$07
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	sec
+	ldy     #$02
+	sbc     (sp),y
+	sta     tmp1
+	txa
+	iny
+	sbc     (sp),y
+	ora     tmp1
+	bcc     L0A40
+	beq     L0A40
+	ldx     #$00
+	lda     #$01
+	jmp     incsp8
+;
+; if (a_high < b_high) return 0;
+;
+L0A40:	ldy     #$07
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	ldy     #$02
+	cmp     (sp),y
+	txa
+	iny
+	sbc     (sp),y
+	bcs     L0A43
+	ldx     #$00
+	txa
+	jmp     incsp8
+;
+; return a_low > b_low;
+;
+L0A43:	ldy     #$05
+	lda     (sp),y
+	tax
+	dey
+	lda     (sp),y
+	sec
+	ldy     #$00
+	sbc     (sp),y
+	sta     tmp1
+	txa
+	iny
+	sbc     (sp),y
+	ora     tmp1
+	jsr     boolugt
+;
+; }
+;
+	jmp     incsp8
 
 .endproc
 
@@ -3595,7 +6417,7 @@ L055D:	jmp     incsp3
 	lda     #$C8
 	sta     _player_y
 ;
-; player_hp = PLAYER_MAX_HP;
+; player_hp = PLAYER_START_HP;
 ;
 	lda     #$05
 	sta     _player_hp
@@ -3605,24 +6427,56 @@ L055D:	jmp     incsp3
 	lda     #$00
 	sta     _player_inv
 ;
-; enemy_on = 0;
+; for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
 ;
-	sta     _enemy_on
+	tay
+L176E:	sta     (sp),y
+	cmp     #$03
+	bcs     L1771
+	lda     (sp),y
+	tay
+	lda     #$00
+	sta     _enemy_on,y
+	tay
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L176E
 ;
-; position = 2;
+; enemy_slot = 0;
 ;
-	lda     #$02
+L1771:	tya
+	sta     _enemy_slot
+;
+; enemy_warn_timer = 0;
+;
+	sta     _enemy_warn_timer
+;
+; position = 12;  // Start in 12th place (last of 12 cars)
+;
+	lda     #$0C
 	sta     _position
 ;
 ; lap_count = 0;
 ;
-	lda     #$00
-	sta     _lap_count
+	sty     _lap_count
+;
+; loop_count = title_select_loop;  // Start from selected loop
+;
+	lda     _title_select_loop
+	sta     _loop_count
 ;
 ; score = 0;
 ;
+	ldx     #$00
+	txa
 	sta     _score
 	sta     _score+1
+;
+; score_high = 0;
+;
+	sta     _score_high
+	sta     _score_high+1
 ;
 ; distance = 0;
 ;
@@ -3633,34 +6487,58 @@ L055D:	jmp     incsp3
 ;
 	sta     _scroll_y
 ;
-; for (i = 0; i < 4; ++i) {
+; score_multiplier = 1;  // Start with 1x multiplier
 ;
-	tay
-L0AEF:	sta     (sp),y
-	cmp     #$04
-	bcs     L0AF1
-;
-; obs_on[i] = 0;
-;
-	lda     (sp),y
-	tay
-	lda     #$00
-	sta     _obs_on,y
-;
-; for (i = 0; i < 4; ++i) {
-;
-	tay
-	clc
 	lda     #$01
-	adc     (sp),y
-	jmp     L0AEF
+	sta     _score_multiplier
+	stx     _score_multiplier+1
+;
+; graze_count = 0;
+;
+	txa
+	sta     _graze_count
+;
+; car_graze_cooldown = 0;
+;
+	sta     _car_graze_cooldown
+;
+; boost_remaining = 2;   // 2 boosts per loop
+;
+	lda     #$02
+	sta     _boost_remaining
+;
+; boost_active = 0;
+;
+	txa
+	sta     _boost_active
+;
+; boss_music_active = 0; // No boss music at start
+;
+	sta     _boss_music_active
+;
+; explode_timer = 0;
+;
+	sta     _explode_timer
+;
+; if (loop_count > 0) {
+;
+	lda     _loop_count
+	beq     L176F
+;
+; music_intensity = 1;  // Loop 2+: moderate start
+;
+	lda     #$01
+;
+; music_intensity = 0;  // Loop 1: calm start
+;
+L176F:	sta     _music_intensity
 ;
 ; for (i = 0; i < MAX_BULLETS; ++i) {
 ;
-L0AF1:	tya
-L0AF0:	sta     (sp),y
-	cmp     #$10
-	bcs     L0AF2
+	txa
+L1770:	sta     (sp),y
+	cmp     #$30
+	bcs     L1773
 ;
 ; bullet_on[i] = 0;
 ;
@@ -3675,12 +6553,16 @@ L0AF0:	sta     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0AF0
+	jmp     L1770
 ;
 ; bullet_timer = 0;
 ;
-L0AF2:	tya
+L1773:	tya
 	sta     _bullet_timer
+;
+; bullet_next = 0;
+;
+	sta     _bullet_next
 ;
 ; pattern_phase = 0;
 ;
@@ -3690,13 +6572,43 @@ L0AF2:	tya
 ;
 	sta     _pattern_type
 ;
+; ppu_off();
+;
+	jsr     _ppu_off
+;
+; load_palettes();
+;
+	jsr     _load_palettes
+;
+; update_loop_palette();  // Override road/grass colors based on loop_count
+;
+	jsr     _update_loop_palette
+;
 ; draw_road();
 ;
 	jsr     _draw_road
 ;
-; prepare_enemy();  // Start with warning marker
+; enemy_next_x = ROAD_LEFT + 8 + (rnd() & 0x7F);
 ;
-	jsr     _prepare_enemy
+	jsr     _rnd
+	and     #$7F
+	clc
+	adc     #$30
+	sta     _enemy_next_x
+;
+; if (enemy_next_x > ROAD_RIGHT - 24) {
+;
+	cmp     #$C1
+	bcc     L0B24
+;
+; enemy_next_x = ROAD_RIGHT - 24;
+;
+	lda     #$C0
+	sta     _enemy_next_x
+;
+; spawn_enemy();
+;
+L0B24:	jsr     _spawn_enemy
 ;
 ; }
 ;
@@ -3715,102 +6627,244 @@ L0AF2:	tya
 .segment	"CODE"
 
 ;
+; unsigned char speed = (pad_now & BTN_B) ? 4 : PLAYER_SPEED;
+;
+	lda     _pad_now
+	and     #$40
+	beq     L1775
+	lda     #$04
+	jmp     L1776
+L1775:	lda     #$02
+L1776:	jsr     pusha
+;
 ; if (pad_now & BTN_LEFT) {
 ;
 	lda     _pad_now
 	and     #$02
-	beq     L0AF3
+	beq     L1777
 ;
-; if (player_x > ROAD_LEFT) player_x -= PLAYER_SPEED;
+; if (player_x > ROAD_LEFT) player_x -= speed;
 ;
 	lda     _player_x
-	cmp     #$41
-	bcc     L0AF3
+	cmp     #$29
+	bcc     L1777
+	ldy     #$00
+	lda     (sp),y
+	eor     #$FF
 	sec
-	sbc     #$02
+	adc     _player_x
 	sta     _player_x
 ;
 ; if (pad_now & BTN_RIGHT) {
 ;
-L0AF3:	lda     _pad_now
+L1777:	lda     _pad_now
 	and     #$01
-	beq     L0AF4
+	beq     L1778
 ;
-; if (player_x < ROAD_RIGHT - 16) player_x += PLAYER_SPEED;
+; if (player_x < ROAD_RIGHT - 16) player_x += speed;
 ;
 	lda     _player_x
-	cmp     #$B0
-	bcs     L0AF4
-	lda     #$02
+	cmp     #$C8
+	bcs     L1778
+	ldy     #$00
+	lda     (sp),y
 	clc
 	adc     _player_x
 	sta     _player_x
 ;
 ; if (pad_now & BTN_UP) {
 ;
-L0AF4:	lda     _pad_now
+L1778:	lda     _pad_now
 	and     #$08
-	beq     L0AF5
+	beq     L177C
 ;
-; if (player_y > 32) player_y -= PLAYER_SPEED;
+; if (player_y > 60) {
 ;
 	lda     _player_y
-	cmp     #$21
-	bcc     L0AF5
+	cmp     #$3D
+;
+; } else if (player_y > 40) {
+;
+	bcs     L1781
+	cmp     #$29
+	bcc     L177A
+;
+; if ((frame_count & 1) == 0) player_y -= speed;
+;
+	lda     _frame_count
+	and     #$01
+;
+; } else if (player_y > 24) {
+;
+	jmp     L1782
+L177A:	lda     _player_y
+	cmp     #$19
+	bcc     L177B
+;
+; if ((frame_count & 3) == 0) player_y -= speed;
+;
+	lda     _frame_count
+	and     #$03
+;
+; } else if (player_y > 16) {
+;
+	jmp     L1782
+L177B:	lda     _player_y
+	cmp     #$11
+	bcc     L177C
+;
+; if ((frame_count & 7) == 0) player_y -= speed;
+;
+	lda     _frame_count
+	and     #$07
+L1782:	bne     L177C
+L1781:	ldy     #$00
+	lda     (sp),y
+	eor     #$FF
 	sec
-	sbc     #$02
+	adc     _player_y
 	sta     _player_y
 ;
 ; if (pad_now & BTN_DOWN) {
 ;
-L0AF5:	lda     _pad_now
+L177C:	lda     _pad_now
 	and     #$04
-	beq     L0AF6
+	beq     L0B5F
 ;
-; if (player_y < SCREEN_HEIGHT - 32) player_y += PLAYER_SPEED;
+; if (player_y < SCREEN_HEIGHT - 32) player_y += speed;
 ;
 	lda     _player_y
 	cmp     #$D0
-	bcs     L0AF6
-	lda     #$02
+	bcs     L0B5F
+	ldy     #$00
+	lda     (sp),y
 	clc
 	adc     _player_y
 	sta     _player_y
 ;
-; if (player_x <= ROAD_LEFT + 8 && player_hp < PLAYER_MAX_HP) {
+; }
 ;
-L0AF6:	lda     _player_x
-	cmp     #$49
-	bcs     L0AF9
-	lda     _player_hp
-	cmp     #$05
-	bcs     L0AF9
+L0B5F:	jmp     incsp1
+
+.endproc
+
+; ---------------------------------------------------------------
+; unsigned char __near__ count_enemies_ahead (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_count_enemies_ahead: near
+
+.segment	"CODE"
+
 ;
-; if ((frame_count & 0x3F) == 0) {
+; unsigned char i, count = 0;
 ;
-	lda     _frame_count
-	and     #$3F
-	bne     L0AF9
-;
-; game_state = STATE_PITSTOP;
-;
-	lda     #$02
-	sta     _game_state
-;
-; pit_timer = 0;
-;
+	jsr     decsp1
 	lda     #$00
-	sta     _pit_timer
+	jsr     pusha
 ;
-; if (player_inv > 0) --player_inv;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
 ;
-L0AF9:	lda     _player_inv
-	beq     L05E1
-	dec     _player_inv
+	ldy     #$01
+L1783:	sta     (sp),y
+	cmp     #$03
+	bcs     L0B66
+;
+; if (enemy_on[i] && !enemy_passed[i]) ++count;
+;
+	lda     (sp),y
+	tay
+	lda     _enemy_on,y
+	beq     L0B67
+	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     _enemy_passed,y
+	bne     L0B67
+	tay
+	clc
+	lda     #$01
+	adc     (sp),y
+	sta     (sp),y
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L0B67:	ldy     #$01
+	clc
+	tya
+	adc     (sp),y
+	jmp     L1783
+;
+; return count;
+;
+L0B66:	ldx     #$00
+	lda     (sp,x)
 ;
 ; }
 ;
-L05E1:	rts
+	jmp     incsp2
+
+.endproc
+
+; ---------------------------------------------------------------
+; unsigned char __near__ has_active_boss (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_has_active_boss: near
+
+.segment	"CODE"
+
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+	jsr     decsp1
+	lda     #$00
+	tay
+L1787:	sta     (sp),y
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$03
+	bcs     L178B
+;
+; if (enemy_on[i] && !enemy_passed[i] && enemy_rank[i] < 3) {
+;
+	tay
+	lda     _enemy_on,y
+	beq     L0B7A
+	lda     (sp,x)
+	tay
+	lda     _enemy_passed,y
+	bne     L0B7A
+	lda     (sp,x)
+	tay
+	lda     _enemy_rank,y
+	cmp     #$03
+	bcs     L0B7A
+;
+; return 1;
+;
+	lda     #$01
+	jmp     incsp1
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L0B7A:	ldy     #$00
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L1787
+;
+; return 0;
+;
+L178B:	txa
+;
+; }
+;
+	jmp     incsp1
 
 .endproc
 
@@ -3825,12 +6879,80 @@ L05E1:	rts
 .segment	"CODE"
 
 ;
-; if (!enemy_on && enemy_warn_timer > 0) {
+; if (position == 1) {
 ;
-	lda     _enemy_on
-	bne     L05E5
+	jsr     decsp2
+	lda     _position
+	cmp     #$01
+	bne     L0B8D
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
+;
+	lda     #$00
+	ldy     #$01
+L178C:	sta     (sp),y
+	cmp     #$03
+	bcs     L1791
+	lda     (sp),y
+	tay
+	lda     #$00
+	sta     _enemy_on,y
+	ldy     #$01
+	clc
+	tya
+	adc     (sp),y
+	jmp     L178C
+;
+; enemy_warn_timer = 0;
+;
+L1791:	lda     #$00
+	sta     _enemy_warn_timer
+;
+; return;
+;
+	jmp     incsp2
+;
+; enemies_ahead = count_enemies_ahead();
+;
+L0B8D:	jsr     _count_enemies_ahead
+	ldy     #$00
+	sta     (sp),y
+;
+; if (enemies_ahead < position - 1 && enemies_ahead < MAX_ENEMIES && enemy_warn_timer == 0) {
+;
+	lda     (sp),y
+	jsr     pusha0
+	lda     _position
+	sec
+	sbc     #$01
+	bcs     L0BA1
+	ldx     #$FF
+L0BA1:	jsr     tosicmp
+	bcs     L1795
+	ldy     #$00
+	lda     (sp),y
+	cmp     #$03
+	bcs     L1795
 	lda     _enemy_warn_timer
-	beq     L05E5
+	bne     L1795
+;
+; if (position <= 4 && has_active_boss()) {
+;
+	lda     _position
+	cmp     #$05
+	bcs     L0BA4
+	jsr     _has_active_boss
+	tax
+	bne     L1795
+;
+; prepare_enemy();
+;
+L0BA4:	jsr     _prepare_enemy
+;
+; if (enemy_warn_timer > 0) {
+;
+L1795:	lda     _enemy_warn_timer
+	beq     L1798
 ;
 ; --enemy_warn_timer;
 ;
@@ -3838,200 +6960,323 @@ L05E1:	rts
 ;
 ; if (enemy_warn_timer == 0) {
 ;
-	beq     L0B00
+	bne     L1797
 ;
-; }
+; if (count_enemies_ahead() < position - 1) {
 ;
-	rts
+	jsr     _count_enemies_ahead
+	jsr     pushax
+	ldx     #$00
+	lda     _position
+	sec
+	sbc     #$01
+	bcs     L0BB1
+	dex
+L0BB1:	jsr     tosicmp
+	bcs     L1797
+;
+; if (position <= 4 && has_active_boss()) {
+;
+	lda     _position
+	cmp     #$05
+	bcs     L0BB2
+	jsr     _has_active_boss
+	tax
+	bne     L1797
 ;
 ; spawn_enemy();
 ;
-L0B00:	jmp     _spawn_enemy
+L0BB2:	jsr     _spawn_enemy
 ;
-; if (!enemy_on) {
+; for (i = 0; i < MAX_ENEMIES; ++i) {
 ;
-L05E5:	lda     _enemy_on
+L1797:	lda     #$00
+L1798:	ldy     #$01
+L1790:	sta     (sp),y
+	cmp     #$03
+	bcc     L17AF
 ;
-; prepare_enemy();
+; }
 ;
-	jeq     _prepare_enemy
+	jmp     incsp2
 ;
-; enemy_y += enemy_speed;
+; if (!enemy_on[i]) continue;
 ;
-	lda     _enemy_speed
+L17AF:	lda     (sp),y
+	tay
+	lda     _enemy_on,y
+	jeq     L0BBA
+;
+; if (enemy_passed[i]) {
+;
+	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     _enemy_passed,y
+	beq     L0BC4
+;
+; enemy_y[i] += 2;
+;
+	lda     #<(_enemy_y)
+	ldx     #>(_enemy_y)
+	ldy     #$01
 	clc
-	adc     _enemy_y
-	sta     _enemy_y
+	adc     (sp),y
+	bcc     L0BCA
+	inx
+L0BCA:	sta     ptr1
+	stx     ptr1+1
+	dey
+	lda     (ptr1),y
+	clc
+	adc     #$02
 ;
-; if ((frame_count & 0x07) == 0) {
+; } else if (enemy_rank[i] < 3) {
+;
+	jmp     L178D
+L0BC4:	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     _enemy_rank,y
+	cmp     #$03
+	bcs     L1799
+;
+; if ((frame_count & 3) == 0) {
 ;
 	lda     _frame_count
-	and     #$07
-	bne     L0AFF
+	and     #$03
+	bne     L0BDA
 ;
-; if (enemy_x + 8 < player_x && enemy_x < ROAD_RIGHT - 24) {
+; } else {
 ;
-	tax
-	lda     _enemy_x
+	jmp     L17AE
+;
+; if (frame_count & 1) {
+;
+L1799:	lda     _frame_count
+	and     #$01
+	beq     L0BDA
+;
+; enemy_y[i] += 1;
+;
+L17AE:	lda     #<(_enemy_y)
+	ldx     #>(_enemy_y)
+	ldy     #$01
+	clc
+	adc     (sp),y
+	bcc     L0BDE
+	inx
+L0BDE:	sta     ptr1
+	stx     ptr1+1
+	dey
+	lda     (ptr1),y
+	clc
+	adc     #$01
+L178D:	sta     (ptr1),y
+;
+; switch (loop_count) {
+;
+L0BDA:	jsr     decsp1
+	lda     _loop_count
+;
+; }
+;
+	beq     L179A
+	cmp     #$01
+	beq     L179B
+	jmp     L179C
+;
+; case 0:  move_mask = 0x07; break;  // Every 8 frames
+;
+L179A:	lda     #$07
+	jmp     L17A3
+;
+; case 1:  move_mask = 0x03; break;  // Every 4 frames
+;
+L179B:	lda     #$03
+	jmp     L17A3
+;
+; default: move_mask = 0x01; break;  // Every 2 frames
+;
+L179C:	lda     #$01
+L17A3:	ldy     #$00
+	sta     (sp),y
+;
+; if (!enemy_passed[i] && enemy_rank[i] >= 3 && (frame_count & move_mask) == 0) {
+;
+	ldy     #$02
+	lda     (sp),y
+	tay
+	lda     _enemy_passed,y
+	jne     L0C06
+	ldy     #$02
+	lda     (sp),y
+	tay
+	lda     _enemy_rank,y
+	cmp     #$03
+	jcc     L0C06
+	ldx     #$00
+	lda     (sp,x)
+	and     _frame_count
+	pha
+	pla
+	bne     L0C06
+;
+; if (enemy_x[i] + 8 < player_x && enemy_x[i] < ROAD_RIGHT - 24) {
+;
+	ldy     #$02
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
 	clc
 	adc     #$08
-	bcc     L05F8
+	bcc     L0BFC
 	inx
-L05F8:	cmp     _player_x
+L0BFC:	cmp     _player_x
 	txa
 	sbc     #$00
-	bcs     L05F9
-	lda     _enemy_x
-	cmp     #$A8
-	bcc     L0AFC
-L05F9:	jmp     L0AFD
+	bcs     L0BF8
+	ldy     #$02
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
+	cmp     #$C0
+	bcs     L0BF8
 ;
-; enemy_x += 1;  // Move right to block
+; enemy_x[i] += 1;
 ;
-L0AFC:	inc     _enemy_x
+	lda     #<(_enemy_x)
+	ldx     #>(_enemy_x)
+	ldy     #$02
+	clc
+	adc     (sp),y
+	bcc     L0C03
+	inx
+L0C03:	sta     ptr1
+	stx     ptr1+1
+	ldy     #$00
+	lda     (ptr1),y
+	clc
+	adc     #$01
 ;
-; } else if (enemy_x > player_x + 8 && enemy_x > ROAD_LEFT + 8) {
+; } else if (enemy_x[i] > player_x + 8 && enemy_x[i] > ROAD_LEFT + 8) {
 ;
-	jmp     L0AFF
-L0AFD:	lda     _enemy_x
+	jmp     L178F
+L0BF8:	ldy     #$02
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
 	jsr     pusha0
 	lda     _player_x
 	clc
 	adc     #$08
-	bcc     L0600
+	bcc     L0C0A
 	ldx     #$01
-L0600:	jsr     tosicmp
-	bcc     L0AFF
-	beq     L0AFF
-	lda     _enemy_x
-	cmp     #$49
-	bcc     L0AFF
-;
-; enemy_x -= 1;  // Move left to block
-;
-	dec     _enemy_x
-;
-; if (enemy_y > SCREEN_HEIGHT) {
-;
-L0AFF:	lda     _enemy_y
-	cmp     #$F1
-	bcc     L060E
-;
-; enemy_on = 0;
-;
-	lda     #$00
-	sta     _enemy_on
-;
-; score += 50;
-;
-	lda     #$32
-	clc
-	adc     _score
-	sta     _score
-	bcc     L060B
-	inc     _score+1
-;
-; position = 1;
-;
-L060B:	lda     #$01
-	sta     _position
-;
-; if (lap_count < 3) {
-;
-	lda     _lap_count
-	cmp     #$03
-	bcs     L060E
-;
-; prepare_enemy();  // Show warning for next enemy
-;
-	jsr     _prepare_enemy
-;
-; position = 2;
-;
-	lda     #$02
-	sta     _position
-;
-; }
-;
-L060E:	rts
-
-.endproc
-
-; ---------------------------------------------------------------
-; void __near__ update_obstacles (void)
-; ---------------------------------------------------------------
-
-.segment	"CODE"
-
-.proc	_update_obstacles: near
-
-.segment	"CODE"
-
-;
-; for (i = 0; i < 4; ++i) {
-;
-	jsr     decsp1
-	lda     #$00
-	tay
-L0B01:	sta     (sp),y
-	cmp     #$04
-	bcs     L0615
-;
-; if (obs_on[i]) {
-;
+L0C0A:	jsr     tosicmp
+	bcc     L0C06
+	beq     L0C06
+	ldy     #$02
 	lda     (sp),y
 	tay
-	lda     _obs_on,y
-	beq     L0616
+	lda     _enemy_x,y
+	cmp     #$31
+	bcc     L0C06
 ;
-; obs_y[i] += SCROLL_SPEED;
+; enemy_x[i] -= 1;
 ;
-	lda     #<(_obs_y)
-	ldx     #>(_obs_y)
-	ldy     #$00
+	lda     #<(_enemy_x)
+	ldx     #>(_enemy_x)
+	ldy     #$02
 	clc
 	adc     (sp),y
-	bcc     L0622
+	bcc     L0C11
 	inx
-L0622:	sta     ptr1
+L0C11:	sta     ptr1
 	stx     ptr1+1
-	lda     (ptr1),y
-	clc
-	adc     #$02
-	sta     (ptr1),y
-;
-; if (obs_y[i] > SCREEN_HEIGHT) {
-;
-	lda     (sp),y
-	tay
-	lda     _obs_y,y
-	cmp     #$F1
-	bcc     L0616
-;
-; obs_on[i] = 0;
-;
 	ldy     #$00
-	lda     (sp),y
-	tay
-	lda     #$00
-	sta     _obs_on,y
-;
-; for (i = 0; i < 4; ++i) {
-;
-L0616:	ldy     #$00
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0B01
+	lda     (ptr1),y
+	sec
+	sbc     #$01
+L178F:	sta     (ptr1),y
 ;
 ; }
 ;
-L0615:	jmp     incsp1
+L0C06:	jsr     incsp1
+;
+; if (player_y + 16 < enemy_y[i] && !enemy_passed[i]) {
+;
+	ldx     #$00
+	lda     _player_y
+	clc
+	adc     #$10
+	bcc     L0C15
+	inx
+L0C15:	jsr     pushax
+	ldy     #$03
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	jsr     tosicmp0
+	bcs     L0C13
+	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     _enemy_passed,y
+	bne     L0C13
+;
+; enemy_passed[i] = 1;
+;
+	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     #$01
+	sta     _enemy_passed,y
+;
+; add_score(20 * score_multiplier);
+;
+	lda     _score_multiplier
+	ldx     _score_multiplier+1
+	jsr     pushax
+	lda     #$14
+	jsr     tosumula0
+	jsr     _add_score
+;
+; if (position > 1) --position;
+;
+	lda     _position
+	cmp     #$02
+	bcc     L0C13
+	dec     _position
+;
+; if (enemy_y[i] > 240) {
+;
+L0C13:	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	cmp     #$F1
+	bcc     L0BBA
+;
+; enemy_on[i] = 0;
+;
+	ldy     #$01
+	lda     (sp),y
+	tay
+	lda     #$00
+	sta     _enemy_on,y
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L0BBA:	ldy     #$01
+	clc
+	tya
+	adc     (sp),y
+	jmp     L1790
 
 .endproc
 
 ; ---------------------------------------------------------------
-; void __near__ check_collisions (void)
+; unsigned char __near__ check_collisions (void)
 ; ---------------------------------------------------------------
 
 .segment	"CODE"
@@ -4041,159 +7286,249 @@ L0615:	jmp     incsp1
 .segment	"CODE"
 
 ;
-; if (player_inv > 0) return;
+; if (car_graze_cooldown > 0) --car_graze_cooldown;
 ;
 	jsr     decsp3
-	lda     _player_inv
-	beq     L0B09
+	lda     _car_graze_cooldown
+	beq     L17B5
+	dec     _car_graze_cooldown
+;
+; if (player_inv > 0) return 0;
+;
+L17B5:	lda     _player_inv
+	beq     L17B7
+	ldx     #$00
+	jmp     L17B2
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L17B7:	ldy     #$02
+L17B3:	sta     (sp),y
+	cmp     #$03
+	bcs     L17BC
+;
+; if (enemy_on[i]) {
+;
+	lda     (sp),y
+	tay
+	lda     _enemy_on,y
+	beq     L0C36
+;
+; dx = abs_diff(player_x, enemy_x[i]);
+;
+	lda     _player_x
+	jsr     pusha
+	ldy     #$03
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
+	jsr     _abs_diff
+	ldy     #$01
+	sta     (sp),y
+;
+; dy = abs_diff(player_y, enemy_y[i]);
+;
+	lda     _player_y
+	jsr     pusha
+	ldy     #$03
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	jsr     _abs_diff
+	ldy     #$00
+	sta     (sp),y
+;
+; if (dx < 10 && dy < 10) {
+;
+	iny
+	lda     (sp),y
+	cmp     #$0A
+	bcs     L0C36
+	dey
+	lda     (sp),y
+	cmp     #$0A
+	bcs     L0C36
+;
+; player_inv = 60;
+;
+	lda     #$3C
+	sta     _player_inv
+;
+; score_multiplier = 1;
+;
+	ldx     #$00
+	lda     #$01
+	sta     _score_multiplier
+	stx     _score_multiplier+1
+;
+; graze_count = 0;
+;
+	stx     _graze_count
+;
+; sfx_damage();
+;
+	jsr     _sfx_damage
+;
+; if (player_hp > 0) {
+;
+	ldx     #$00
+	lda     _player_hp
+	beq     L17BA
+;
+; --player_hp;
+;
+	dec     _player_hp
+;
+; if (player_hp == 0) {
+;
+L17BA:	lda     _player_hp
+	bne     L17BB
+;
+; do_game_over();
+;
+	jsr     _do_game_over
+;
+; return 1;
+;
+	ldx     #$00
+L17BB:	lda     #$01
+	jmp     incsp3
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L0C36:	ldy     #$02
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L17B3
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L17BC:	lda     #$00
+L17B4:	sta     (sp),y
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$03
+	jcs     L17B2
+;
+; if (enemy_on[i]) {
+;
+	tay
+	lda     _enemy_on,y
+	jeq     L0C60
+;
+; dx = abs_diff(player_x, enemy_x[i]);
+;
+	lda     _player_x
+	jsr     pusha
+	ldy     #$03
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
+	jsr     _abs_diff
+	ldy     #$01
+	sta     (sp),y
+;
+; dy = abs_diff(player_y, enemy_y[i]);
+;
+	lda     _player_y
+	jsr     pusha
+	ldy     #$03
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	jsr     _abs_diff
+	ldy     #$00
+	sta     (sp),y
+;
+; if (!(dx < 10 && dy < 10) &&
+;
+	iny
+	lda     (sp),y
+	cmp     #$0A
+	bcs     L17BD
+	dey
+	lda     (sp),y
+	cmp     #$0A
+	bcc     L17BE
+L17BD:	lda     #$00
+	jmp     L0C7A
+L17BE:	lda     #$01
+L0C7A:	jsr     bnega
+	beq     L0C60
+;
+; car_graze_cooldown == 0 &&
+;
+	lda     _car_graze_cooldown
+	bne     L0C60
+;
+; ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
+;
+	ldy     #$01
+	lda     (sp),y
+	cmp     #$14
+	bcs     L17CC
+	dey
+	lda     (sp),y
+	cmp     #$20
+	bcc     L17CA
+	iny
+L17CC:	lda     (sp),y
+	cmp     #$1C
+	bcs     L0C60
+	dey
+	lda     (sp),y
+	cmp     #$14
+	bcs     L0C60
+;
+; if (score_multiplier <= 32767u) {
+;
+L17CA:	ldx     _score_multiplier+1
+	cpx     #$80
+	bcs     L0C85
+;
+; score_multiplier *= 2;
+;
+	lda     _score_multiplier
+	asl     a
+	sta     _score_multiplier
+	lda     _score_multiplier+1
+	rol     a
+;
+; } else {
+;
+	jmp     L17CB
+;
+; score_multiplier = 65535u;
+;
+L0C85:	lda     #$FF
+	sta     _score_multiplier
+L17CB:	sta     _score_multiplier+1
+;
+; sfx_graze();
+;
+	jsr     _sfx_graze
+;
+; car_graze_cooldown = 30;  // Half second cooldown
+;
+	lda     #$1E
+	sta     _car_graze_cooldown
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L0C60:	ldy     #$02
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L17B4
+;
+; return 0;
+;
+L17B2:	txa
 ;
 ; }
 ;
 	jmp     incsp3
-;
-; if (enemy_on) {
-;
-L0B09:	lda     _enemy_on
-	beq     L0B06
-;
-; dx = abs_diff(player_x, enemy_x);
-;
-	lda     _player_x
-	jsr     pusha
-	lda     _enemy_x
-	jsr     _abs_diff
-	ldy     #$01
-	sta     (sp),y
-;
-; dy = abs_diff(player_y, enemy_y);
-;
-	lda     _player_y
-	jsr     pusha
-	lda     _enemy_y
-	jsr     _abs_diff
-	ldy     #$00
-	sta     (sp),y
-;
-; if (dx < 14 && dy < 14) {
-;
-	iny
-	lda     (sp),y
-	cmp     #$0E
-	bcs     L0B05
-	dey
-	lda     (sp),y
-	cmp     #$0E
-	bcs     L0B05
-;
-; --player_hp;
-;
-	dec     _player_hp
-;
-; player_inv = 60;
-;
-	lda     #$3C
-	sta     _player_inv
-;
-; if (player_hp == 0) {
-;
-	lda     _player_hp
-	bne     L0B05
-;
-; game_state = STATE_GAMEOVER; music_play(3);
-;
-	lda     #$03
-	sta     _game_state
-	jsr     _music_play
-;
-; for (i = 0; i < 4; ++i) {
-;
-L0B05:	lda     #$00
-L0B06:	ldy     #$02
-L0B02:	sta     (sp),y
-	cmp     #$04
-	bcs     L0647
-;
-; if (obs_on[i]) {
-;
-	lda     (sp),y
-	tay
-	lda     _obs_on,y
-	beq     L0648
-;
-; dx = abs_diff(player_x, obs_x[i]);
-;
-	lda     _player_x
-	jsr     pusha
-	ldy     #$03
-	lda     (sp),y
-	tay
-	lda     _obs_x,y
-	jsr     _abs_diff
-	ldy     #$01
-	sta     (sp),y
-;
-; dy = abs_diff(player_y, obs_y[i]);
-;
-	lda     _player_y
-	jsr     pusha
-	ldy     #$03
-	lda     (sp),y
-	tay
-	lda     _obs_y,y
-	jsr     _abs_diff
-	ldy     #$00
-	sta     (sp),y
-;
-; if (dx < 12 && dy < 12) {
-;
-	iny
-	lda     (sp),y
-	cmp     #$0C
-	bcs     L0648
-	dey
-	lda     (sp),y
-	cmp     #$0C
-	bcs     L0648
-;
-; --player_hp;
-;
-	dec     _player_hp
-;
-; player_inv = 60;
-;
-	lda     #$3C
-	sta     _player_inv
-;
-; obs_on[i] = 0;
-;
-	ldy     #$02
-	lda     (sp),y
-	tay
-	lda     #$00
-	sta     _obs_on,y
-;
-; if (player_hp == 0) {
-;
-	lda     _player_hp
-	bne     L0648
-;
-; game_state = STATE_GAMEOVER; music_play(3);
-;
-	lda     #$03
-	sta     _game_state
-	jsr     _music_play
-;
-; for (i = 0; i < 4; ++i) {
-;
-L0648:	ldy     #$02
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0B02
-;
-; }
-;
-L0647:	jmp     incsp3
 
 .endproc
 
@@ -4210,45 +7545,142 @@ L0647:	jmp     incsp3
 ;
 ; update_player();
 ;
+	jsr     decsp2
 	jsr     _update_player
 ;
 ; update_enemy();
 ;
 	jsr     _update_enemy
 ;
-; update_obstacles();
-;
-	jsr     _update_obstacles
-;
-; check_collisions();
+; took_damage = check_collisions();
 ;
 	jsr     _check_collisions
+	ldy     #$01
+	sta     (sp),y
+;
+; boss_now = has_active_boss();
+;
+	jsr     _has_active_boss
+	ldy     #$00
+	sta     (sp),y
+;
+; if (boss_now && !boss_music_active) {
+;
+	lda     (sp),y
+	beq     L17D0
+	lda     _boss_music_active
+	bne     L17D0
+;
+; boss_music_active = 1;
+;
+	lda     #$01
+	sta     _boss_music_active
+;
+; switch (loop_count) {
+;
+	lda     _loop_count
+;
+; }
+;
+	beq     L0CA1
+	cmp     #$01
+	beq     L0CA5
+	jmp     L0CA8
+;
+; case 0:  music_play(TRACK_BOSS1); break;
+;
+L0CA1:	lda     #$05
+	jmp     L17CD
+;
+; case 1:  music_play(TRACK_BOSS2); break;
+;
+L0CA5:	lda     #$06
+	jmp     L17CD
+;
+; default: music_play(TRACK_BOSS3); break;
+;
+L0CA8:	lda     #$07
+	jmp     L17CD
+;
+; } else if (!boss_now && boss_music_active) {
+;
+L17D0:	lda     (sp),y
+	bne     L0CAC
+	lda     _boss_music_active
+	beq     L0CAC
+;
+; boss_music_active = 0;
+;
+	sty     _boss_music_active
+;
+; music_set_intensity(loop_count);
+;
+	lda     _loop_count
+	jsr     _music_set_intensity
+;
+; music_play(TRACK_RACING);
+;
+	lda     #$01
+L17CD:	jsr     _music_play
 ;
 ; spawn_danmaku();
 ;
-	jsr     _spawn_danmaku
+L0CAC:	jsr     _spawn_danmaku
 ;
 ; update_bullets();
 ;
 	jsr     _update_bullets
 ;
+; if (!took_damage) {
+;
+	ldy     #$01
+	lda     (sp),y
+	bne     L0CB8
+;
 ; check_bullet_collisions();
 ;
 	jsr     _check_bullet_collisions
 ;
+; if (player_inv > 0) --player_inv;
+;
+L0CB8:	lda     _player_inv
+	beq     L17D3
+	dec     _player_inv
+;
+; if (explode_timer > 0) {
+;
+L17D3:	lda     _explode_timer
+	beq     L0CBE
+;
+; --explode_timer;
+;
+	dec     _explode_timer
+;
+; explode_y += (pad_now & BTN_B) ? 4 : SCROLL_SPEED;  // Match road speed
+;
+	lda     _pad_now
+	and     #$40
+	beq     L17D4
+	lda     #$04
+	jmp     L17D6
+L17D4:	lda     #$02
+L17D6:	clc
+	adc     _explode_y
+	sta     _explode_y
+;
 ; ++distance;
 ;
-	inc     _distance
-	bne     L0678
+L0CBE:	inc     _distance
+	bne     L0CC9
 	inc     _distance+1
 ;
-; if (distance >= 1000) {
+; if (distance >= LAP_DISTANCE) {  // Lap complete
 ;
-L0678:	lda     _distance
-	cmp     #$E8
+L0CC9:	lda     _distance
+	cmp     #$BC
 	lda     _distance+1
-	sbc     #$03
-	bcc     L0B11
+	sbc     #$02
+	jcc     L17DA
 ;
 ; distance = 0;
 ;
@@ -4260,87 +7692,176 @@ L0678:	lda     _distance
 ;
 	inc     _lap_count
 ;
-; score += 100;
+; if (loop_count == 0) {
 ;
-	lda     #$64
-	clc
-	adc     _score
-	sta     _score
-	bcc     L0680
-	inc     _score+1
+	lda     _loop_count
+	bne     L17D8
 ;
-; if (position == 1) score += 100;
+; if (lap_count >= 2) {
 ;
-L0680:	lda     _position
-	cmp     #$01
-	bne     L0B0A
-	lda     #$64
-	clc
-	adc     _score
-	sta     _score
-	bcc     L0B0A
-	inc     _score+1
+	lda     _lap_count
+	cmp     #$02
+	lda     #$00
+	bcc     L17CE
 ;
-; player_hp += 3;
+; } else {
 ;
-L0B0A:	lda     #$03
-	clc
-	adc     _player_hp
-	sta     _player_hp
+	jmp     L0CD9
 ;
-; if (player_hp > PLAYER_MAX_HP) {
+; if (lap_count >= 1) {
 ;
-	cmp     #$06
-	bcc     L0B0B
+L17D8:	lda     _lap_count
+	beq     L0CD9
 ;
-; player_hp = PLAYER_MAX_HP;
+; music_set_intensity(2);  // LAP2-3 intense
 ;
-	lda     #$05
-	sta     _player_hp
+	lda     #$02
 ;
-; if (lap_count >= 3 && position == 1) {
+; } else {
 ;
-L0B0B:	lda     _lap_count
+	jmp     L17CE
+;
+; music_set_intensity(1);  // LAP1 moderate
+;
+L0CD9:	lda     #$01
+L17CE:	jsr     _music_set_intensity
+;
+; if (lap_count >= 3) {
+;
+	lda     _lap_count
 	cmp     #$03
-	bcc     L0B11
+	bcc     L17DA
+;
+; if (position == 1) {
+;
 	lda     _position
 	cmp     #$01
-	bne     L0B11
+	bne     L0CE2
 ;
-; game_state = STATE_WIN;
+; ++loop_count;
 ;
-	lda     #$04
+	inc     _loop_count
+;
+; if (loop_count > max_loop) {
+;
+	lda     _loop_count
+	sec
+	sbc     _max_loop
+	bcc     L17D9
+	beq     L17D9
+;
+; max_loop = loop_count;
+;
+	lda     _loop_count
+	sta     _max_loop
+;
+; add_score(1000 * (loop_count) * (1 << loop_count));
+;
+L17D9:	lda     _loop_count
+	jsr     pusha0
+	ldx     #$03
+	lda     #$E8
+	jsr     tosumulax
+	jsr     pushax
+	ldy     _loop_count
+	lda     #$01
+	ldx     #$00
+	jsr     aslaxy
+	jsr     tosumulax
+	jsr     _add_score
+;
+; for (b = 0; b < MAX_BULLETS; ++b) {
+;
+	jsr     decsp1
+	lda     #$00
+	tay
+L17CF:	sta     (sp),y
+	cmp     #$30
+	bcs     L0CEE
+;
+; bullet_on[b] = 0;
+;
+	lda     (sp),y
+	tay
+	lda     #$00
+	sta     _bullet_on,y
+;
+; for (b = 0; b < MAX_BULLETS; ++b) {
+;
+	tay
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L17CF
+;
+; }
+;
+L0CEE:	jsr     incsp1
+;
+; sfx_stop();
+;
+	jsr     _sfx_stop
+;
+; game_state = STATE_LOOP_CLEAR;
+;
+	lda     #$06
 	sta     _game_state
 ;
-; init_win_animation();
+; loop_clear_timer = 0;
 ;
-	jsr     _init_win_animation
+	lda     #$00
+	sta     _loop_clear_timer
 ;
-; music_play(2);  // Victory fanfare!
+; music_play(2);  // Victory music
 ;
 	lda     #$02
 	jsr     _music_play
 ;
-; if ((frame_count & 0x3F) == 0) {
+; init_win_animation();  // Reuse confetti
 ;
-L0B11:	lda     _frame_count
-	and     #$3F
-	bne     L0B12
+	jsr     _init_win_animation
 ;
-; spawn_obstacle();
+; } else {
 ;
-	jsr     _spawn_obstacle
+	jmp     L17DA
 ;
-; scroll_y += SCROLL_SPEED;
+; do_finish_lose();
 ;
-L0B12:	lda     #$02
-	clc
-	adc     _scroll_y
+L0CE2:	jsr     _do_finish_lose
+;
+; if (pad_now & BTN_B) {
+;
+L17DA:	lda     _pad_now
+	and     #$40
+	beq     L17DB
+;
+; scroll_y -= 4;  // Fast speed
+;
+	lda     _scroll_y
+	sec
+	sbc     #$04
+	sta     _scroll_y
+;
+; ++distance;     // Extra distance for boost
+;
+	inc     _distance
+	bne     L0D09
+	inc     _distance+1
+;
+; } else {
+;
+	jmp     incsp2
+;
+; scroll_y -= SCROLL_SPEED;  // Normal speed
+;
+L17DB:	lda     _scroll_y
+	sec
+	sbc     #$02
 	sta     _scroll_y
 ;
 ; }
 ;
-	rts
+L0D09:	jmp     incsp2
 
 .endproc
 
@@ -4360,18 +7881,23 @@ L0B12:	lda     #$02
 	lda     #$00
 	jsr     pusha
 ;
-; if (player_inv == 0 || (frame_count & 4)) {
+; if (game_state != STATE_EXPLODE && game_state != STATE_FINISH && (player_inv == 0 || (frame_count & 4))) {
 ;
 	jsr     decsp1
+	lda     _game_state
+	cmp     #$07
+	beq     L17E7
+	cmp     #$08
+	beq     L17E7
 	lda     _player_inv
-	beq     L0B1A
+	beq     L17E6
 	lda     _frame_count
 	and     #$04
-	beq     L069E
+	beq     L17E7
 ;
 ; id = set_car(id, player_x, player_y, SPR_CAR, 0);
 ;
-L0B1A:	jsr     decsp4
+L17E6:	jsr     decsp4
 	ldy     #$05
 	lda     (sp),y
 	ldy     #$03
@@ -4389,157 +7915,1347 @@ L0B1A:	jsr     decsp4
 	ldy     #$01
 	sta     (sp),y
 ;
-; if (!enemy_on && enemy_warn_timer > 0 && (frame_count & 8)) {
+; if (game_state == STATE_RACING) {
 ;
-L069E:	lda     _enemy_on
-	bne     L06A9
-	lda     _enemy_warn_timer
-	beq     L06A9
-	lda     _frame_count
-	and     #$08
-	beq     L06A9
+L17E7:	lda     _game_state
+	cmp     #$01
+	bne     L17E8
 ;
-; id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1 | 0x80);  // Arrow, flipped vertically
+; id = set_sprite(id, player_x + 4, player_y + 4, SPR_HITBOX, 0);
 ;
 	jsr     decsp4
 	ldy     #$05
 	lda     (sp),y
 	ldy     #$03
 	sta     (sp),y
-	lda     _enemy_next_x
+	lda     _player_x
 	clc
 	adc     #$04
+	dey
+	sta     (sp),y
+	lda     _player_y
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+	lda     #$0F
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L17E8:	lda     #$00
+	tay
+L17DD:	sta     (sp),y
+	cmp     #$03
+	jcs     L17EE
+;
+; if (enemy_on[i]) {
+;
+	lda     (sp),y
+	tay
+	lda     _enemy_on,y
+	jeq     L0D29
+;
+; unsigned char rank = enemy_rank[i];
+;
+	jsr     decsp2
+	ldy     #$02
+	lda     (sp),y
+	tay
+	lda     _enemy_rank,y
+	jsr     pusha
+;
+; if (rank <= 3) {
+;
+	ldy     #$00
+	lda     (sp),y
+	cmp     #$04
+	bcs     L17EA
+;
+; tile = SPR_BOSS;
+;
+	lda     #$60
+;
+; else if (rank <= 5) {
+;
+	jmp     L1805
+L17EA:	lda     (sp),y
+	cmp     #$06
+	bcs     L17EC
+;
+; tile = SPR_ENEMY;
+;
+	lda     #$04
+	ldy     #$02
+	sta     (sp),y
+;
+; pal = 3;
+;
+	lda     #$03
+;
+; else if (rank <= 8) {
+;
+	jmp     L17FF
+L17EC:	lda     (sp),y
+	cmp     #$09
+	bcs     L17ED
+;
+; tile = SPR_ENEMY;
+;
+	lda     #$04
+	ldy     #$02
+	sta     (sp),y
+;
+; pal = 2;
+;
+	tya
+;
+; else {
+;
+	jmp     L17FF
+;
+; tile = SPR_ENEMY;
+;
+L17ED:	lda     #$04
+L1805:	ldy     #$02
+	sta     (sp),y
+;
+; pal = 1;
+;
+	lda     #$01
+L17FF:	dey
+	sta     (sp),y
+;
+; id = set_car(id, enemy_x[i], enemy_y[i], tile, pal);
+;
+	jsr     decsp4
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	tay
+	lda     _enemy_x,y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	tay
+	lda     _enemy_y,y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$00
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	jsr     _set_car
+	ldy     #$04
+	sta     (sp),y
+;
+; }
+;
+	jsr     incsp3
+;
+; for (i = 0; i < MAX_ENEMIES; ++i) {
+;
+L0D29:	ldy     #$00
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L17DD
+;
+; if (game_state == STATE_RACING && explode_timer > 0 && (frame_count & 2)) {
+;
+L17EE:	lda     _game_state
+	cmp     #$01
+	bne     L17F2
+	lda     _explode_timer
+	beq     L17F2
+	lda     _frame_count
+	and     #$02
+	beq     L17F2
+;
+; id = set_sprite(id, explode_x + 4, explode_y + 4, SPR_EXPLOSION, 1);
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _explode_x
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+	lda     _explode_y
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; if (position >= 10) {
+;
+L17F2:	lda     _position
+	cmp     #$0A
+	jcc     L0D68
+;
+; id = set_sprite(id, 8, 8, SPR_DIGIT + 1, 3);              // "1"
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	dey
+	sta     (sp),y
+	lda     #$11
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 16, 8, SPR_DIGIT + (position - 10), 3); // 0,1,2
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$10
 	dey
 	sta     (sp),y
 	lda     #$08
 	dey
 	sta     (sp),y
-	lda     #$0A
+	lda     _position
+	sec
+	sbc     #$0A
+	clc
+	adc     #$10
 	dey
 	sta     (sp),y
-	lda     #$81
+	lda     #$03
 	jsr     _set_sprite
 	ldy     #$01
 	sta     (sp),y
 ;
-; id = set_sprite(id, enemy_next_x + 4, 16, 0x0A, 1 | 0x80);
+; id = set_sprite(id, 24, 8, SPR_LETTER + 19, 3);  // T
 ;
 	jsr     decsp4
 	ldy     #$05
 	lda     (sp),y
 	ldy     #$03
 	sta     (sp),y
-	lda     _enemy_next_x
+	lda     #$18
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 32, 8, SPR_LETTER + 7, 3);   // H
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$20
+;
+; } else {
+;
+	jmp     L180D
+;
+; id = set_sprite(id, 8, 8, SPR_DIGIT + position, 3);
+;
+L0D68:	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	dey
+	sta     (sp),y
+	lda     _position
 	clc
-	adc     #$04
+	adc     #$10
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; if (position == 1) {
+;
+	lda     _position
+	cmp     #$01
+	bne     L17F3
+;
+; id = set_sprite(id, 16, 8, SPR_LETTER + 18, 3);  // S
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$42
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 24, 8, SPR_LETTER + 19, 3);  // T
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$18
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$43
+;
+; } else if (position == 2) {
+;
+	jmp     L1807
+L17F3:	lda     _position
+	cmp     #$02
+	bne     L17F4
+;
+; id = set_sprite(id, 16, 8, SPR_LETTER + 13, 3);  // N
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$3D
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 24, 8, SPR_LETTER + 3, 3);   // D
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$18
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$33
+;
+; } else if (position == 3) {
+;
+	jmp     L1807
+L17F4:	lda     _position
+	cmp     #$03
+	bne     L0DB4
+;
+; id = set_sprite(id, 16, 8, SPR_LETTER + 17, 3);  // R
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$41
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 24, 8, SPR_LETTER + 3, 3);   // D
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$18
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$33
+;
+; } else {
+;
+	jmp     L1807
+;
+; id = set_sprite(id, 16, 8, SPR_LETTER + 19, 3);  // T
+;
+L0DB4:	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 24, 8, SPR_LETTER + 7, 3);   // H
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$18
+L180D:	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$37
+L1807:	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; unsigned char hp = player_hp;
+;
+	lda     _player_hp
+	jsr     pusha
+;
+; id = set_sprite(id, 8, 224, SPR_LETTER + 7, 3);  // H
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	lda     #$37
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, 16, 224, SPR_DIGIT + (hp / 100), 3);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	jsr     pusha0
+	lda     #$64
+	jsr     tosudiva0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; hp %= 100;
+;
+	ldx     #$00
+	lda     (sp,x)
+	jsr     pusha0
+	lda     #$64
+	jsr     tosumoda0
+	ldy     #$00
+	sta     (sp),y
+;
+; id = set_sprite(id, 24, 224, SPR_DIGIT + (hp / 10), 3);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$18
+	dey
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	jsr     pusha0
+	lda     #$0A
+	jsr     tosudiva0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, 32, 224, SPR_DIGIT + (hp % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$20
+	dey
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	jsr     pusha0
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; }
+;
+	jsr     incsp1
+;
+; unsigned int m = score_multiplier;
+;
+	lda     _score_multiplier
+	ldx     _score_multiplier+1
+	jsr     pushax
+;
+; id = set_sprite(id, 192, 8, SPR_LETTER + 23, 3);  // X
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$C0
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	lda     #$47
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, 200, 8, SPR_DIGIT + (m / 10000), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$C8
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$27
+	lda     #$10
+	jsr     tosudivax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; m %= 10000;
+;
+	jsr     pushw0sp
+	ldx     #$27
+	lda     #$10
+	jsr     tosumodax
+	jsr     stax0sp
+;
+; id = set_sprite(id, 208, 8, SPR_DIGIT + (m / 1000), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$D0
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudivax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; m %= 1000;
+;
+	jsr     pushw0sp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosumodax
+	jsr     stax0sp
+;
+; id = set_sprite(id, 216, 8, SPR_DIGIT + (m / 100), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$D8
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$64
+	jsr     tosudiva0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; m %= 100;
+;
+	jsr     pushw0sp
+	lda     #$64
+	jsr     tosumoda0
+	jsr     stax0sp
+;
+; id = set_sprite(id, 224, 8, SPR_DIGIT + (m / 10), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosudiva0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, 232, 8, SPR_DIGIT + (m % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$E8
+	dey
+	sta     (sp),y
+	lda     #$08
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; }
+;
+	jsr     incsp2
+;
+; if (score_high > 0) {
+;
+	lda     _score_high
+	ora     _score_high+1
+	jeq     L0E33
+;
+; unsigned long full_score = ((unsigned long)score_high << 16) | score;
+;
+	lda     _score_high
+	ldx     _score_high+1
+	stx     sreg+1
+	sta     sreg
+	lda     #$00
+	tax
+	jsr     pusheax
+	lda     _score
+	ldx     _score+1
+	jsr     tosor0ax
+	jsr     pusheax
+;
+; if (full_score > 999999UL) full_score = 999999UL;
+;
+	jsr     ldeax0sp
+	cmp     #$40
+	txa
+	sbc     #$42
+	lda     sreg
+	sbc     #$0F
+	lda     sreg+1
+	sbc     #$00
+	bcc     L0E38
+	ldy     #$00
+	lda     #$3F
+	sta     (sp),y
+	lda     #$42
+	iny
+	sta     (sp),y
+	lda     #$0F
+	iny
+	sta     (sp),y
+	lda     #$00
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, 192, 20, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
+;
+L0E38:	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$C0
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$86
+	lda     #$01
+	sta     sreg
+	lda     #$00
+	sta     sreg+1
+	lda     #$A0
+	jsr     tosudiveax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 200, 20, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$C8
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$27
+	lda     #$10
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 208, 20, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$D0
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 216, 20, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$D8
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$00
+	lda     #$64
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 224, 20, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 232, 20, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$E8
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; } else {
+;
+	jsr     incsp4
+	jmp     L0E76
+;
+; unsigned int s = score;
+;
+L0E33:	lda     _score
+	ldx     _score+1
+	jsr     pushax
+;
+; id = set_sprite(id, 192, 20, SPR_DIGIT + 0, 3);  // Leading zero
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$C0
+	dey
+	sta     (sp),y
+	lda     #$14
 	dey
 	sta     (sp),y
 	lda     #$10
 	dey
 	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, 200, 20, SPR_DIGIT + (s / 10000), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$C8
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$27
+	lda     #$10
+	jsr     tosudivax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; s %= 10000;
+;
+	jsr     pushw0sp
+	ldx     #$27
+	lda     #$10
+	jsr     tosumodax
+	jsr     stax0sp
+;
+; id = set_sprite(id, 208, 20, SPR_DIGIT + (s / 1000), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$D0
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudivax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; s %= 1000;
+;
+	jsr     pushw0sp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosumodax
+	jsr     stax0sp
+;
+; id = set_sprite(id, 216, 20, SPR_DIGIT + (s / 100), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$D8
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$64
+	jsr     tosudiva0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; s %= 100;
+;
+	jsr     pushw0sp
+	lda     #$64
+	jsr     tosumoda0
+	jsr     stax0sp
+;
+; id = set_sprite(id, 224, 20, SPR_DIGIT + (s / 10), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$E0
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosudiva0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, 232, 20, SPR_DIGIT + (s % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$E8
+	dey
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; }
+;
+	jsr     incsp2
+;
+; id = set_sprite(id, 120, 16, SPR_LETTER + 11, 3);  // L
+;
+L0E76:	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$78
+	dey
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$3B
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 128, 16, SPR_DIGIT + lap_count + 1, 3);  // Current lap (1-3)
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$80
+	dey
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     _lap_count
+	clc
+	adc     #$10
+	bcc     L17E0
+	clc
+L17E0:	adc     #$01
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; if (loop_count > 0) {
+;
+	lda     _loop_count
+	beq     L17F5
+;
+; id = set_sprite(id, 104, 16, SPR_DIGIT + loop_count + 1, 1);  // Loop number in red
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$68
+	dey
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     _loop_count
+	clc
+	adc     #$10
+	bcc     L17E1
+	clc
+L17E1:	adc     #$01
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; if (enemy_warn_timer > 0 && (frame_count & 8)) {
+;
+L17F5:	lda     _enemy_warn_timer
+	beq     L17FA
+	lda     _frame_count
+	and     #$08
+	beq     L17FA
+;
+; id = set_sprite(id, enemy_next_x + 4, 12, 0x0A, 1);
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _enemy_next_x
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+	lda     #$0C
+	dey
+	sta     (sp),y
 	lda     #$0A
 	dey
 	sta     (sp),y
-	lda     #$81
+	lda     #$01
 	jsr     _set_sprite
 	ldy     #$01
 	sta     (sp),y
-;
-; if (enemy_on) {
-;
-L06A9:	lda     _enemy_on
-	beq     L0B2A
-;
-; id = set_car(id, enemy_x, enemy_y, SPR_CAR + 4, 1);
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     _enemy_x
-	dey
-	sta     (sp),y
-	lda     _enemy_y
-	dey
-	sta     (sp),y
-	lda     #$04
-	dey
-	sta     (sp),y
-	lda     #$01
-	jsr     _set_car
-	ldy     #$01
-	sta     (sp),y
-;
-; for (i = 0; i < 4; ++i) {
-;
-	lda     #$00
-L0B2A:	tay
-L0B15:	sta     (sp),y
-	cmp     #$04
-	bcs     L0B1E
-;
-; if (obs_on[i]) {
-;
-	lda     (sp),y
-	tay
-	lda     _obs_on,y
-	beq     L06C9
-;
-; id = set_sprite(id, obs_x[i], obs_y[i], SPR_OBSTACLE, 2);
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	iny
-	lda     (sp),y
-	tay
-	lda     _obs_x,y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	tay
-	lda     _obs_y,y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$02
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; for (i = 0; i < 4; ++i) {
-;
-L06C9:	ldy     #$00
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0B15
 ;
 ; for (i = 0; i < MAX_BULLETS; ++i) {
 ;
-L0B1E:	tya
-L0B16:	sta     (sp),y
-	cmp     #$10
-	bcs     L06DF
+	lda     #$00
+L17FA:	dey
+L17DF:	sta     (sp),y
+	cmp     #$30
+	bcs     L0EDB
 ;
-; if (bullet_on[i] && id < 60) {  // Leave room for HUD
+; if (bullet_on[i] && id < 62 && ((i & 1) == (frame_count & 1))) {
 ;
 	lda     (sp),y
 	tay
 	lda     _bullet_on,y
-	beq     L06E0
+	beq     L0EDC
 	ldy     #$01
 	lda     (sp),y
-	cmp     #$3C
-	bcs     L06E0
+	cmp     #$3E
+	bcs     L0EDC
+	dey
+	lda     (sp),y
+	and     #$01
+	jsr     pusha0
+	lda     _frame_count
+	and     #$01
+	jsr     tosicmp0
+	bne     L0EDC
 ;
-; id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 1);
+; id = set_sprite(id, bullet_x[i], bullet_y[i], SPR_BULLET, 2);
 ;
 	jsr     decsp4
 	ldy     #$05
@@ -4561,383 +9277,41 @@ L0B16:	sta     (sp),y
 	lda     #$0B
 	dey
 	sta     (sp),y
-	lda     #$01
+	lda     #$02
 	jsr     _set_sprite
 	ldy     #$01
 	sta     (sp),y
 ;
 ; for (i = 0; i < MAX_BULLETS; ++i) {
 ;
-L06E0:	ldy     #$00
+L0EDC:	ldy     #$00
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0B16
+	jmp     L17DF
 ;
-; id = set_sprite(id, 8, 8, SPR_LETTER + 15, 3);  // P
+; car_pos = 80 + (unsigned char)(distance >> 3);  // distance / 8
 ;
-L06DF:	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	dey
-	sta     (sp),y
-	lda     #$3F
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 16, 8, SPR_DIGIT + position, 3);
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$10
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     _position
-	clc
-	adc     #$10
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 8, 20, SPR_LETTER + 7, 3);  // H
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$14
-	dey
-	sta     (sp),y
-	lda     #$37
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 16, 20, SPR_DIGIT + player_hp, 3);
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$10
-	dey
-	sta     (sp),y
-	lda     #$14
-	dey
-	sta     (sp),y
-	lda     _player_hp
-	clc
-	adc     #$10
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 100, 8, SPR_LETTER + 11, 3);  // L
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$64
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$3B
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 108, 8, SPR_LETTER + 0, 3);   // A
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$6C
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$30
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 116, 8, SPR_LETTER + 15, 3);  // P
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$74
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$3F
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 128, 8, SPR_DIGIT + lap_count + 1, 3);  // Current lap
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$80
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     _lap_count
-	clc
-	adc     #$10
-	bcc     L0B19
-	clc
-L0B19:	adc     #$01
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 136, 8, SPR_SLASH, 3);        // "/"
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$88
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$05
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; id = set_sprite(id, 144, 8, SPR_DIGIT + 3, 3);    // 3 (total laps)
-;
-	jsr     decsp4
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$90
-	dey
-	sta     (sp),y
-	lda     #$08
-	dey
-	sta     (sp),y
-	lda     #$13
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$01
-	sta     (sp),y
-;
-; progress = (unsigned char)(distance / 10);
-;
-	jsr     decsp4
+L0EDB:	jsr     decsp1
 	lda     _distance
 	ldx     _distance+1
-	jsr     pushax
-	lda     #$0A
-	jsr     tosudiva0
-	ldy     #$03
-	sta     (sp),y
-;
-; if (progress > 100) progress = 100;
-;
-	cmp     #$65
-	lda     #$00
-	bcc     L0B23
-	lda     #$64
-	sta     (sp),y
-;
-; for (bar_x = 0; bar_x < 8 && id < 58; ++bar_x) {
-;
-	lda     #$00
-L0B23:	dey
-L0B17:	sta     (sp),y
-	cmp     #$08
-	bcs     L0749
-	ldy     #$05
-	lda     (sp),y
-	cmp     #$3A
-	bcs     L0749
-;
-; id = set_sprite(id, 64 + bar_x * 10, 224, SPR_BAR_EMPTY, 3);
-;
-	jsr     decsp4
-	ldy     #$09
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	ldy     #$06
-	ldx     #$00
-	lda     (sp),y
-	jsr     mulax10
+	jsr     shrax3
 	clc
-	adc     #$40
-	ldy     #$02
-	sta     (sp),y
-	lda     #$E0
-	dey
-	sta     (sp),y
-	lda     #$07
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$05
-	sta     (sp),y
-;
-; for (bar_x = 0; bar_x < 8 && id < 58; ++bar_x) {
-;
-	ldy     #$02
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0B17
-;
-; bar_filled = progress / 13;  // 0-7 segments
-;
-L0749:	ldy     #$03
-	lda     (sp),y
-	jsr     pusha0
-	lda     #$0D
-	jsr     tosudiva0
-	ldy     #$01
-	sta     (sp),y
-;
-; for (bar_x = 0; bar_x < bar_filled && bar_x < 8 && id < 60; ++bar_x) {
-;
-	lda     #$00
-	iny
-L0B18:	sta     (sp),y
-	ldx     #$00
-	lda     (sp),y
-	dey
-	cmp     (sp),y
-	bcs     L075D
-	iny
-	lda     (sp),y
-	cmp     #$08
-	bcs     L075D
-	ldy     #$05
-	lda     (sp),y
-	cmp     #$3C
-	bcs     L075D
-;
-; id = set_sprite(id, 64 + bar_x * 10, 224, SPR_BAR_FILL, 3);
-;
-	jsr     decsp4
-	ldy     #$09
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	ldy     #$06
-	lda     (sp),y
-	jsr     mulax10
-	clc
-	adc     #$40
-	ldy     #$02
-	sta     (sp),y
-	lda     #$E0
-	dey
-	sta     (sp),y
-	lda     #$06
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$05
-	sta     (sp),y
-;
-; for (bar_x = 0; bar_x < bar_filled && bar_x < 8 && id < 60; ++bar_x) {
-;
-	ldy     #$02
-	clc
-	lda     #$01
-	adc     (sp),y
-	jmp     L0B18
-;
-; car_pos = 64 + ((progress * 70) / 100);
-;
-L075D:	ldy     #$03
-	lda     (sp),y
-	jsr     pusha0
-	lda     #$46
-	jsr     tosumula0
-	jsr     pushax
-	lda     #$64
-	jsr     tosudiva0
-	clc
-	adc     #$40
+	adc     #$50
 	ldy     #$00
 	sta     (sp),y
 ;
-; id = set_sprite(id, car_pos, 216, SPR_CAR_ICON, 0);
+; if (car_pos > 168) car_pos = 168;
 ;
-	jsr     decsp4
-	ldy     #$09
+	cmp     #$A9
+	bcc     L0EFA
+	lda     #$A8
+	sta     (sp),y
+;
+; id = set_sprite(id, car_pos, 224, SPR_CAR_ICON, 0);
+;
+L0EFA:	jsr     decsp4
+	ldy     #$06
 	lda     (sp),y
 	ldy     #$03
 	sta     (sp),y
@@ -4945,7 +9319,7 @@ L075D:	ldy     #$03
 	lda     (sp),y
 	ldy     #$02
 	sta     (sp),y
-	lda     #$D8
+	lda     #$E0
 	dey
 	sta     (sp),y
 	lda     #$08
@@ -4953,17 +9327,17 @@ L075D:	ldy     #$03
 	sta     (sp),y
 	tya
 	jsr     _set_sprite
-	ldy     #$05
+	ldy     #$02
 	sta     (sp),y
 ;
-; id = set_sprite(id, 152, 224, SPR_LETTER + 6, 3);  // G
+; id = set_sprite(id, 168, 224, SPR_LETTER + 6, 3);  // G (goal)
 ;
 	jsr     decsp4
-	ldy     #$09
+	ldy     #$06
 	lda     (sp),y
 	ldy     #$03
 	sta     (sp),y
-	lda     #$98
+	lda     #$A8
 	dey
 	sta     (sp),y
 	lda     #$E0
@@ -4974,83 +9348,20 @@ L075D:	ldy     #$03
 	sta     (sp),y
 	lda     #$03
 	jsr     _set_sprite
-	ldy     #$05
-	sta     (sp),y
-;
-; id = set_sprite(id, 160, 224, SPR_LETTER + 14, 3); // O
-;
-	jsr     decsp4
-	ldy     #$09
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$A0
-	dey
-	sta     (sp),y
-	lda     #$E0
-	dey
-	sta     (sp),y
-	lda     #$3E
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$05
-	sta     (sp),y
-;
-; id = set_sprite(id, 168, 224, SPR_LETTER + 0, 3);  // A
-;
-	jsr     decsp4
-	ldy     #$09
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$A8
-	dey
-	sta     (sp),y
-	lda     #$E0
-	dey
-	sta     (sp),y
-	lda     #$30
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$05
-	sta     (sp),y
-;
-; id = set_sprite(id, 176, 224, SPR_LETTER + 11, 3); // L
-;
-	jsr     decsp4
-	ldy     #$09
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	lda     #$B0
-	dey
-	sta     (sp),y
-	lda     #$E0
-	dey
-	sta     (sp),y
-	lda     #$3B
-	dey
-	sta     (sp),y
-	lda     #$03
-	jsr     _set_sprite
-	ldy     #$05
+	ldy     #$02
 	sta     (sp),y
 ;
 ; }
 ;
-	jsr     incsp4
+	jsr     incsp1
 ;
 ; while (id < 64) {
 ;
-	jmp     L0798
+	jmp     L0F0E
 ;
 ; OAM[id * 4] = 0xFF;
 ;
-L0B29:	lda     (sp),y
+L17FE:	lda     (sp),y
 	jsr     shlax2
 	inx
 	inx
@@ -5070,11 +9381,11 @@ L0B29:	lda     (sp),y
 ;
 ; while (id < 64) {
 ;
-L0798:	ldy     #$01
+L0F0E:	ldy     #$01
 	ldx     #$00
 	lda     (sp),y
 	cmp     #$40
-	bcc     L0B29
+	bcc     L17FE
 ;
 ; }
 ;
@@ -5098,99 +9409,25 @@ L0798:	ldy     #$01
 	lda     #$00
 	jsr     pusha
 ;
-; unsigned char x = 100, y = 100;
+; unsigned char x = 96, y = 48;
 ;
-	lda     #$64
+	lda     #$60
 	jsr     pusha
-	jsr     pusha
-;
-; id = set_sprite(id, x,      y, SPR_LETTER + 17, 0);  // R
-;
-	jsr     decsp4
-	ldy     #$06
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$41
-	dey
-	sta     (sp),y
-	tya
-	jsr     _set_sprite
-	ldy     #$02
-	sta     (sp),y
-;
-; id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  0);  // A
-;
-	jsr     decsp4
-	ldy     #$06
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	clc
-	adc     #$08
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
 	lda     #$30
-	dey
-	sta     (sp),y
-	tya
-	jsr     _set_sprite
-	ldy     #$02
-	sta     (sp),y
+	jsr     pusha
 ;
-; id = set_sprite(id, x + 16, y, SPR_LETTER + 2,  0);  // C
+; id = set_sprite(id, x,      y, SPR_LETTER + 4,  0);  // E
 ;
-	jsr     decsp4
-	ldy     #$06
+	jsr     decsp7
+	ldy     #$09
 	lda     (sp),y
 	ldy     #$03
 	sta     (sp),y
-	ldy     #$05
+	ldy     #$08
 	lda     (sp),y
-	clc
-	adc     #$10
 	ldy     #$02
 	sta     (sp),y
-	ldy     #$04
-	lda     (sp),y
-	ldy     #$01
-	sta     (sp),y
-	lda     #$32
-	dey
-	sta     (sp),y
-	tya
-	jsr     _set_sprite
-	ldy     #$02
-	sta     (sp),y
-;
-; id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  0);  // E
-;
-	jsr     decsp4
-	ldy     #$06
-	lda     (sp),y
-	ldy     #$03
-	sta     (sp),y
-	ldy     #$05
-	lda     (sp),y
-	clc
-	adc     #$18
-	ldy     #$02
-	sta     (sp),y
-	ldy     #$04
+	ldy     #$07
 	lda     (sp),y
 	ldy     #$01
 	sta     (sp),y
@@ -5199,48 +9436,1611 @@ L0798:	ldy     #$01
 	sta     (sp),y
 	tya
 	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 3,  0);  // D
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
 	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$33
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 6,  0);  // G
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$36
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  0);  // E
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$34
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y + 12, SPR_LETTER + 17, 1);  // R
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$01
+	sta     (sp),y
+	lda     #$41
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y + 12, SPR_LETTER + 0,  1);  // A
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$01
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  1);  // C
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$01
+	sta     (sp),y
+	lda     #$32
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  1);  // E
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$01
+	sta     (sp),y
+	lda     #$34
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$05
 	sta     (sp),y
 ;
 ; if (frame_count & 0x20) {
 ;
 	lda     _frame_count
-	ldx     #$00
 	and     #$20
-	beq     L0B2F
+	beq     L181B
 ;
-; id = set_car(id, x + 4, y + 24, SPR_CAR, 0);
+; id = set_car(id, x + 12, y + 36, SPR_CAR, 0);
 ;
 	jsr     decsp4
-	ldy     #$06
+	ldy     #$09
 	lda     (sp),y
 	ldy     #$03
 	sta     (sp),y
-	ldy     #$05
+	ldy     #$08
 	lda     (sp),y
 	clc
-	adc     #$04
+	adc     #$0C
 	ldy     #$02
 	sta     (sp),y
-	ldy     #$04
+	ldy     #$07
 	lda     (sp),y
 	clc
-	adc     #$18
+	adc     #$24
 	ldy     #$01
 	sta     (sp),y
-	txa
+	lda     #$00
 	dey
 	sta     (sp),y
 	jsr     _set_car
+	ldy     #$05
+	sta     (sp),y
+;
+; for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+;
+	lda     #$00
+L181B:	ldy     #$02
+L1812:	sta     (sp),y
+	cmp     #$03
+	jcs     L181C
+;
+; y = 120 + i * 16;
+;
+	lda     (sp),y
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	clc
+	adc     #$78
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, 64, y, SPR_DIGIT + i + 1, 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$40
+	dey
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	clc
+	adc     #$10
+	bcc     L1814
+	clc
+L1814:	adc     #$01
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 80, y, SPR_LETTER + high_names[i][0], 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$50
+	dey
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	sta     ptr1
+	txa
+	clc
+	adc     #>(_high_names)
+	sta     ptr1+1
+	ldy     #<(_high_names)
+	lda     (ptr1),y
+	clc
+	adc     #$30
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 88, y, SPR_LETTER + high_names[i][1], 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$58
+	dey
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	clc
+	adc     #$30
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, 96, y, SPR_LETTER + high_names[i][2], 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$60
+	dey
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	ldx     #$00
+	lda     (sp),y
+	jsr     mulax3
+	clc
+	adc     #<(_high_names)
+	sta     ptr1
+	txa
+	adc     #>(_high_names)
+	sta     ptr1+1
 	ldy     #$02
+	lda     (ptr1),y
+	clc
+	adc     #$30
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; x = 112;
+;
+	lda     #$70
+	dey
+	sta     (sp),y
+;
+; if (high_scores_high[i] > 0) {
+;
+	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L1815
+	inx
+	clc
+L1815:	adc     #<(_high_scores_high)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores_high)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	cpx     #$00
+	bne     L1824
+	cmp     #$00
+	jeq     L0F9B
+;
+; unsigned long full_score = ((unsigned long)high_scores_high[i] << 16) | high_scores[i];
+;
+L1824:	ldy     #$02
+	ldx     #$00
+	lda     (sp),y
+	asl     a
+	bcc     L1816
+	inx
+	clc
+L1816:	adc     #<(_high_scores_high)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores_high)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	sta     sreg+1
+	dey
+	lda     (ptr1),y
+	sta     sreg
+	tya
+	tax
+	jsr     pusheax
+	ldy     #$06
+	lda     (sp),y
+	asl     a
+	bcc     L1817
+	inx
+	clc
+L1817:	adc     #<(_high_scores)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores)
+	sta     ptr1+1
+	ldy     #$01
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	jsr     tosor0ax
+	jsr     pusheax
+;
+; if (full_score > 999999UL) full_score = 999999UL;
+;
+	jsr     ldeax0sp
+	cmp     #$40
+	txa
+	sbc     #$42
+	lda     sreg
+	sbc     #$0F
+	lda     sreg+1
+	sbc     #$00
+	bcc     L0FA3
+	ldy     #$00
+	lda     #$3F
+	sta     (sp),y
+	lda     #$42
+	iny
+	sta     (sp),y
+	lda     #$0F
+	iny
+	sta     (sp),y
+	lda     #$00
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(full_score / 100000UL), 3);
+;
+L0FA3:	jsr     decsp4
+	ldy     #$0D
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0C
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$86
+	lda     #$01
+	sta     sreg
+	lda     #$00
+	sta     sreg+1
+	lda     #$A0
+	jsr     tosudiveax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$09
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((full_score / 10000UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0D
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0C
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$27
+	lda     #$10
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$09
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((full_score / 1000UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0D
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0C
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$09
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((full_score / 100UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0D
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0C
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$00
+	lda     #$64
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$09
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((full_score / 10UL) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0D
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0C
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosudiv0ax
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$09
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(full_score % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0D
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0C
+	lda     (sp),y
+	clc
+	adc     #$28
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     ldeaxysp
+	jsr     pusheax
+	ldx     #$00
+	lda     #$0A
+	jsr     tosumod0ax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$09
+	sta     (sp),y
+;
+; } else {
+;
+	jsr     incsp4
+	jmp     L0F69
+;
+; s = high_scores[i];
+;
+L0F9B:	ldy     #$02
+	lda     (sp),y
+	asl     a
+	bcc     L1818
+	inx
+	clc
+L1818:	adc     #<(_high_scores)
+	sta     ptr1
+	txa
+	adc     #>(_high_scores)
+	sta     ptr1+1
+	dey
+	lda     (ptr1),y
+	tax
+	dey
+	lda     (ptr1),y
+	jsr     stax0sp
+;
+; id = set_sprite(id, x,      y, SPR_DIGIT + 0, 3);  // Leading zero for alignment
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$27
+	lda     #$10
+	jsr     tosudivax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudivax
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$64
+	jsr     tosudiva0
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosudiva0
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 40, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$28
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; for (i = 0; i < NUM_HIGH_SCORES; ++i) {
+;
+L0F69:	ldy     #$02
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L1812
+;
+; if (max_loop > 0) {
+;
+L181C:	lda     _max_loop
+	jeq     L1820
+;
+; y = 104;
+;
+	lda     #$68
+	iny
+	sta     (sp),y
+;
+; x = 80;
+;
+	lda     #$50
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 11, 3);  // L
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3B
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 14, 3);  // O
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3E
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 14, 3);  // O
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3E
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_LETTER + 15, 3);  // P
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3F
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; x = 120;
+;
+	lda     #$78
+	dey
+	sta     (sp),y
+;
+; if (frame_count & 0x10) {
+;
+	lda     _frame_count
+	and     #$10
+	beq     L181F
+;
+; id = set_sprite(id, x, y, SPR_DIGIT + title_select_loop + 1,
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     _title_select_loop
+	clc
+	adc     #$10
+	bcc     L1819
+	clc
+L1819:	adc     #$01
+	dey
+	sta     (sp),y
+;
+; title_select_loop > 0 ? 1 : 3);  // Red if loop 2+
+;
+	lda     _title_select_loop
+	beq     L181D
+	lda     #$01
+	jmp     L181E
+L181D:	lda     #$03
+L181E:	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; if (max_loop > 0) {
+;
+L181F:	lda     _max_loop
+	beq     L1820
+;
+; id = set_sprite(id, x + 12, y - 6, 0x0A, 3);        // Up arrow
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	sec
+	sbc     #$06
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0A
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 12, y + 6, 0x0A, 3 | 0x80); // Down arrow (flipped)
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$06
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0A
+	dey
+	sta     (sp),y
+	lda     #$83
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; if (frame_count & 0x20) {
+;
+L1820:	lda     _frame_count
+	and     #$20
+	jeq     L1821
+;
+; y = 168;
+;
+	lda     #$A8
+	ldy     #$03
+	sta     (sp),y
+;
+; x = 88;
+;
+	lda     #$58
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$42
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$41
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; y = 216;
+;
+L1821:	lda     #$D8
+	ldy     #$03
+	sta     (sp),y
+;
+; x = 216;
+;
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$45
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_DIGIT + 4, 3);    // 4
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$14
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + 5, 3);    // 5
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$15
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; y = 220;
+;
+	lda     #$DC
+	ldy     #$03
+	sta     (sp),y
+;
+; x = 84;
+;
+	lda     #$54
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_COPYRIGHT, 3);    // (C)
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$4A
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$12
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$10
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y, SPR_DIGIT + 2, 3);    // 2
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$12
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 40, y, SPR_DIGIT + 6, 3);    // 6
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$28
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$16
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 56, y, SPR_LETTER + 5, 3);   // F
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$38
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$35
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 64, y, SPR_LETTER + 20, 3);  // U
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$40
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$44
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 72, y, SPR_LETTER + 1, 3);   // B
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$48
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$31
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 80, y, SPR_LETTER + 0, 3);   // A
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$50
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
 ;
 ; while (id < 64) {
 ;
-	jmp     L0B2B
+	jmp     L1813
 ;
 ; OAM[id * 4] = 0xFF;
 ;
-L0B2D:	lda     (sp),y
+L1823:	lda     (sp),y
 	jsr     shlax2
 	inx
 	inx
@@ -5252,22 +11052,22 @@ L0B2D:	lda     (sp),y
 ;
 ; ++id;
 ;
-	ldy     #$02
+	ldy     #$05
 	clc
 	lda     #$01
 	adc     (sp),y
-L0B2B:	sta     (sp),y
+L1813:	sta     (sp),y
 ;
 ; while (id < 64) {
 ;
 	ldx     #$00
-L0B2F:	lda     (sp),y
+	lda     (sp),y
 	cmp     #$40
-	bcc     L0B2D
+	bcc     L1823
 ;
 ; }
 ;
-	jmp     incsp3
+	jmp     incsp6
 
 .endproc
 
@@ -5500,11 +11300,11 @@ L0B2F:	lda     (sp),y
 ;
 ; while (id < 64) {
 ;
-	jmp     L0B30
+	jmp     L1825
 ;
 ; OAM[id * 4] = 0xFF;
 ;
-L0B32:	lda     (sp),y
+L1827:	lda     (sp),y
 	jsr     shlax2
 	inx
 	inx
@@ -5520,14 +11320,14 @@ L0B32:	lda     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-L0B30:	sta     (sp),y
+L1825:	sta     (sp),y
 ;
 ; while (id < 64) {
 ;
 	ldx     #$00
 	lda     (sp),y
 	cmp     #$40
-	bcc     L0B32
+	bcc     L1827
 ;
 ; }
 ;
@@ -5555,9 +11355,9 @@ L0B30:	sta     (sp),y
 ;
 	lda     #$00
 	tay
-L0B35:	sta     (sp),y
-	cmp     #$0C
-	bcc     L0B37
+L182A:	sta     (sp),y
+	cmp     #$08
+	bcc     L182C
 ;
 ; }
 ;
@@ -5565,13 +11365,13 @@ L0B35:	sta     (sp),y
 ;
 ; confetti_y[i] += 1 + (i & 1);  // Different speeds
 ;
-L0B37:	lda     #<(_confetti_y)
+L182C:	lda     #<(_confetti_y)
 	ldx     #>(_confetti_y)
 	clc
 	adc     (sp),y
-	bcc     L084B
+	bcc     L1189
 	inx
-L084B:	jsr     pushax
+L1189:	jsr     pushax
 	sta     ptr1
 	stx     ptr1+1
 	ldy     #$00
@@ -5582,9 +11382,9 @@ L084B:	jsr     pushax
 	and     #$01
 	clc
 	adc     #$01
-	bcc     L0B36
+	bcc     L182B
 	clc
-L0B36:	adc     ptr1
+L182B:	adc     ptr1
 	ldy     #$00
 	jsr     staspidx
 ;
@@ -5592,14 +11392,14 @@ L0B36:	adc     ptr1
 ;
 	lda     _frame_count
 	and     #$02
-	beq     L084F
+	beq     L118D
 ;
 ; if (i & 1) {
 ;
 	ldy     #$00
 	lda     (sp),y
 	and     #$01
-	beq     L0851
+	beq     L118F
 ;
 ; confetti_x[i] += 1;
 ;
@@ -5607,9 +11407,9 @@ L0B36:	adc     ptr1
 	ldx     #>(_confetti_x)
 	clc
 	adc     (sp),y
-	bcc     L0855
+	bcc     L1193
 	inx
-L0855:	sta     ptr1
+L1193:	sta     ptr1
 	stx     ptr1+1
 	lda     (ptr1),y
 	clc
@@ -5617,31 +11417,31 @@ L0855:	sta     ptr1
 ;
 ; } else {
 ;
-	jmp     L0B34
+	jmp     L1829
 ;
 ; confetti_x[i] -= 1;
 ;
-L0851:	lda     #<(_confetti_x)
+L118F:	lda     #<(_confetti_x)
 	ldx     #>(_confetti_x)
 	clc
 	adc     (sp),y
-	bcc     L085A
+	bcc     L1198
 	inx
-L085A:	sta     ptr1
+L1198:	sta     ptr1
 	stx     ptr1+1
 	lda     (ptr1),y
 	sec
 	sbc     #$01
-L0B34:	sta     (ptr1),y
+L1829:	sta     (ptr1),y
 ;
 ; if (confetti_y[i] > 240) {
 ;
-L084F:	ldy     #$00
+L118D:	ldy     #$00
 	lda     (sp),y
 	tay
 	lda     _confetti_y,y
 	cmp     #$F1
-	bcc     L0843
+	bcc     L1181
 ;
 ; confetti_y[i] = 0;
 ;
@@ -5658,17 +11458,17 @@ L084F:	ldy     #$00
 	ldy     #$00
 	clc
 	adc     (sp),y
-	bcc     L0866
+	bcc     L11A4
 	inx
-L0866:	jsr     pushax
+L11A4:	jsr     pushax
 	jsr     _rnd
 	ldx     #$00
 	and     #$7F
 	clc
 	adc     #$20
-	bcc     L0869
+	bcc     L11A7
 	inx
-L0869:	jsr     pushax
+L11A7:	jsr     pushax
 	jsr     _rnd
 	and     #$3F
 	jsr     tosadda0
@@ -5677,11 +11477,822 @@ L0869:	jsr     pushax
 ;
 ; for (i = 0; i < MAX_CONFETTI; ++i) {
 ;
-L0843:	ldy     #$00
+L1181:	ldy     #$00
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0B35
+	jmp     L182A
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ draw_highscore_entry (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_draw_highscore_entry: near
+
+.segment	"CODE"
+
+;
+; unsigned char id = 0;
+;
+	lda     #$00
+	jsr     pusha
+;
+; x = 72;
+;
+	jsr     decsp5
+	lda     #$48
+	ldy     #$04
+	sta     (sp),y
+;
+; y = 40;
+;
+	lda     #$28
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 13, 0);  // N
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3D
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 4,  0);  // E
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$34
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 22, 0);  // W
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$46
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; x = 68;
+;
+	lda     #$44
+	dey
+	sta     (sp),y
+;
+; y = 56;
+;
+	lda     #$38
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 7,  0);  // H
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$37
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 8,  0);  // I
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$38
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 6,  0);  // G
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$36
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_LETTER + 7,  0);  // H
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$37
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; x = 96;
+;
+	lda     #$60
+	dey
+	sta     (sp),y
+;
+; y = 80;
+;
+	lda     #$50
+	dey
+	sta     (sp),y
+;
+; s = score;
+;
+	lda     _score
+	ldx     _score+1
+	jsr     stax0sp
+;
+; if (s > 99999) s = 99999;
+;
+	ldy     #$00
+	cmp     #$A0
+	txa
+	sbc     #$86
+	tya
+	sbc     #$01
+	bcc     L11EF
+	lda     #$9F
+	sta     (sp),y
+	lda     #$86
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
+;
+L11EF:	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$27
+	lda     #$10
+	jsr     tosudivax
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudivax
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$64
+	jsr     tosudiva0
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosudiva0
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$07
+	jsr     pushwysp
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; x = 88;
+;
+	lda     #$58
+	dey
+	sta     (sp),y
+;
+; y = 110;
+;
+	lda     #$6E
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 13, 3);  // N
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3D
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  3);  // A
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 12, 3);  // M
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3C
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  3);  // E
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$34
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; x = 104;
+;
+	lda     #$68
+	dey
+	sta     (sp),y
+;
+; y = 140;
+;
+	lda     #$8C
+	dey
+	sta     (sp),y
+;
+; for (i = 0; i < 3; ++i) {
+;
+	lda     #$00
+	dey
+L1831:	sta     (sp),y
+	cmp     #$03
+	jcs     L1839
+;
+; id = set_sprite(id, x + i * 16, y, SPR_LETTER + entry_name[i],
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	clc
+	ldy     #$08
+	adc     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	tay
+	lda     _entry_name,y
+	clc
+	adc     #$30
+	ldy     #$00
+	sta     (sp),y
+;
+; (i == name_entry_pos) ? 0 : 3);
+;
+	ldy     #$06
+	lda     (sp),y
+	cmp     _name_entry_pos
+	bne     L1833
+	lda     #$00
+	jmp     L1834
+L1833:	lda     #$03
+L1834:	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; if (i == name_entry_pos && (frame_count & 0x10)) {
+;
+	ldy     #$02
+	lda     (sp),y
+	cmp     _name_entry_pos
+	bne     L1838
+	lda     _frame_count
+	and     #$10
+	beq     L1838
+;
+; id = set_sprite(id, x + i * 16, y + 10, SPR_BAR_FILL, 1);
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	clc
+	ldy     #$08
+	adc     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$0A
+	ldy     #$01
+	sta     (sp),y
+	lda     #$06
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; for (i = 0; i < 3; ++i) {
+;
+	ldy     #$02
+L1838:	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L1831
+;
+; x = 80;
+;
+L1839:	lda     #$50
+	ldy     #$04
+	sta     (sp),y
+;
+; y = 140;
+;
+	lda     #$8C
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, x, y - 4, 0x0A, 0);  // Up arrow (rotated)
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	sec
+	sbc     #$04
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0A
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x, y + 8, 0x0A, 0 | 0x80);  // Down arrow
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0A
+	dey
+	sta     (sp),y
+	lda     #$80
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; y = 190;
+;
+	lda     #$BE
+	ldy     #$03
+	sta     (sp),y
+;
+; x = 104;
+;
+	lda     #$68
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 0, 3);   // A
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 12, y, SPR_LETTER + 14, 3);  // O
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$0C
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3E
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 20, y, SPR_LETTER + 10, 3);  // K
+;
+	jsr     decsp4
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$08
+	lda     (sp),y
+	clc
+	adc     #$14
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3A
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$05
+;
+; while (id < 64) {
+;
+	jmp     L1832
+;
+; OAM[id * 4] = 0xFF;
+;
+L183B:	lda     (sp),y
+	jsr     shlax2
+	inx
+	inx
+	sta     ptr1
+	stx     ptr1+1
+	lda     #$FF
+	ldy     #$00
+	sta     (ptr1),y
+;
+; ++id;
+;
+	ldy     #$05
+	clc
+	lda     #$01
+	adc     (sp),y
+L1832:	sta     (sp),y
+;
+; while (id < 64) {
+;
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$40
+	bcc     L183B
+;
+; }
+;
+	jmp     incsp6
 
 .endproc
 
@@ -5712,7 +12323,7 @@ L0843:	ldy     #$00
 ;
 	lda     _win_timer
 	cmp     #$3C
-	bcs     L0B3B
+	bcs     L183F
 ;
 ; bounce = (win_timer >> 2) & 0x03;
 ;
@@ -5725,7 +12336,7 @@ L0843:	ldy     #$00
 ;
 	cmp     #$03
 	tya
-	bcc     L0B3C
+	bcc     L1840
 	lda     #$04
 	sec
 	sbc     (sp),y
@@ -5733,15 +12344,15 @@ L0843:	ldy     #$00
 ;
 ; for (i = 0; i < MAX_CONFETTI && id < 20; ++i) {
 ;
-L0B3B:	tya
-L0B3C:	ldy     #$02
-L0B39:	sta     (sp),y
-	cmp     #$0C
-	bcs     L0B3F
+L183F:	tya
+L1840:	ldy     #$02
+L183D:	sta     (sp),y
+	cmp     #$08
+	bcs     L1843
 	ldy     #$07
 	lda     (sp),y
 	cmp     #$14
-	bcs     L0B3F
+	bcs     L1843
 ;
 ; id = set_sprite(id, confetti_x[i], confetti_y[i],
 ;
@@ -5786,11 +12397,11 @@ L0B39:	sta     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-	jmp     L0B39
+	jmp     L183D
 ;
 ; text_y = 60 - bounce;
 ;
-L0B3F:	lda     #$3C
+L1843:	lda     #$3C
 	sec
 	ldy     #$00
 	sbc     (sp),y
@@ -6181,7 +12792,7 @@ L0B3F:	lda     #$3C
 ;
 	lda     _frame_count
 	and     #$10
-	beq     L090C
+	beq     L134B
 ;
 ; id = set_car(id, x, y, SPR_CAR, 0);
 ;
@@ -6204,11 +12815,11 @@ L0B3F:	lda     #$3C
 ;
 ; } else {
 ;
-	jmp     L0B47
+	jmp     L184B
 ;
 ; id = set_car(id, x, y, SPR_CAR, 0 | 0x40);  // H-flip
 ;
-L090C:	jsr     decsp4
+L134B:	jsr     decsp4
 	ldy     #$0B
 	lda     (sp),y
 	ldy     #$03
@@ -6225,7 +12836,7 @@ L090C:	jsr     decsp4
 	dey
 	sta     (sp),y
 	lda     #$40
-L0B47:	jsr     _set_car
+L184B:	jsr     _set_car
 	ldy     #$07
 	sta     (sp),y
 ;
@@ -6370,9 +12981,9 @@ L0B47:	jsr     _set_car
 	ldy     #$05
 	sta     (sp),y
 ;
-; x = 96;
+; x = 80;
 ;
-	lda     #$60
+	lda     #$50
 	iny
 	sta     (sp),y
 ;
@@ -6383,22 +12994,24 @@ L0B47:	jsr     _set_car
 	ldy     #$03
 	jsr     staxysp
 ;
-; if (s > 999) s = 999;  // Cap display
+; if (s > 99999) s = 99999;  // Cap at 5 digits
 ;
-	cmp     #$E8
+	cmp     #$A0
 	txa
-	sbc     #$03
-	bcc     L094E
+	sbc     #$86
+	lda     #$00
+	sbc     #$01
+	bcc     L138D
 	ldy     #$03
-	lda     #$E7
+	lda     #$9F
 	sta     (sp),y
-	tya
+	lda     #$86
 	iny
 	sta     (sp),y
 ;
-; id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 100), 3);
+; id = set_sprite(id, x,      y, SPR_DIGIT + (unsigned char)(s / 10000), 3);
 ;
-L094E:	jsr     decsp4
+L138D:	jsr     decsp4
 	ldy     #$0B
 	lda     (sp),y
 	ldy     #$03
@@ -6413,8 +13026,9 @@ L094E:	jsr     decsp4
 	sta     (sp),y
 	ldy     #$0A
 	jsr     pushwysp
-	lda     #$64
-	jsr     tosudiva0
+	ldx     #$27
+	lda     #$10
+	jsr     tosudivax
 	clc
 	adc     #$10
 	ldy     #$00
@@ -6424,7 +13038,7 @@ L094E:	jsr     decsp4
 	ldy     #$07
 	sta     (sp),y
 ;
-; id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+; id = set_sprite(id, x + 8,  y, SPR_DIGIT + (unsigned char)((s / 1000) % 10), 3);
 ;
 	jsr     decsp4
 	ldy     #$0B
@@ -6435,6 +13049,73 @@ L094E:	jsr     decsp4
 	lda     (sp),y
 	clc
 	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$0A
+	jsr     pushwysp
+	ldx     #$03
+	lda     #$E8
+	jsr     tosudivax
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$07
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)((s / 100) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0A
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$09
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	ldy     #$0A
+	jsr     pushwysp
+	lda     #$64
+	jsr     tosudiva0
+	jsr     pushax
+	lda     #$0A
+	jsr     tosumoda0
+	clc
+	adc     #$10
+	ldy     #$00
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$07
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + (unsigned char)((s / 10) % 10), 3);
+;
+	jsr     decsp4
+	ldy     #$0B
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$0A
+	lda     (sp),y
+	clc
+	adc     #$18
 	ldy     #$02
 	sta     (sp),y
 	ldy     #$09
@@ -6457,7 +13138,7 @@ L094E:	jsr     decsp4
 	ldy     #$07
 	sta     (sp),y
 ;
-; id = set_sprite(id, x + 16, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
+; id = set_sprite(id, x + 32, y, SPR_DIGIT + (unsigned char)(s % 10), 3);
 ;
 	jsr     decsp4
 	ldy     #$0B
@@ -6467,7 +13148,7 @@ L094E:	jsr     decsp4
 	ldy     #$0A
 	lda     (sp),y
 	clc
-	adc     #$10
+	adc     #$20
 	ldy     #$02
 	sta     (sp),y
 	ldy     #$09
@@ -6487,7 +13168,7 @@ L094E:	jsr     decsp4
 	ldy     #$07
 	sta     (sp),y
 ;
-; id = set_sprite(id, x + 24, y, SPR_LETTER + 15, 3);  // P
+; id = set_sprite(id, x + 44, y, SPR_LETTER + 15, 3);  // P
 ;
 	jsr     decsp4
 	ldy     #$0B
@@ -6497,7 +13178,7 @@ L094E:	jsr     decsp4
 	ldy     #$0A
 	lda     (sp),y
 	clc
-	adc     #$18
+	adc     #$2C
 	ldy     #$02
 	sta     (sp),y
 	ldy     #$09
@@ -6512,7 +13193,7 @@ L094E:	jsr     decsp4
 	ldy     #$07
 	sta     (sp),y
 ;
-; id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 3);  // T (PTS)
+; id = set_sprite(id, x + 52, y, SPR_LETTER + 19, 3);  // T (PTS)
 ;
 	jsr     decsp4
 	ldy     #$0B
@@ -6522,7 +13203,7 @@ L094E:	jsr     decsp4
 	ldy     #$0A
 	lda     (sp),y
 	clc
-	adc     #$20
+	adc     #$34
 	ldy     #$02
 	sta     (sp),y
 	ldy     #$09
@@ -6537,7 +13218,7 @@ L094E:	jsr     decsp4
 	ldy     #$07
 	sta     (sp),y
 ;
-; id = set_sprite(id, x + 40, y, SPR_LETTER + 18, 3);  // S
+; id = set_sprite(id, x + 60, y, SPR_LETTER + 18, 3);  // S
 ;
 	jsr     decsp4
 	ldy     #$0B
@@ -6547,7 +13228,7 @@ L094E:	jsr     decsp4
 	ldy     #$0A
 	lda     (sp),y
 	clc
-	adc     #$28
+	adc     #$3C
 	ldy     #$02
 	sta     (sp),y
 	ldy     #$09
@@ -6566,21 +13247,21 @@ L094E:	jsr     decsp4
 ;
 	lda     _win_timer
 	cmp     #$5B
-	jcc     L0B45
+	jcc     L1849
 	lda     _frame_count
 	and     #$20
-	jeq     L0B45
+	jeq     L1849
 ;
-; y = 200;
+; x = 96;
 ;
-	lda     #$C8
-	ldy     #$05
+	lda     #$60
+	dey
 	sta     (sp),y
 ;
-; x = 72;
+; y = 192;
 ;
-	lda     #$48
-	iny
+	lda     #$C0
+	dey
 	sta     (sp),y
 ;
 ; id = set_sprite(id, x,      y, SPR_LETTER + 15, 3);  // P
@@ -6706,10 +13387,10 @@ L094E:	jsr     decsp4
 	ldy     #$07
 	sta     (sp),y
 ;
-; x = 128;
+; y = 204;
 ;
-	lda     #$80
-	dey
+	lda     #$CC
+	ldy     #$05
 	sta     (sp),y
 ;
 ; id = set_sprite(id, x,      y, SPR_LETTER + 18, 3);  // S
@@ -6836,11 +13517,11 @@ L094E:	jsr     decsp4
 ;
 ; while (id < 64) {
 ;
-	jmp     L0B48
+	jmp     L184C
 ;
 ; OAM[id * 4] = 0xFF;
 ;
-L0B44:	lda     (sp),y
+L1848:	lda     (sp),y
 	jsr     shlax2
 	inx
 	inx
@@ -6856,18 +13537,409 @@ L0B44:	lda     (sp),y
 	clc
 	lda     #$01
 	adc     (sp),y
-L0B48:	sta     (sp),y
+L184C:	sta     (sp),y
 ;
 ; while (id < 64) {
 ;
-L0B45:	ldx     #$00
+L1849:	ldx     #$00
 	lda     (sp),y
 	cmp     #$40
-	bcc     L0B44
+	bcc     L1848
 ;
 ; }
 ;
 	jmp     incsp8
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ draw_loop_clear (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_draw_loop_clear: near
+
+.segment	"CODE"
+
+;
+; unsigned char id = 0;
+;
+	lda     #$00
+	jsr     pusha
+;
+; for (i = 0; i < MAX_CONFETTI && id < 16; ++i) {
+;
+	jsr     decsp1
+	tay
+L184E:	sta     (sp),y
+	cmp     #$08
+	bcs     L1442
+	iny
+	lda     (sp),y
+	cmp     #$10
+	bcs     L1442
+;
+; id = set_sprite(id, confetti_x[i], confetti_y[i], SPR_BULLET, confetti_color[i]);
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	iny
+	lda     (sp),y
+	tay
+	lda     _confetti_x,y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	tay
+	lda     _confetti_y,y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0B
+	dey
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	tay
+	lda     _confetti_color,y
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; for (i = 0; i < MAX_CONFETTI && id < 16; ++i) {
+;
+	dey
+	clc
+	lda     #$01
+	adc     (sp),y
+	jmp     L184E
+;
+; id = set_sprite(id, 76,  60, SPR_LETTER + 11, 0);  // L
+;
+L1442:	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$4C
+	dey
+	sta     (sp),y
+	lda     #$3C
+	dey
+	sta     (sp),y
+	lda     #$3B
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 84,  60, SPR_LETTER + 14, 0);  // O
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$54
+	dey
+	sta     (sp),y
+	lda     #$3C
+	dey
+	sta     (sp),y
+	lda     #$3E
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 92,  60, SPR_LETTER + 14, 0);  // O
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$5C
+	dey
+	sta     (sp),y
+	lda     #$3C
+	dey
+	sta     (sp),y
+	lda     #$3E
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 100, 60, SPR_LETTER + 15, 0);  // P
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$64
+	dey
+	sta     (sp),y
+	lda     #$3C
+	dey
+	sta     (sp),y
+	lda     #$3F
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 112, 60, SPR_DIGIT + loop_count, 1);
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$70
+	dey
+	sta     (sp),y
+	lda     #$3C
+	dey
+	sta     (sp),y
+	lda     _loop_count
+	clc
+	adc     #$10
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 100, 80, SPR_LETTER + 14, 0);  // O
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$64
+	dey
+	sta     (sp),y
+	lda     #$50
+	dey
+	sta     (sp),y
+	lda     #$3E
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 108, 80, SPR_LETTER + 10, 0);  // K
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$6C
+	dey
+	sta     (sp),y
+	lda     #$50
+	dey
+	sta     (sp),y
+	lda     #$3A
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_car(id, 112, 100, SPR_CAR, (frame_count & 0x10) ? 0 : 0x40);
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$70
+	dey
+	sta     (sp),y
+	lda     #$64
+	dey
+	sta     (sp),y
+	lda     #$00
+	dey
+	sta     (sp),y
+	lda     _frame_count
+	and     #$10
+	beq     L1851
+	tya
+	jmp     L1852
+L1851:	lda     #$40
+L1852:	jsr     _set_car
+	ldy     #$01
+	sta     (sp),y
+;
+; if (loop_clear_timer > 60 && (frame_count & 0x20)) {
+;
+	lda     _loop_clear_timer
+	cmp     #$3D
+	jcc     L1858
+	lda     _frame_count
+	and     #$20
+	jeq     L1858
+;
+; id = set_sprite(id, 88, 180, SPR_LETTER + 18, 3);   // S
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$58
+	dey
+	sta     (sp),y
+	lda     #$B4
+	dey
+	sta     (sp),y
+	lda     #$42
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 96, 180, SPR_LETTER + 19, 3);   // T
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$60
+	dey
+	sta     (sp),y
+	lda     #$B4
+	dey
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 104, 180, SPR_LETTER + 0, 3);   // A
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$68
+	dey
+	sta     (sp),y
+	lda     #$B4
+	dey
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 112, 180, SPR_LETTER + 17, 3);  // R
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$70
+	dey
+	sta     (sp),y
+	lda     #$B4
+	dey
+	sta     (sp),y
+	lda     #$41
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+	sta     (sp),y
+;
+; id = set_sprite(id, 120, 180, SPR_LETTER + 19, 3);  // T
+;
+	jsr     decsp4
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     #$78
+	dey
+	sta     (sp),y
+	lda     #$B4
+	dey
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$03
+	jsr     _set_sprite
+	ldy     #$01
+;
+; while (id < 64) {
+;
+	jmp     L1859
+;
+; OAM[id * 4] = 0xFF;
+;
+L1857:	lda     (sp),y
+	jsr     shlax2
+	inx
+	inx
+	sta     ptr1
+	stx     ptr1+1
+	lda     #$FF
+	dey
+	sta     (ptr1),y
+;
+; ++id;
+;
+	iny
+	clc
+	tya
+	adc     (sp),y
+L1859:	sta     (sp),y
+;
+; while (id < 64) {
+;
+L1858:	ldx     #$00
+	lda     (sp),y
+	cmp     #$40
+	bcc     L1857
+;
+; }
+;
+	jmp     incsp2
 
 .endproc
 
@@ -6902,7 +13974,7 @@ L0B45:	ldx     #$00
 ;
 	lda     _frame_count
 	and     #$10
-	bne     L0B49
+	bne     L185A
 ;
 ; }
 ;
@@ -6910,7 +13982,7 @@ L0B45:	ldx     #$00
 ;
 ; id = set_sprite(id, x,      y, SPR_LETTER + 15, 3);  // P
 ;
-L0B49:	jsr     decsp4
+L185A:	jsr     decsp4
 	ldy     #$06
 	lda     (sp),y
 	ldy     #$03
@@ -7058,6 +14130,10 @@ L0B49:	jsr     decsp4
 	lda     #$00
 	sta     _game_state
 ;
+; init_save();
+;
+	jsr     _init_save
+;
 ; wait_vblank();
 ;
 	jsr     _wait_vblank
@@ -7092,37 +14168,18 @@ L0B49:	jsr     decsp4
 	lda     #$88
 	sta     $2000
 ;
+; nmi_enabled = 1;  // Allow wait_vblank to use NMI flag
+;
+	lda     #$01
+	sta     _nmi_enabled
+;
 ; ppu_on();
 ;
 	jsr     _ppu_on
 ;
-; wait_vblank();
-;
-L0A29:	jsr     _wait_vblank
-;
-; OAM_ADDR = 0;
-;
-	lda     #$00
-	sta     $2003
-;
-; OAM_DMA = 0x02;
-;
-	lda     #$02
-	sta     $4014
-;
-; PPU_SCROLL = 0;
-;
-	lda     #$00
-	sta     $2005
-;
-; PPU_SCROLL = scroll_y;
-;
-	lda     _scroll_y
-	sta     $2005
-;
 ; pad_old = pad_now;
 ;
-	lda     _pad_now
+L185F:	lda     _pad_now
 	sta     _pad_old
 ;
 ; pad_now = read_pad();
@@ -7151,9 +14208,9 @@ L0A29:	jsr     _wait_vblank
 ;
 	jsr     _clear_sprites
 ;
-; music_update();
+; update_sfx();
 ;
-	jsr     _music_update
+	jsr     _update_sfx
 ;
 ; switch (game_state) {
 ;
@@ -7161,34 +14218,76 @@ L0A29:	jsr     _wait_vblank
 ;
 ; }
 ;
-	beq     L0A49
+	beq     L151C
 	cmp     #$01
-	beq     L0B4A
+	beq     L1862
 	cmp     #$02
-	beq     L0B4B
+	jeq     L1641
 	cmp     #$03
-	beq     L0A6D
+	jeq     L164A
 	cmp     #$04
-	jeq     L0A76
+	jeq     L153F
 	cmp     #$05
-	beq     L0A5C
-	jmp     L0A29
+	jeq     L1679
+	cmp     #$06
+	jeq     L1871
+	cmp     #$07
+	jeq     L1863
+	cmp     #$08
+	jeq     L186A
+	jmp     L151A
 ;
 ; draw_title();
 ;
-L0A49:	jsr     _draw_title
+L151C:	jsr     _draw_title
+;
+; if (max_loop > 0) {
+;
+	lda     _max_loop
+	beq     L1861
+;
+; if (pad_new & BTN_UP) {
+;
+	lda     _pad_new
+	and     #$08
+	beq     L1860
+;
+; if (title_select_loop < max_loop) {
+;
+	lda     _title_select_loop
+	cmp     _max_loop
+	bcs     L1860
+;
+; ++title_select_loop;
+;
+	inc     _title_select_loop
+;
+; if (pad_new & BTN_DOWN) {
+;
+L1860:	lda     _pad_new
+	and     #$04
+	beq     L1861
+;
+; if (title_select_loop > 0) {
+;
+	lda     _title_select_loop
+	beq     L1861
+;
+; --title_select_loop;
+;
+	dec     _title_select_loop
 ;
 ; if (pad_new & BTN_START) {
 ;
-	lda     _pad_new
+L1861:	lda     _pad_new
 	and     #$10
-	beq     L0A29
+	jeq     L151A
 ;
 ; init_game();
 ;
 	jsr     _init_game
 ;
-; music_play(1);  // Racing BGM - energetic!
+; music_play(TRACK_RACING);  // Racing BGM - energetic!
 ;
 	lda     #$01
 	jsr     _music_play
@@ -7196,30 +14295,43 @@ L0A49:	jsr     _draw_title
 ; game_state = STATE_RACING;
 ;
 	lda     #$01
-	sta     _game_state
 ;
 ; break;
 ;
-	jmp     L0A29
+	jmp     L185B
 ;
 ; if (pad_new & BTN_START) {
 ;
-L0B4A:	lda     _pad_new
+L1862:	lda     _pad_new
 	and     #$10
-	beq     L0A54
+	beq     L1533
 ;
 ; game_state = STATE_PAUSED;
 ;
-	lda     #$05
+	lda     #$04
 	sta     _game_state
+;
+; music_pause();
+;
+	jsr     _music_pause
+;
+; sfx_stop();
+;
+	jsr     _sfx_stop
 ;
 ; } else {
 ;
-	jmp     L0A29
+	jmp     L151A
 ;
 ; update_game();
 ;
-L0A54:	jsr     _update_game
+L1533:	jsr     _update_game
+;
+; if (game_state == STATE_RACING) {
+;
+	lda     _game_state
+	cmp     #$01
+	jne     L151A
 ;
 ; draw_game();
 ;
@@ -7227,64 +14339,811 @@ L0A54:	jsr     _update_game
 ;
 ; break;
 ;
-	jmp     L0A29
+	jmp     L151A
 ;
 ; draw_pause();
 ;
-L0A5C:	jsr     _draw_pause
+L153F:	jsr     _draw_pause
 ;
 ; if (pad_new & BTN_START) {
 ;
 	lda     _pad_new
 	and     #$10
-	jeq     L0A29
+	jeq     L151A
 ;
 ; game_state = STATE_RACING;
 ;
 	lda     #$01
 	sta     _game_state
 ;
+; music_resume();
+;
+	jsr     _music_resume
+;
 ; break;
 ;
-	jmp     L0A29
+	jmp     L151A
 ;
-; ++pit_timer;
+; ++explode_timer;
 ;
-L0B4B:	inc     _pit_timer
+L1863:	inc     _explode_timer
 ;
-; if (pit_timer >= 60) {
+; unsigned char id = 0;
 ;
-	lda     _pit_timer
-	cmp     #$3C
-	bcc     L0A65
+	lda     #$00
+	jsr     pusha
 ;
-; player_hp = PLAYER_MAX_HP;
+; unsigned char phase = explode_timer >> 3;  // Every 8 frames
 ;
-	lda     #$05
-	sta     _player_hp
+	jsr     decsp2
+	lda     _explode_timer
+	lsr     a
+	lsr     a
+	lsr     a
+	jsr     pusha
 ;
-; game_state = STATE_RACING;
+; id = set_sprite(id, explode_x + 4, explode_y + 4, SPR_EXPLOSION, 2);
 ;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _explode_x
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+	lda     _explode_y
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; if (phase >= 1) {
+;
+	ldy     #$00
+	lda     (sp),y
+	beq     L1865
+;
+; ex = explode_x - 4;
+;
+	lda     _explode_x
+	sec
+	sbc     #$04
+	ldy     #$02
+	sta     (sp),y
+;
+; ey = explode_y - 4;
+;
+	lda     _explode_y
+	sec
+	sbc     #$04
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, ex, ey, SPR_EXPLOSION, 2);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, ex + 16, ey, SPR_EXPLOSION, 2);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; if (phase >= 2) {
+;
+	ldy     #$00
+L1865:	lda     (sp),y
+	cmp     #$02
+	bcc     L1867
+;
+; ex = explode_x - 8;
+;
+	lda     _explode_x
+	sec
+	sbc     #$08
+	ldy     #$02
+	sta     (sp),y
+;
+; ey = explode_y + 4;
+;
+	lda     _explode_y
+	clc
+	adc     #$04
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, ex, ey, SPR_EXPLOSION, 2);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, ex + 24, ey, SPR_EXPLOSION, 2);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$06
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; if (phase >= 3) {
+;
+	ldy     #$00
+L1867:	lda     (sp),y
+	cmp     #$03
+	bcc     L1599
+;
+; ey = explode_y + 12;
+;
+	lda     _explode_y
+	clc
+	adc     #$0C
+	iny
+	sta     (sp),y
+;
+; id = set_sprite(id, explode_x - 4, ey, SPR_EXPLOSION, 2);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _explode_x
+	sec
+	sbc     #$04
+	dey
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+	sta     (sp),y
+;
+; id = set_sprite(id, explode_x + 12, ey, SPR_EXPLOSION, 2);
+;
+	jsr     decsp4
+	ldy     #$07
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _explode_x
+	clc
+	adc     #$0C
+	dey
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$0E
+	dey
+	sta     (sp),y
+	lda     #$02
+	jsr     _set_sprite
+	ldy     #$03
+;
+; while (id < 64) {
+;
+	jmp     L185C
+;
+; OAM[id * 4] = 0xFF;
+;
+L1869:	lda     (sp),y
+	jsr     shlax2
+	inx
+	inx
+	sta     ptr1
+	stx     ptr1+1
+	lda     #$FF
+	ldy     #$00
+	sta     (ptr1),y
+;
+; ++id;
+;
+	ldy     #$03
+	clc
 	lda     #$01
-	sta     _game_state
+	adc     (sp),y
+L185C:	sta     (sp),y
 ;
-; draw_game();
+; while (id < 64) {
 ;
-L0A65:	jsr     _draw_game
+L1599:	ldy     #$03
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$40
+	bcc     L1869
+;
+; }
+;
+	jsr     incsp4
+;
+; if (explode_timer > 60) {
+;
+	lda     _explode_timer
+	cmp     #$3D
+	jcc     L151A
+;
+; finish_game_over();
+;
+	jsr     _finish_game_over
 ;
 ; break;
 ;
-	jmp     L0A29
+	jmp     L151A
+;
+; ++explode_timer;
+;
+L186A:	inc     _explode_timer
+;
+; unsigned char id = 0;
+;
+	lda     #$00
+	jsr     pusha
+;
+; id = set_sprite(id, player_x,     player_y,     SPR_CAR,     0);
+;
+	jsr     decsp6
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _player_x
+	dey
+	sta     (sp),y
+	lda     _player_y
+	dey
+	sta     (sp),y
+	lda     #$00
+	dey
+	sta     (sp),y
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, player_x + 8, player_y,     SPR_CAR + 1, 0);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _player_x
+	clc
+	adc     #$08
+	dey
+	sta     (sp),y
+	lda     _player_y
+	dey
+	sta     (sp),y
+	tya
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, player_x,     player_y + 8, SPR_CAR + 2, 0);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _player_x
+	dey
+	sta     (sp),y
+	lda     _player_y
+	clc
+	adc     #$08
+	dey
+	sta     (sp),y
+	lda     #$02
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, player_x + 8, player_y + 8, SPR_CAR + 3, 0);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	lda     _player_x
+	clc
+	adc     #$08
+	dey
+	sta     (sp),y
+	lda     _player_y
+	clc
+	adc     #$08
+	dey
+	sta     (sp),y
+	lda     #$03
+	dey
+	sta     (sp),y
+	tya
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; x = 96;
+;
+	lda     #$60
+	dey
+	sta     (sp),y
+;
+; y = 100;
+;
+	lda     #$64
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, x, y, SPR_DIGIT + position, 1);
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     _position
+	clc
+	adc     #$10
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; if (position == 2) {
+;
+	lda     _position
+	cmp     #$02
+	bne     L186B
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 13, 1);  // N
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3D
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  1);  // D
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$33
+;
+; } else if (position == 3) {
+;
+	jmp     L187E
+L186B:	lda     _position
+	cmp     #$03
+	bne     L15E6
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 17, 1);  // R
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$41
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  1);  // D
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$33
+;
+; } else {
+;
+	jmp     L187E
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 1);  // T
+;
+L15E6:	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$43
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 7,  1);  // H
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$37
+L187E:	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; x = 88;
+;
+	lda     #$58
+	dey
+	sta     (sp),y
+;
+; y = 116;
+;
+	lda     #$74
+	dey
+	sta     (sp),y
+;
+; id = set_sprite(id, x,      y, SPR_LETTER + 15, 1);  // P
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3F
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 8,  y, SPR_LETTER + 11, 1);  // L
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$08
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$3B
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  1);  // A
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$10
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$30
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 24, y, SPR_LETTER + 2,  1);  // C
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$18
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$32
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+	sta     (sp),y
+;
+; id = set_sprite(id, x + 32, y, SPR_LETTER + 4,  1);  // E
+;
+	jsr     decsp4
+	ldy     #$06
+	lda     (sp),y
+	ldy     #$03
+	sta     (sp),y
+	ldy     #$05
+	lda     (sp),y
+	clc
+	adc     #$20
+	ldy     #$02
+	sta     (sp),y
+	ldy     #$04
+	lda     (sp),y
+	ldy     #$01
+	sta     (sp),y
+	lda     #$34
+	dey
+	sta     (sp),y
+	lda     #$01
+	jsr     _set_sprite
+	ldy     #$02
+;
+; while (id < 64) {
+;
+	jmp     L185E
+;
+; OAM[id * 4] = 0xFF;
+;
+L186D:	lda     (sp),y
+	jsr     shlax2
+	inx
+	inx
+	sta     ptr1
+	stx     ptr1+1
+	lda     #$FF
+	ldy     #$00
+	sta     (ptr1),y
+;
+; ++id;
+;
+	ldy     #$02
+	clc
+	lda     #$01
+	adc     (sp),y
+L185E:	sta     (sp),y
+;
+; while (id < 64) {
+;
+	ldx     #$00
+	lda     (sp),y
+	cmp     #$40
+	bcc     L186D
+;
+; }
+;
+	jsr     incsp3
+;
+; if (explode_timer > 90) {
+;
+	lda     _explode_timer
+	cmp     #$5B
+	jcc     L151A
+;
+; finish_game_over();
+;
+	jsr     _finish_game_over
+;
+; break;
+;
+	jmp     L151A
 ;
 ; draw_gameover();
 ;
-L0A6D:	jsr     _draw_gameover
+L1641:	jsr     _draw_gameover
 ;
 ; if (pad_new & BTN_START) {
 ;
 	lda     _pad_new
 	and     #$10
-	jeq     L0A29
+	jeq     L151A
 ;
 ; music_play(0);  // Back to title BGM
 ;
@@ -7294,15 +15153,14 @@ L0A6D:	jsr     _draw_gameover
 ; game_state = STATE_TITLE;
 ;
 	lda     #$00
-	sta     _game_state
 ;
 ; break;
 ;
-	jmp     L0A29
+	jmp     L185B
 ;
 ; update_win_animation();
 ;
-L0A76:	jsr     _update_win_animation
+L164A:	jsr     _update_win_animation
 ;
 ; draw_win();
 ;
@@ -7312,10 +15170,10 @@ L0A76:	jsr     _update_win_animation
 ;
 	lda     _win_timer
 	cmp     #$5B
-	jcc     L0A29
+	jcc     L151A
 	lda     _pad_new
 	and     #$10
-	jeq     L0A29
+	jeq     L151A
 ;
 ; music_play(0);  // Back to title BGM
 ;
@@ -7325,11 +15183,266 @@ L0A76:	jsr     _update_win_animation
 ; game_state = STATE_TITLE;
 ;
 	lda     #$00
-	sta     _game_state
 ;
 ; break;
 ;
-	jmp     L0A29
+	jmp     L185B
+;
+; ++loop_clear_timer;
+;
+L1871:	inc     _loop_clear_timer
+;
+; update_win_animation();  // Reuse confetti animation
+;
+	jsr     _update_win_animation
+;
+; draw_loop_clear();
+;
+	jsr     _draw_loop_clear
+;
+; if (loop_clear_timer > 60 && (pad_new & BTN_START)) {
+;
+	lda     _loop_clear_timer
+	cmp     #$3D
+	jcc     L151A
+	lda     _pad_new
+	and     #$10
+	jeq     L151A
+;
+; lap_count = 0;
+;
+	lda     #$00
+	sta     _lap_count
+;
+; position = 12;  // Start from the back again
+;
+	lda     #$0C
+	sta     _position
+;
+; distance = 0;
+;
+	lda     #$00
+	sta     _distance
+	sta     _distance+1
+;
+; scroll_y = 0;
+;
+	sta     _scroll_y
+;
+; boost_remaining = 2;  // Reset boosts for new loop
+;
+	lda     #$02
+	sta     _boost_remaining
+;
+; boost_active = 0;
+;
+	lda     #$00
+	sta     _boost_active
+;
+; boss_music_active = 0; // No boss at loop start
+;
+	sta     _boss_music_active
+;
+; ppu_off();
+;
+	jsr     _ppu_off
+;
+; load_palettes();
+;
+	jsr     _load_palettes
+;
+; update_loop_palette();  // Override road/grass colors based on loop_count
+;
+	jsr     _update_loop_palette
+;
+; draw_road();
+;
+	jsr     _draw_road
+;
+; music_play(TRACK_RACING);
+;
+	lda     #$01
+	jsr     _music_play
+;
+; music_set_intensity(1);  // Loop 2+: moderate start
+;
+	lda     #$01
+	jsr     _music_set_intensity
+;
+; game_state = STATE_RACING;
+;
+	lda     #$01
+;
+; break;
+;
+	jmp     L185B
+;
+; draw_highscore_entry();
+;
+L1679:	jsr     _draw_highscore_entry
+;
+; if (pad_new & BTN_UP) {
+;
+	lda     _pad_new
+	and     #$08
+	beq     L1876
+;
+; if (name_entry_char < 25) {
+;
+	lda     _name_entry_char
+	cmp     #$19
+	bcs     L1875
+;
+; ++name_entry_char;
+;
+	inc     _name_entry_char
+;
+; } else {
+;
+	jmp     L1680
+;
+; name_entry_char = 0;  // Wrap around
+;
+L1875:	lda     #$00
+	sta     _name_entry_char
+;
+; entry_name[name_entry_pos] = name_entry_char;
+;
+L1680:	ldy     _name_entry_pos
+	lda     _name_entry_char
+	sta     _entry_name,y
+;
+; if (pad_new & BTN_DOWN) {
+;
+L1876:	lda     _pad_new
+	and     #$04
+	beq     L1878
+;
+; if (name_entry_char > 0) {
+;
+	lda     _name_entry_char
+	beq     L1877
+;
+; --name_entry_char;
+;
+	dec     _name_entry_char
+;
+; } else {
+;
+	jmp     L168C
+;
+; name_entry_char = 25;  // Wrap around
+;
+L1877:	lda     #$19
+	sta     _name_entry_char
+;
+; entry_name[name_entry_pos] = name_entry_char;
+;
+L168C:	ldy     _name_entry_pos
+	lda     _name_entry_char
+	sta     _entry_name,y
+;
+; if (pad_new & BTN_A) {
+;
+L1878:	lda     _pad_new
+	and     #$80
+	beq     L1879
+;
+; ++name_entry_pos;
+;
+	inc     _name_entry_pos
+;
+; if (name_entry_pos >= 3) {
+;
+	lda     _name_entry_pos
+	cmp     #$03
+	bcc     L1696
+;
+; insert_high_score(new_score_rank, score_high, score);
+;
+	jsr     decsp3
+	lda     _new_score_rank
+	ldy     #$02
+	sta     (sp),y
+	lda     _score_high
+	ldy     #$00
+	sta     (sp),y
+	iny
+	lda     _score_high+1
+	sta     (sp),y
+	lda     _score
+	ldx     _score+1
+	jsr     _insert_high_score
+;
+; game_state = STATE_GAMEOVER;
+;
+	lda     #$02
+	sta     _game_state
+;
+; } else {
+;
+	jmp     L1879
+;
+; name_entry_char = entry_name[name_entry_pos];
+;
+L1696:	ldy     _name_entry_pos
+	lda     _entry_name,y
+	sta     _name_entry_char
+;
+; if (pad_new & BTN_START) {
+;
+L1879:	lda     _pad_new
+	and     #$10
+	beq     L151A
+;
+; insert_high_score(new_score_rank, score_high, score);
+;
+	jsr     decsp3
+	lda     _new_score_rank
+	ldy     #$02
+	sta     (sp),y
+	lda     _score_high
+	ldy     #$00
+	sta     (sp),y
+	iny
+	lda     _score_high+1
+	sta     (sp),y
+	lda     _score
+	ldx     _score+1
+	jsr     _insert_high_score
+;
+; game_state = STATE_GAMEOVER;
+;
+	lda     #$02
+L185B:	sta     _game_state
+;
+; wait_vblank();
+;
+L151A:	jsr     _wait_vblank
+;
+; OAM_ADDR = 0;
+;
+	lda     #$00
+	sta     $2003
+;
+; OAM_DMA = 0x02;
+;
+	lda     #$02
+	sta     $4014
+;
+; PPU_SCROLL = 0;
+;
+	lda     #$00
+	sta     $2005
+;
+; PPU_SCROLL = scroll_y;
+;
+	lda     _scroll_y
+	sta     $2005
+;
+; while (1) {
+;
+	jmp     L185F
 
 .endproc
 

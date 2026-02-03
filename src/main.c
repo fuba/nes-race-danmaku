@@ -60,7 +60,8 @@
 #define STATE_PAUSED     4
 #define STATE_HIGHSCORE  5  // Name entry for high score
 #define STATE_LOOP_CLEAR 6  // Loop completion celebration
-#define STATE_EXPLODE    7  // Player explosion before game over
+#define STATE_EXPLODE    7  // Player explosion (HP=0)
+#define STATE_FINISH     8  // Finished race but not 1st place
 
 // Screen constants
 #define ROAD_LEFT       40
@@ -94,6 +95,7 @@
 #define SPR_BAR_EMPTY   0x07
 #define SPR_CAR_ICON    0x08
 #define SPR_EXPLOSION   0x0E
+#define SPR_HITBOX      0x0F    // Hitbox indicator
 #define SPR_BULLET      0x0B    // Diamond bullet sprite
 #define SPR_DIGIT       0x10
 #define SPR_LETTER      0x30
@@ -127,9 +129,9 @@ static unsigned char enemy_warn_timer; // Warning countdown before spawn
 static unsigned char enemy_slot;       // Next enemy slot to use
 
 // Explosion effect
-static unsigned char explode_x;
-static unsigned char explode_y;
-static unsigned char explode_timer;    // Explosion animation timer
+static unsigned char explode_x;        // Explosion/retire position X
+static unsigned char explode_y;        // Explosion/retire position Y
+static unsigned char explode_timer;    // Animation timer (explosion or retire)
 
 
 static unsigned char position;
@@ -598,6 +600,7 @@ const unsigned char palette[32] = {
 // FORWARD DECLARATIONS
 // ============================================
 static void do_game_over(void);
+static void do_finish_lose(void);
 static void finish_game_over(void);
 static unsigned char check_high_score(unsigned int new_score_high, unsigned int new_score_low);
 static void insert_high_score(unsigned char rank, unsigned int new_score_high, unsigned int new_score_low);
@@ -1033,6 +1036,7 @@ static unsigned char read_pad(void) {
         result <<= 1;
         result |= (JOYPAD1 & 1);
     }
+    // Return result directly - emulators typically return pressed=1, released=0
     return result;
 }
 
@@ -1056,10 +1060,13 @@ static void clear_sprites(void) {
     }
 }
 
-// Set a single sprite
+// Set a single sprite (with overflow guard)
 static unsigned char set_sprite(unsigned char id, unsigned char x, unsigned char y,
                                 unsigned char tile, unsigned char attr) {
-    unsigned char idx = id * 4;
+    unsigned int idx;
+    // Guard against OAM overflow (NES has 64 sprites max)
+    if (id >= 64) return id;
+    idx = id * 4;
     OAM[idx] = y;
     OAM[idx + 1] = tile;
     OAM[idx + 2] = attr;
@@ -1456,7 +1463,7 @@ static unsigned char check_bullet_collisions(void) {
         add_score(score_multiplier * (1 << loop_count));
         if (score_multiplier < 65535u) ++score_multiplier;
         ++graze_count;
-        if (graze_count >= 10) {
+        if (graze_count >= 20) {  // 20 grazes for +1 HP (balanced recovery)
             graze_count = 0;
             if (player_hp < PLAYER_MAX_HP) ++player_hp;
         }
@@ -1556,19 +1563,27 @@ static void init_name_entry(unsigned char rank) {
     entry_name[2] = 0;
 }
 
-// Handle game over - start explosion first, then check high score
+// Handle game over (HP=0) - explosion animation, then check high score
 static void do_game_over(void) {
     // Stop any playing SFX
     sfx_stop();
-    // Start explosion at player position
+    // Save player position for explosion animation
     explode_x = player_x;
     explode_y = player_y;
     explode_timer = 0;
     game_state = STATE_EXPLODE;
-    music_play(3);  // Game over music during explosion only
+    music_play(3);  // Game over music during explosion
 }
 
-// Finish game over after explosion - check for high score
+// Handle finishing race in 2nd place or lower - show position
+static void do_finish_lose(void) {
+    sfx_stop();
+    explode_timer = 0;
+    game_state = STATE_FINISH;
+    music_play(3);  // Game over music
+}
+
+// Finish game over after animation - check for high score
 static void finish_game_over(void) {
     new_score_rank = check_high_score(score_high, score);
     if (new_score_rank < NUM_HIGH_SCORES) {
@@ -1579,7 +1594,7 @@ static void finish_game_over(void) {
     } else {
         // No high score, just game over
         game_state = STATE_GAMEOVER;
-        music_stop();  // Silence after explosion
+        music_stop();  // Silence after retire
     }
 }
 
@@ -1801,8 +1816,8 @@ static unsigned char check_collisions(void) {
             dx = abs_diff(player_x, enemy_x[i]);
             dy = abs_diff(player_y, enemy_y[i]);
 
-            // Damage zone
-            if (dx < 14 && dy < 14) {
+            // Damage zone (smaller hitbox - core collision only)
+            if (dx < 10 && dy < 10) {
                 player_inv = 60;
                 score_multiplier = 1;
                 graze_count = 0;
@@ -1826,9 +1841,9 @@ static unsigned char check_collisions(void) {
             dx = abs_diff(player_x, enemy_x[i]);
             dy = abs_diff(player_y, enemy_y[i]);
 
-            // Graze zone: beside (dx < 20) OR front/back (dy < 28)
+            // Graze zone: beside (dx < 18) OR front/back (dy < 24)
             // But not in damage zone
-            if (!(dx < 14 && dy < 14) &&
+            if (!(dx < 10 && dy < 10) &&
                 car_graze_cooldown == 0 &&
                 ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
                 // Double the multiplier (max 65535)
@@ -1942,8 +1957,8 @@ static void update_game(void) {
                 music_play(2);  // Victory music
                 init_win_animation();  // Reuse confetti
             } else {
-                // Finished 3 laps but not in 1st place - game over
-                do_game_over();
+                // Finished 3 laps but not in 1st place - show position
+                do_finish_lose();
             }
         }
     }
@@ -1962,9 +1977,16 @@ static void draw_game(void) {
     unsigned char id = 0;
     unsigned char i;
 
-    // Player car (4 sprites)
-    if (player_inv == 0 || (frame_count & 4)) {
+    // Player car (4 sprites) - skip during explosion/finish (drawn separately)
+    if (game_state != STATE_EXPLODE && game_state != STATE_FINISH && (player_inv == 0 || (frame_count & 4))) {
         id = set_car(id, player_x, player_y, SPR_CAR, 0);
+    }
+
+    // Hitbox indicator (8x8 centered on player center)
+    // Hitbox is dx < 4, dy < 4 from center (player_x+8, player_y+8)
+    // Draw 8x8 sprite at center - 4 = player_x+4, player_y+4
+    if (game_state == STATE_RACING) {
+        id = set_sprite(id, player_x + 4, player_y + 4, SPR_HITBOX, 0);
     }
 
     // Enemy cars (4 sprites each) - color/design based on rank
@@ -1998,8 +2020,8 @@ static void draw_game(void) {
         }
     }
 
-    // Explosion effect (1 sprite, blinking)
-    if (explode_timer > 0 && (frame_count & 2)) {
+    // Explosion effect (1 sprite, blinking) - only during racing
+    if (game_state == STATE_RACING && explode_timer > 0 && (frame_count & 2)) {
         id = set_sprite(id, explode_x + 4, explode_y + 4, SPR_EXPLOSION, 1);
     }
 
@@ -2220,13 +2242,13 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Version "V400" at bottom-right
+    // Version "V405" at bottom-right
     y = 216;
     x = 216;
     id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
     id = set_sprite(id, x + 8,  y, SPR_DIGIT + 4, 3);    // 4
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + 5, 3);    // 5
 
     // Copyright "(C) 2026 FUBA" at bottom-center
     y = 220;
@@ -2585,18 +2607,7 @@ void main(void) {
 
     // Main loop
     while (1) {
-        // Wait for vblank
-        wait_vblank();
-
-        // OAM DMA
-        OAM_ADDR = 0;
-        OAM_DMA = 0x02;
-
-        // Set scroll
-        PPU_SCROLL = 0;
-        PPU_SCROLL = scroll_y;
-
-        // Read controller
+        // Read controller first (before vblank for responsive input)
         pad_old = pad_now;
         pad_now = read_pad();
         pad_new = pad_now & ~pad_old;
@@ -2604,7 +2615,7 @@ void main(void) {
         ++frame_count;
         rnd_seed ^= frame_count;
 
-        // Clear sprites first
+        // Clear sprites and build OAM buffer BEFORE vblank
         clear_sprites();
 
         // Music is updated in NMI handler for stable timing
@@ -2660,40 +2671,92 @@ void main(void) {
                 break;
 
             case STATE_EXPLODE:
-                // Show explosion animation
+                // Show explosion animation (HP=0 death)
                 ++explode_timer;
-                // Draw road background
-                draw_game();
-                // Draw explosion effect - expanding
                 {
                     unsigned char id = 0;
                     unsigned char ex, ey;
                     unsigned char phase = explode_timer >> 3;  // Every 8 frames
 
                     // Center explosion
-                    id = set_sprite(id, explode_x, explode_y, SPR_EXPLOSION, 2);
+                    id = set_sprite(id, explode_x + 4, explode_y + 4, SPR_EXPLOSION, 2);
 
                     // Expanding explosions around center
                     if (phase >= 1) {
-                        ex = explode_x - 8;
-                        ey = explode_y - 8;
+                        ex = explode_x - 4;
+                        ey = explode_y - 4;
                         id = set_sprite(id, ex, ey, SPR_EXPLOSION, 2);
                         id = set_sprite(id, ex + 16, ey, SPR_EXPLOSION, 2);
                     }
                     if (phase >= 2) {
-                        ex = explode_x - 16;
-                        ey = explode_y;
+                        ex = explode_x - 8;
+                        ey = explode_y + 4;
                         id = set_sprite(id, ex, ey, SPR_EXPLOSION, 2);
-                        id = set_sprite(id, ex + 32, ey, SPR_EXPLOSION, 2);
+                        id = set_sprite(id, ex + 24, ey, SPR_EXPLOSION, 2);
                     }
                     if (phase >= 3) {
-                        ey = explode_y + 8;
-                        id = set_sprite(id, explode_x - 8, ey, SPR_EXPLOSION, 2);
-                        id = set_sprite(id, explode_x + 8, ey, SPR_EXPLOSION, 2);
+                        ey = explode_y + 12;
+                        id = set_sprite(id, explode_x - 4, ey, SPR_EXPLOSION, 2);
+                        id = set_sprite(id, explode_x + 12, ey, SPR_EXPLOSION, 2);
+                    }
+
+                    // Hide remaining sprites
+                    while (id < 64) {
+                        OAM[id * 4] = 0xFF;
+                        ++id;
                     }
                 }
                 // After ~1 second, move to next state
                 if (explode_timer > 60) {
+                    finish_game_over();
+                }
+                break;
+
+            case STATE_FINISH:
+                // Show finishing position (2nd place or lower)
+                ++explode_timer;
+                {
+                    unsigned char id = 0;
+                    unsigned char x, y;
+
+                    // Draw player car (stopped)
+                    id = set_sprite(id, player_x,     player_y,     SPR_CAR,     0);
+                    id = set_sprite(id, player_x + 8, player_y,     SPR_CAR + 1, 0);
+                    id = set_sprite(id, player_x,     player_y + 8, SPR_CAR + 2, 0);
+                    id = set_sprite(id, player_x + 8, player_y + 8, SPR_CAR + 3, 0);
+
+                    // Show position (e.g., "2ND" or "3RD")
+                    x = 96;
+                    y = 100;
+                    id = set_sprite(id, x, y, SPR_DIGIT + position, 1);
+                    if (position == 2) {
+                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 13, 1);  // N
+                        id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  1);  // D
+                    } else if (position == 3) {
+                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 17, 1);  // R
+                        id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  1);  // D
+                    } else {
+                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 1);  // T
+                        id = set_sprite(id, x + 16, y, SPR_LETTER + 7,  1);  // H
+                    }
+
+                    // "PLACE" below
+                    x = 88;
+                    y = 116;
+                    id = set_sprite(id, x,      y, SPR_LETTER + 15, 1);  // P
+                    id = set_sprite(id, x + 8,  y, SPR_LETTER + 11, 1);  // L
+                    id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  1);  // A
+                    id = set_sprite(id, x + 24, y, SPR_LETTER + 2,  1);  // C
+                    id = set_sprite(id, x + 32, y, SPR_LETTER + 4,  1);  // E
+
+                    // Hide remaining sprites
+                    while (id < 64) {
+                        OAM[id * 4] = 0xFF;
+                        ++id;
+                    }
+                }
+                // After ~1.5 seconds, move to next state
+                if (explode_timer > 90) {
                     finish_game_over();
                 }
                 break;
@@ -2783,5 +2846,16 @@ void main(void) {
                 }
                 break;
         }
+
+        // Wait for vblank AFTER building OAM buffer
+        wait_vblank();
+
+        // OAM DMA - now transfers current frame's sprites
+        OAM_ADDR = 0;
+        OAM_DMA = 0x02;
+
+        // Set scroll
+        PPU_SCROLL = 0;
+        PPU_SCROLL = scroll_y;
     }
 }
