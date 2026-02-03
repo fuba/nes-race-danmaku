@@ -668,6 +668,18 @@ DOT = [
     "00000000",
 ]
 
+# Smoke puff for exhaust animation (small cloud)
+SMOKE = [
+    "00000000",
+    "00011000",
+    "00111100",
+    "01111110",
+    "01111110",
+    "00111100",
+    "00011000",
+    "00000000",
+]
+
 # Explosion sprite
 EXPLOSION = [
     "00100100",
@@ -1020,6 +1032,8 @@ def main():
     sprites.append((0x4B, HEART))
     # Dot/period at 0x4C for version display
     sprites.append((0x4C, DOT))
+    # Smoke puff at 0x4D for exhaust animation
+    sprites.append((0x4D, SMOKE))
 
     # Note: LAP display simplified to "LX" format, slash not needed
 
