@@ -2229,7 +2229,7 @@ static void draw_game(void) {
 
     // Warning marker for next enemy (single up arrow at top edge)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 0, 0x0A, 1);  // red (danger), top of screen
+        id = set_sprite(id, enemy_next_x + 4, 8, 0x0A, 1);  // red (danger), top of screen
     }
 
     // Bullets - danmaku (use remaining sprite slots)
