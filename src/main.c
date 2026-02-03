@@ -2092,10 +2092,12 @@ static void draw_game(void) {
     }
 
     // HUD - Score: bottom right row 2
-    // If score_high > 0, show high digits in red (palette 1)
+    // If score_high > 0, reduce low digits to keep sprite count <= 6 on this scanline.
     {
         unsigned char score_x = 200;
+        unsigned char low_digits = 5;
         if (score_high > 0) {
+            low_digits = 4;
             // Show score_high in red as prefix (up to 2 digits)
             if (score_high >= 10) {
                 id = set_sprite(id, score_x, 224, SPR_DIGIT + (score_high / 10), 1);
@@ -2104,17 +2106,28 @@ static void draw_game(void) {
             id = set_sprite(id, score_x, 224, SPR_DIGIT + (score_high % 10), 1);
             score_x += 8;
         }
-        // Show lower 16-bit score (5 digits in white)
+        // Show lower 16-bit score in white (4-5 digits)
         {
             unsigned int s = score;
-            id = set_sprite(id, score_x, 224, SPR_DIGIT + (s / 10000), 3);
-            s %= 10000;
-            id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (s / 1000), 3);
-            s %= 1000;
-            id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (s / 100), 3);
-            s %= 100;
-            id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (s / 10), 3);
-            id = set_sprite(id, score_x + 32, 224, SPR_DIGIT + (s % 10), 3);
+            if (low_digits == 5) {
+                id = set_sprite(id, score_x, 224, SPR_DIGIT + (s / 10000), 3);
+                s %= 10000;
+                id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (s / 1000), 3);
+                s %= 1000;
+                id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (s / 100), 3);
+                s %= 100;
+                id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (s / 10), 3);
+                id = set_sprite(id, score_x + 32, 224, SPR_DIGIT + (s % 10), 3);
+            } else {
+                // Omit the ones digit to save one sprite when red prefix is visible.
+                id = set_sprite(id, score_x, 224, SPR_DIGIT + (s / 10000), 3);
+                s %= 10000;
+                id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (s / 1000), 3);
+                s %= 1000;
+                id = set_sprite(id, score_x + 16, 224, SPR_DIGIT + (s / 100), 3);
+                s %= 100;
+                id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + (s / 10), 3);
+            }
         }
     }
 
