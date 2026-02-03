@@ -1,4 +1,5 @@
 # EDGERACE
+<img width="512" height="480" alt="edgerace-2026-02-03T14-12-38" src="https://github.com/user-attachments/assets/d6f6651d-8a91-4ff1-8a0f-a32434c0542a" />
 
 ## 究極の弾幕レーシング、ここに始動！
 
