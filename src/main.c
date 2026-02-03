@@ -617,6 +617,9 @@ static void init_name_entry(unsigned char rank);
 static void music_play(unsigned char track);
 static void music_stop(void);
 static void update_loop_palette(void);
+static unsigned char score_greater(unsigned int a_high, unsigned int a_low,
+                                    unsigned int b_high, unsigned int b_low);
+static void validate_high_scores(void);
 
 // ============================================
 // MUSIC FUNCTIONS
@@ -1585,6 +1588,9 @@ static void init_save(void) {
         title_select_loop = 0;
     }
     title_select_loop = 0;  // Default to starting from loop 1
+
+    // Validate high score order (fix any SRAM corruption)
+    validate_high_scores();
 }
 
 // Compare two 32-bit scores: returns 1 if (a_high:a_low) > (b_high:b_low)
@@ -1594,6 +1600,40 @@ static unsigned char score_greater(
     if (a_high > b_high) return 1;
     if (a_high < b_high) return 0;
     return a_low > b_low;
+}
+
+// Validate and fix high score order (in case of SRAM corruption)
+static void validate_high_scores(void) {
+    unsigned char i, j;
+    unsigned int temp_low, temp_high;
+    unsigned char temp_name[3];
+
+    // Simple bubble sort to ensure descending order
+    for (i = 0; i < NUM_HIGH_SCORES - 1; ++i) {
+        for (j = i + 1; j < NUM_HIGH_SCORES; ++j) {
+            // If score[j] > score[i], swap them
+            if (score_greater(high_scores_high[j], high_scores[j],
+                              high_scores_high[i], high_scores[i])) {
+                // Swap scores
+                temp_high = high_scores_high[i];
+                temp_low = high_scores[i];
+                high_scores_high[i] = high_scores_high[j];
+                high_scores[i] = high_scores[j];
+                high_scores_high[j] = temp_high;
+                high_scores[j] = temp_low;
+                // Swap names
+                temp_name[0] = high_names[i][0];
+                temp_name[1] = high_names[i][1];
+                temp_name[2] = high_names[i][2];
+                high_names[i][0] = high_names[j][0];
+                high_names[i][1] = high_names[j][1];
+                high_names[i][2] = high_names[j][2];
+                high_names[j][0] = temp_name[0];
+                high_names[j][1] = temp_name[1];
+                high_names[j][2] = temp_name[2];
+            }
+        }
+    }
 }
 
 // Check if score qualifies for high score, return rank (0-2) or 255 if not
