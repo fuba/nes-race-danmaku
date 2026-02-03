@@ -70,431 +70,431 @@ _note_table:
 _racing_tri:
 	.byte	$00
 	.byte	$00
+	.byte	$07
 	.byte	$0C
+	.byte	$09
+	.byte	$09
+	.byte	$07
+	.byte	$07
+	.byte	$05
+	.byte	$05
+	.byte	$07
+	.byte	$07
+	.byte	$09
+	.byte	$09
+	.byte	$0B
+	.byte	$0B
+	.byte	$00
 	.byte	$00
 	.byte	$07
-	.byte	$07
-	.byte	$13
-	.byte	$07
+	.byte	$0C
 	.byte	$09
 	.byte	$09
-	.byte	$15
-	.byte	$09
 	.byte	$07
-	.byte	$07
-	.byte	$13
 	.byte	$07
 	.byte	$05
 	.byte	$05
-	.byte	$11
-	.byte	$05
 	.byte	$07
 	.byte	$07
-	.byte	$13
-	.byte	$07
-	.byte	$09
-	.byte	$09
-	.byte	$0B
-	.byte	$0B
 	.byte	$0C
 	.byte	$0C
 	.byte	$FF
 	.byte	$00
 _racing_pl1:
 	.byte	$18
-	.byte	$FF
 	.byte	$1C
 	.byte	$1F
-	.byte	$FF
+	.byte	$1C
+	.byte	$21
 	.byte	$1F
 	.byte	$1C
 	.byte	$18
-	.byte	$21
-	.byte	$FF
-	.byte	$1F
-	.byte	$1C
-	.byte	$FF
-	.byte	$1A
-	.byte	$1C
-	.byte	$1F
 	.byte	$1D
-	.byte	$FF
 	.byte	$21
 	.byte	$24
-	.byte	$FF
+	.byte	$21
 	.byte	$1F
 	.byte	$1C
 	.byte	$1A
-	.byte	$1C
+	.byte	$18
+	.byte	$18
 	.byte	$1C
 	.byte	$1F
+	.byte	$1C
+	.byte	$21
+	.byte	$24
+	.byte	$23
 	.byte	$1F
+	.byte	$1D
+	.byte	$1F
+	.byte	$21
+	.byte	$23
 	.byte	$24
 	.byte	$FF
 	.byte	$FF
 	.byte	$FF
 _racing_pl2:
-	.byte	$10
-	.byte	$10
-	.byte	$13
-	.byte	$10
-	.byte	$17
-	.byte	$17
-	.byte	$1A
-	.byte	$17
 	.byte	$18
-	.byte	$18
-	.byte	$1C
-	.byte	$18
-	.byte	$17
-	.byte	$17
-	.byte	$1A
-	.byte	$17
-	.byte	$15
-	.byte	$15
-	.byte	$18
-	.byte	$15
-	.byte	$17
-	.byte	$17
-	.byte	$1A
-	.byte	$17
-	.byte	$18
-	.byte	$18
-	.byte	$1C
 	.byte	$1C
 	.byte	$1F
-	.byte	$FF
-	.byte	$FF
-	.byte	$FF
+	.byte	$1C
+	.byte	$15
+	.byte	$1C
+	.byte	$21
+	.byte	$1C
+	.byte	$11
+	.byte	$15
+	.byte	$18
+	.byte	$15
+	.byte	$13
+	.byte	$17
+	.byte	$1A
+	.byte	$17
+	.byte	$18
+	.byte	$1C
+	.byte	$1F
+	.byte	$1C
+	.byte	$15
+	.byte	$1C
+	.byte	$21
+	.byte	$1C
+	.byte	$11
+	.byte	$15
+	.byte	$18
+	.byte	$15
+	.byte	$13
+	.byte	$17
+	.byte	$1A
+	.byte	$17
 _racing_noise:
 	.byte	$01
-	.byte	$00
 	.byte	$03
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$02
-	.byte	$00
 	.byte	$03
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$01
-	.byte	$00
 	.byte	$03
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$02
-	.byte	$00
 	.byte	$03
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$01
-	.byte	$00
 	.byte	$03
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$02
-	.byte	$00
 	.byte	$03
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
-	.byte	$00
+	.byte	$03
 	.byte	$01
-	.byte	$00
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
+	.byte	$03
 _racing2_tri:
 	.byte	$02
 	.byte	$02
-	.byte	$FF
+	.byte	$09
 	.byte	$0E
 	.byte	$02
 	.byte	$02
-	.byte	$FF
+	.byte	$09
 	.byte	$0E
 	.byte	$05
 	.byte	$05
-	.byte	$FF
+	.byte	$0C
 	.byte	$11
+	.byte	$05
+	.byte	$05
+	.byte	$0C
+	.byte	$11
+	.byte	$00
+	.byte	$00
+	.byte	$07
+	.byte	$0C
 	.byte	$09
 	.byte	$09
-	.byte	$FF
+	.byte	$10
 	.byte	$15
 	.byte	$02
 	.byte	$02
-	.byte	$FF
+	.byte	$09
 	.byte	$0E
-	.byte	$00
-	.byte	$00
-	.byte	$FF
-	.byte	$0C
-	.byte	$0A
-	.byte	$0A
-	.byte	$FF
-	.byte	$0A
+	.byte	$02
+	.byte	$02
 	.byte	$09
-	.byte	$09
-	.byte	$FF
-	.byte	$09
+	.byte	$0E
 _racing2_pl1:
 	.byte	$1A
-	.byte	$FF
 	.byte	$1D
-	.byte	$FF
 	.byte	$21
-	.byte	$FF
+	.byte	$1D
+	.byte	$24
+	.byte	$21
 	.byte	$1F
 	.byte	$1D
 	.byte	$1C
-	.byte	$FF
 	.byte	$1F
-	.byte	$FF
-	.byte	$21
-	.byte	$FF
-	.byte	$FF
-	.byte	$FF
-	.byte	$1A
-	.byte	$1D
 	.byte	$21
 	.byte	$1F
 	.byte	$1D
 	.byte	$1C
 	.byte	$1A
 	.byte	$FF
-	.byte	$18
-	.byte	$FF
 	.byte	$1A
-	.byte	$FF
+	.byte	$1D
+	.byte	$21
+	.byte	$24
+	.byte	$21
+	.byte	$1F
+	.byte	$1D
 	.byte	$1C
+	.byte	$1A
+	.byte	$1C
+	.byte	$1D
+	.byte	$1F
+	.byte	$21
 	.byte	$FF
 	.byte	$FF
 	.byte	$FF
 _racing2_pl2:
-	.byte	$15
-	.byte	$1A
-	.byte	$1D
-	.byte	$15
-	.byte	$1A
-	.byte	$1D
-	.byte	$15
-	.byte	$1A
-	.byte	$13
-	.byte	$18
-	.byte	$1C
-	.byte	$13
-	.byte	$18
-	.byte	$1C
-	.byte	$13
-	.byte	$18
-	.byte	$15
-	.byte	$1A
-	.byte	$1D
-	.byte	$15
-	.byte	$13
-	.byte	$18
-	.byte	$1C
-	.byte	$13
+	.byte	$0E
 	.byte	$11
-	.byte	$16
-	.byte	$1A
+	.byte	$15
 	.byte	$11
+	.byte	$1A
+	.byte	$1D
+	.byte	$21
+	.byte	$1D
+	.byte	$11
+	.byte	$15
+	.byte	$18
+	.byte	$15
+	.byte	$11
+	.byte	$15
+	.byte	$18
+	.byte	$15
+	.byte	$0C
+	.byte	$10
+	.byte	$13
 	.byte	$10
 	.byte	$15
-	.byte	$19
-	.byte	$10
+	.byte	$18
+	.byte	$1C
+	.byte	$18
+	.byte	$0E
+	.byte	$11
+	.byte	$15
+	.byte	$11
+	.byte	$1A
+	.byte	$1D
+	.byte	$21
+	.byte	$1D
 _racing2_noise:
 	.byte	$01
-	.byte	$00
-	.byte	$00
 	.byte	$03
-	.byte	$00
-	.byte	$00
-	.byte	$00
 	.byte	$03
-	.byte	$01
-	.byte	$00
-	.byte	$00
 	.byte	$03
 	.byte	$02
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$01
-	.byte	$00
-	.byte	$00
 	.byte	$03
-	.byte	$00
-	.byte	$00
-	.byte	$00
 	.byte	$03
-	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
-	.byte	$00
+	.byte	$03
+	.byte	$03
+	.byte	$03
 	.byte	$01
-	.byte	$00
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
+	.byte	$03
+	.byte	$02
+	.byte	$03
+	.byte	$03
+	.byte	$03
+	.byte	$01
+	.byte	$03
+	.byte	$02
+	.byte	$03
+	.byte	$01
+	.byte	$03
+	.byte	$03
+	.byte	$03
 _racing3_tri:
 	.byte	$04
-	.byte	$FF
 	.byte	$04
+	.byte	$0B
 	.byte	$10
 	.byte	$04
-	.byte	$FF
 	.byte	$04
+	.byte	$0B
 	.byte	$10
 	.byte	$07
-	.byte	$FF
 	.byte	$07
+	.byte	$0E
 	.byte	$13
 	.byte	$09
-	.byte	$FF
+	.byte	$09
+	.byte	$10
+	.byte	$15
 	.byte	$0B
+	.byte	$0B
+	.byte	$12
 	.byte	$17
-	.byte	$04
-	.byte	$FF
-	.byte	$04
+	.byte	$09
+	.byte	$09
 	.byte	$10
-	.byte	$02
-	.byte	$FF
-	.byte	$02
-	.byte	$0E
-	.byte	$00
-	.byte	$FF
+	.byte	$15
+	.byte	$04
+	.byte	$04
 	.byte	$0B
-	.byte	$FF
-	.byte	$04
-	.byte	$04
 	.byte	$10
 	.byte	$04
+	.byte	$04
+	.byte	$0B
+	.byte	$10
 _racing3_pl1:
 	.byte	$1C
-	.byte	$FF
+	.byte	$1F
+	.byte	$23
+	.byte	$1F
+	.byte	$26
+	.byte	$23
+	.byte	$21
+	.byte	$1F
+	.byte	$28
+	.byte	$26
+	.byte	$23
+	.byte	$1F
+	.byte	$21
+	.byte	$23
 	.byte	$1F
 	.byte	$1C
+	.byte	$1F
 	.byte	$23
-	.byte	$FF
-	.byte	$21
-	.byte	$1F
-	.byte	$1F
-	.byte	$FF
-	.byte	$23
-	.byte	$1F
-	.byte	$21
-	.byte	$FF
-	.byte	$23
-	.byte	$21
-	.byte	$1C
-	.byte	$1F
+	.byte	$26
 	.byte	$23
 	.byte	$28
 	.byte	$26
-	.byte	$FF
 	.byte	$24
 	.byte	$23
 	.byte	$21
-	.byte	$FF
 	.byte	$1F
-	.byte	$FF
+	.byte	$1C
+	.byte	$1F
 	.byte	$1C
 	.byte	$FF
 	.byte	$FF
 	.byte	$FF
 _racing3_pl2:
-	.byte	$17
-	.byte	$1C
-	.byte	$1F
-	.byte	$17
-	.byte	$1C
-	.byte	$1F
-	.byte	$17
-	.byte	$1C
-	.byte	$1A
-	.byte	$1F
-	.byte	$23
-	.byte	$1A
-	.byte	$1C
-	.byte	$21
-	.byte	$24
-	.byte	$1C
-	.byte	$17
-	.byte	$1C
-	.byte	$1F
-	.byte	$23
-	.byte	$15
-	.byte	$1A
-	.byte	$1E
-	.byte	$15
 	.byte	$10
+	.byte	$13
+	.byte	$17
+	.byte	$13
+	.byte	$13
+	.byte	$17
+	.byte	$1A
+	.byte	$17
 	.byte	$15
 	.byte	$18
-	.byte	$10
+	.byte	$1C
+	.byte	$18
 	.byte	$17
-	.byte	$FF
-	.byte	$FF
-	.byte	$FF
+	.byte	$1A
+	.byte	$1E
+	.byte	$1A
+	.byte	$10
+	.byte	$13
+	.byte	$17
+	.byte	$13
+	.byte	$13
+	.byte	$17
+	.byte	$1A
+	.byte	$17
+	.byte	$15
+	.byte	$18
+	.byte	$1C
+	.byte	$18
+	.byte	$17
+	.byte	$1A
+	.byte	$1E
+	.byte	$1A
 _racing3_noise:
 	.byte	$01
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$02
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$01
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$02
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$01
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$02
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
 	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
-	.byte	$00
+	.byte	$03
 	.byte	$01
-	.byte	$00
-	.byte	$00
-	.byte	$00
+	.byte	$03
+	.byte	$03
+	.byte	$03
 _boss1_tri:
 	.byte	$09
 	.byte	$09
-	.byte	$15
-	.byte	$09
-	.byte	$09
-	.byte	$09
-	.byte	$15
-	.byte	$09
-	.byte	$07
-	.byte	$07
-	.byte	$13
-	.byte	$07
-	.byte	$05
-	.byte	$05
-	.byte	$04
-	.byte	$04
-	.byte	$09
-	.byte	$09
-	.byte	$15
-	.byte	$09
-	.byte	$09
-	.byte	$09
-	.byte	$15
-	.byte	$09
-	.byte	$07
-	.byte	$07
-	.byte	$05
-	.byte	$05
-	.byte	$04
-	.byte	$04
 	.byte	$10
+	.byte	$09
+	.byte	$09
+	.byte	$09
+	.byte	$10
+	.byte	$09
+	.byte	$07
+	.byte	$07
+	.byte	$0E
+	.byte	$07
+	.byte	$05
+	.byte	$05
+	.byte	$0C
+	.byte	$05
+	.byte	$09
+	.byte	$09
+	.byte	$10
+	.byte	$09
+	.byte	$09
+	.byte	$09
+	.byte	$10
+	.byte	$09
+	.byte	$07
+	.byte	$07
+	.byte	$05
+	.byte	$05
+	.byte	$04
+	.byte	$04
+	.byte	$0B
 	.byte	$04
 _boss1_pl1:
 	.byte	$21
@@ -502,9 +502,9 @@ _boss1_pl1:
 	.byte	$28
 	.byte	$24
 	.byte	$21
-	.byte	$24
 	.byte	$28
 	.byte	$24
+	.byte	$21
 	.byte	$1F
 	.byte	$23
 	.byte	$26
@@ -512,7 +512,7 @@ _boss1_pl1:
 	.byte	$1D
 	.byte	$21
 	.byte	$24
-	.byte	$28
+	.byte	$21
 	.byte	$21
 	.byte	$24
 	.byte	$28
@@ -523,8 +523,8 @@ _boss1_pl1:
 	.byte	$24
 	.byte	$1F
 	.byte	$23
-	.byte	$1D
-	.byte	$21
+	.byte	$26
+	.byte	$23
 	.byte	$1C
 	.byte	$1C
 	.byte	$28
@@ -535,9 +535,9 @@ _boss1_pl2:
 	.byte	$24
 	.byte	$21
 	.byte	$1C
-	.byte	$21
 	.byte	$24
 	.byte	$21
+	.byte	$1C
 	.byte	$1A
 	.byte	$1F
 	.byte	$23
@@ -545,7 +545,7 @@ _boss1_pl2:
 	.byte	$18
 	.byte	$1D
 	.byte	$21
-	.byte	$24
+	.byte	$1D
 	.byte	$1C
 	.byte	$21
 	.byte	$24
@@ -556,8 +556,8 @@ _boss1_pl2:
 	.byte	$21
 	.byte	$1A
 	.byte	$1F
-	.byte	$18
-	.byte	$1D
+	.byte	$23
+	.byte	$1F
 	.byte	$17
 	.byte	$17
 	.byte	$23
@@ -588,46 +588,46 @@ _boss1_noise:
 	.byte	$02
 	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
+	.byte	$03
 _boss2_tri:
 	.byte	$02
+	.byte	$02
+	.byte	$09
 	.byte	$0E
 	.byte	$02
-	.byte	$0E
 	.byte	$02
-	.byte	$0E
-	.byte	$02
+	.byte	$09
 	.byte	$0E
 	.byte	$00
-	.byte	$0C
 	.byte	$00
+	.byte	$07
 	.byte	$0C
 	.byte	$0A
-	.byte	$16
-	.byte	$09
-	.byte	$15
-	.byte	$02
-	.byte	$0E
-	.byte	$02
-	.byte	$0E
-	.byte	$04
-	.byte	$10
+	.byte	$0A
 	.byte	$05
+	.byte	$0A
+	.byte	$02
+	.byte	$02
+	.byte	$09
+	.byte	$0E
+	.byte	$05
+	.byte	$05
+	.byte	$0C
 	.byte	$11
 	.byte	$07
+	.byte	$07
+	.byte	$0E
 	.byte	$13
 	.byte	$09
+	.byte	$09
+	.byte	$10
 	.byte	$15
-	.byte	$02
-	.byte	$0E
-	.byte	$02
-	.byte	$0E
 _boss2_pl1:
 	.byte	$26
 	.byte	$21
@@ -696,66 +696,66 @@ _boss2_pl2:
 	.byte	$1A
 _boss2_noise:
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
 	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
 	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
 	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
 	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
 	.byte	$03
 	.byte	$01
-	.byte	$00
+	.byte	$03
 	.byte	$02
 	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
-	.byte	$01
-	.byte	$00
-	.byte	$01
-	.byte	$01
+	.byte	$03
 _boss3_tri:
 	.byte	$04
+	.byte	$04
+	.byte	$0B
 	.byte	$10
 	.byte	$04
+	.byte	$04
+	.byte	$0B
 	.byte	$10
 	.byte	$04
-	.byte	$10
 	.byte	$04
-	.byte	$10
-	.byte	$04
-	.byte	$10
-	.byte	$04
+	.byte	$0B
 	.byte	$10
 	.byte	$07
-	.byte	$13
-	.byte	$09
-	.byte	$15
-	.byte	$0B
-	.byte	$17
-	.byte	$0B
-	.byte	$17
-	.byte	$09
-	.byte	$15
 	.byte	$07
+	.byte	$0E
 	.byte	$13
-	.byte	$06
+	.byte	$09
+	.byte	$09
+	.byte	$10
+	.byte	$15
+	.byte	$0B
+	.byte	$0B
 	.byte	$12
+	.byte	$17
 	.byte	$07
-	.byte	$13
+	.byte	$07
+	.byte	$04
+	.byte	$04
 	.byte	$04
 	.byte	$04
 	.byte	$10
@@ -778,17 +778,17 @@ _boss3_pl1:
 	.byte	$2D
 	.byte	$2F
 	.byte	$23
-	.byte	$27
+	.byte	$26
 	.byte	$2A
 	.byte	$2F
 	.byte	$2D
 	.byte	$2A
-	.byte	$27
-	.byte	$2A
-	.byte	$2A
-	.byte	$2B
+	.byte	$26
 	.byte	$2A
 	.byte	$2B
+	.byte	$2D
+	.byte	$2B
+	.byte	$2D
 	.byte	$28
 	.byte	$28
 	.byte	$28
@@ -810,82 +810,82 @@ _boss3_pl2:
 	.byte	$23
 	.byte	$24
 	.byte	$28
-	.byte	$1B
+	.byte	$1A
 	.byte	$1E
 	.byte	$23
-	.byte	$27
+	.byte	$26
 	.byte	$24
 	.byte	$21
 	.byte	$1E
 	.byte	$21
-	.byte	$21
 	.byte	$23
-	.byte	$21
+	.byte	$24
 	.byte	$23
+	.byte	$24
 	.byte	$1F
 	.byte	$1F
 	.byte	$1F
 	.byte	$1F
 _boss3_noise:
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
+	.byte	$03
 	.byte	$01
+	.byte	$03
 	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
-	.byte	$01
-	.byte	$02
+	.byte	$03
 _title_tri:
 	.byte	$0C
 	.byte	$0C
-	.byte	$00
+	.byte	$07
 	.byte	$0C
-	.byte	$07
-	.byte	$07
-	.byte	$07
-	.byte	$13
 	.byte	$09
 	.byte	$09
+	.byte	$10
 	.byte	$09
-	.byte	$15
-	.byte	$07
-	.byte	$07
-	.byte	$07
-	.byte	$13
 	.byte	$05
 	.byte	$05
-	.byte	$05
+	.byte	$0C
 	.byte	$11
 	.byte	$07
 	.byte	$07
-	.byte	$07
+	.byte	$0E
 	.byte	$13
+	.byte	$0C
+	.byte	$0C
+	.byte	$07
+	.byte	$0C
 	.byte	$09
 	.byte	$09
+	.byte	$10
+	.byte	$09
+	.byte	$05
+	.byte	$05
 	.byte	$07
 	.byte	$07
 	.byte	$0C
@@ -894,66 +894,66 @@ _title_tri:
 	.byte	$0C
 _title_pl1:
 	.byte	$24
-	.byte	$24
-	.byte	$1F
-	.byte	$24
 	.byte	$28
+	.byte	$2B
 	.byte	$28
 	.byte	$26
 	.byte	$24
+	.byte	$1F
+	.byte	$24
 	.byte	$21
+	.byte	$24
+	.byte	$28
+	.byte	$24
+	.byte	$1F
+	.byte	$21
+	.byte	$23
+	.byte	$1F
+	.byte	$1D
 	.byte	$21
 	.byte	$24
 	.byte	$21
-	.byte	$1F
-	.byte	$1F
-	.byte	$1C
-	.byte	$1F
-	.byte	$1D
-	.byte	$1D
-	.byte	$21
-	.byte	$24
-	.byte	$1F
 	.byte	$1F
 	.byte	$23
 	.byte	$26
-	.byte	$28
+	.byte	$23
 	.byte	$28
 	.byte	$26
 	.byte	$24
+	.byte	$23
 	.byte	$24
 	.byte	$FF
 	.byte	$24
 	.byte	$FF
 _title_pl2:
 	.byte	$1C
+	.byte	$1F
+	.byte	$24
+	.byte	$1F
+	.byte	$1F
 	.byte	$1C
 	.byte	$18
 	.byte	$1C
-	.byte	$1F
-	.byte	$1F
+	.byte	$18
+	.byte	$1C
+	.byte	$21
+	.byte	$1C
+	.byte	$1A
 	.byte	$1D
-	.byte	$1C
-	.byte	$18
-	.byte	$18
-	.byte	$1C
-	.byte	$18
-	.byte	$1A
-	.byte	$1A
-	.byte	$18
+	.byte	$1F
 	.byte	$1A
 	.byte	$15
-	.byte	$15
 	.byte	$18
+	.byte	$1D
+	.byte	$18
+	.byte	$17
+	.byte	$1A
+	.byte	$1F
+	.byte	$1A
+	.byte	$1F
+	.byte	$1D
 	.byte	$1C
 	.byte	$1A
-	.byte	$1A
-	.byte	$1D
-	.byte	$1F
-	.byte	$1F
-	.byte	$1F
-	.byte	$1D
-	.byte	$1C
 	.byte	$1C
 	.byte	$FF
 	.byte	$1C
@@ -1020,11 +1020,11 @@ _gameover_tri:
 	.byte	$FF
 	.byte	$02
 	.byte	$FF
+	.byte	$00
+	.byte	$FF
+	.byte	$0B
+	.byte	$FF
 	.byte	$09
-	.byte	$FF
-	.byte	$04
-	.byte	$FF
-	.byte	$04
 	.byte	$FF
 _gameover_pl1:
 	.byte	$1C
@@ -1033,7 +1033,7 @@ _gameover_pl1:
 	.byte	$17
 	.byte	$15
 	.byte	$FF
-	.byte	$14
+	.byte	$13
 	.byte	$FF
 	.byte	$15
 	.byte	$17
@@ -1047,16 +1047,16 @@ _gameover_pl2:
 	.byte	$18
 	.byte	$17
 	.byte	$15
-	.byte	$14
+	.byte	$13
 	.byte	$11
 	.byte	$FF
 	.byte	$10
 	.byte	$FF
 	.byte	$11
-	.byte	$14
+	.byte	$13
 	.byte	$15
 	.byte	$FF
-	.byte	$14
+	.byte	$13
 	.byte	$10
 	.byte	$FF
 	.byte	$FF
@@ -10775,7 +10775,7 @@ L1821:	lda     #$D8
 	ldy     #$05
 	sta     (sp),y
 ;
-; id = set_sprite(id, x + 24, y, SPR_DIGIT + 5, 3);    // 5
+; id = set_sprite(id, x + 24, y, SPR_DIGIT + 6, 3);    // 6
 ;
 	jsr     decsp4
 	ldy     #$09
@@ -10792,7 +10792,7 @@ L1821:	lda     #$D8
 	lda     (sp),y
 	ldy     #$01
 	sta     (sp),y
-	lda     #$15
+	lda     #$16
 	dey
 	sta     (sp),y
 	lda     #$03

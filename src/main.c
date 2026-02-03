@@ -286,34 +286,34 @@ static const unsigned int note_table[48] = {
 
 // Triangle bass - bouncy driving bass (C major feel)
 static const unsigned char racing_tri[RACING_LEN] = {
-    C2, C2, C3, C2,  G2, G2, G3, G2,
-    A2, A2, A3, A2,  G2, G2, G3, G2,
-    F2, F2, F3, F2,  G2, G2, G3, G2,
-    A2, A2, B2, B2,  C3, C3, NOTE_REST, C2,
+    C2, C2, G2, C3,  A2, A2, G2, G2,
+    F2, F2, G2, G2,  A2, A2, B2, B2,
+    C2, C2, G2, C3,  A2, A2, G2, G2,
+    F2, F2, G2, G2,  C3, C3, NOTE_REST, C2,
 };
 
 // Pulse 1 - cheerful melody
 static const unsigned char racing_pl1[RACING_LEN] = {
-    C4, NOTE_REST, E4, G4,  NOTE_REST, G4, E4, C4,
-    A4, NOTE_REST, G4, E4,  NOTE_REST, D4, E4, G4,
-    F4, NOTE_REST, A4, C5,  NOTE_REST, G4, E4, D4,
-    E4, E4, G4, G4,  C5, NOTE_REST, NOTE_REST, NOTE_REST,
+    C4, E4, G4, E4,  A4, G4, E4, C4,
+    F4, A4, C5, A4,  G4, E4, D4, C4,
+    C4, E4, G4, E4,  A4, C5, B4, G4,
+    F4, G4, A4, B4,  C5, NOTE_REST, NOTE_REST, NOTE_REST,
 };
 
 // Pulse 2 - harmony
 static const unsigned char racing_pl2[RACING_LEN] = {
-    E3, E3, G3, E3,  B3, B3, D4, B3,
-    C4, C4, E4, C4,  B3, B3, D4, B3,
-    A3, A3, C4, A3,  B3, B3, D4, B3,
-    C4, C4, E4, E4,  G4, NOTE_REST, NOTE_REST, NOTE_REST,
+    C4, E4, G4, E4,  A3, E4, A4, E4,
+    F3, A3, C4, A3,  G3, B3, D4, B3,
+    C4, E4, G4, E4,  A3, E4, A4, E4,
+    F3, A3, C4, A3,  G3, B3, D4, B3,
 };
 
 // Noise pattern (0=off, 1=kick, 2=snare, 3=hihat)
 static const unsigned char racing_noise[RACING_LEN] = {
-    1, 0, 3, 0,  2, 0, 3, 0,
-    1, 0, 3, 0,  2, 0, 3, 0,
-    1, 0, 3, 0,  2, 0, 3, 0,
-    1, 0, 2, 0,  1, 0, 0, 0,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 2, 3,  1, 3, 3, 3,
 };
 
 // ============================================
@@ -321,34 +321,34 @@ static const unsigned char racing_noise[RACING_LEN] = {
 // ============================================
 // Triangle bass - ominous pulsing
 static const unsigned char racing2_tri[RACING_LEN] = {
-    D2, D2, NOTE_REST, D3,  D2, D2, NOTE_REST, D3,
-    F2, F2, NOTE_REST, F3,  A2, A2, NOTE_REST, A3,
-    D2, D2, NOTE_REST, D3,  C2, C2, NOTE_REST, C3,
-    AS2, AS2, NOTE_REST, AS2, A2, A2, NOTE_REST, A2,
+    D2, D2, A2, D3,  D2, D2, A2, D3,
+    F2, F2, C3, F3,  F2, F2, C3, F3,
+    C2, C2, G2, C3,  A2, A2, E3, A3,
+    D2, D2, A2, D3,  D2, D2, A2, D3,
 };
 
 // Pulse 1 - haunting melody
 static const unsigned char racing2_pl1[RACING_LEN] = {
-    D4, NOTE_REST, F4, NOTE_REST,  A4, NOTE_REST, G4, F4,
-    E4, NOTE_REST, G4, NOTE_REST,  A4, NOTE_REST, NOTE_REST, NOTE_REST,
-    D4, F4, A4, G4,  F4, E4, D4, NOTE_REST,
-    C4, NOTE_REST, D4, NOTE_REST,  E4, NOTE_REST, NOTE_REST, NOTE_REST,
+    D4, F4, A4, F4,  C5, A4, G4, F4,
+    E4, G4, A4, G4,  F4, E4, D4, NOTE_REST,
+    D4, F4, A4, C5,  A4, G4, F4, E4,
+    D4, E4, F4, G4,  A4, NOTE_REST, NOTE_REST, NOTE_REST,
 };
 
 // Pulse 2 - eerie arpeggios
 static const unsigned char racing2_pl2[RACING_LEN] = {
-    A3, D4, F4, A3,  D4, F4, A3, D4,
-    G3, C4, E4, G3,  C4, E4, G3, C4,
-    A3, D4, F4, A3,  G3, C4, E4, G3,
-    F3, AS3, D4, F3,  E3, A3, CS4, E3,
+    D3, F3, A3, F3,  D4, F4, A4, F4,
+    F3, A3, C4, A3,  F3, A3, C4, A3,
+    C3, E3, G3, E3,  A3, C4, E4, C4,
+    D3, F3, A3, F3,  D4, F4, A4, F4,
 };
 
 // Subtle drums - tension building
 static const unsigned char racing2_noise[RACING_LEN] = {
-    1, 0, 0, 3,  0, 0, 0, 3,
-    1, 0, 0, 3,  2, 0, 0, 3,
-    1, 0, 0, 3,  0, 0, 0, 3,
-    1, 0, 2, 0,  1, 0, 0, 0,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 2, 3,  1, 3, 3, 3,
 };
 
 // ============================================
@@ -356,34 +356,34 @@ static const unsigned char racing2_noise[RACING_LEN] = {
 // ============================================
 // Triangle bass - menacing
 static const unsigned char racing3_tri[RACING_LEN] = {
-    E2, NOTE_REST, E2, E3,  E2, NOTE_REST, E2, E3,
-    G2, NOTE_REST, G2, G3,  A2, NOTE_REST, B2, B3,
-    E2, NOTE_REST, E2, E3,  D2, NOTE_REST, D2, D3,
-    C2, NOTE_REST, B2, NOTE_REST,  E2, E2, E3, E2,
+    E2, E2, B2, E3,  E2, E2, B2, E3,
+    G2, G2, D3, G3,  A2, A2, E3, A3,
+    B2, B2, FS3, B3,  A2, A2, E3, A3,
+    E2, E2, B2, E3,  E2, E2, B2, E3,
 };
 
 // Pulse 1 - dark powerful melody
 static const unsigned char racing3_pl1[RACING_LEN] = {
-    E4, NOTE_REST, G4, E4,  B4, NOTE_REST, A4, G4,
-    G4, NOTE_REST, B4, G4,  A4, NOTE_REST, B4, A4,
-    E4, G4, B4, E5,  D5, NOTE_REST, C5, B4,
-    A4, NOTE_REST, G4, NOTE_REST,  E4, NOTE_REST, NOTE_REST, NOTE_REST,
+    E4, G4, B4, G4,  D5, B4, A4, G4,
+    E5, D5, B4, G4,  A4, B4, G4, E4,
+    G4, B4, D5, B4,  E5, D5, C5, B4,
+    A4, G4, E4, G4,  E4, NOTE_REST, NOTE_REST, NOTE_REST,
 };
 
 // Pulse 2 - ominous harmonies
 static const unsigned char racing3_pl2[RACING_LEN] = {
-    B3, E4, G4, B3,  E4, G4, B3, E4,
-    D4, G4, B4, D4,  E4, A4, C5, E4,
-    B3, E4, G4, B4,  A3, D4, FS4, A3,
-    E3, A3, C4, E3,  B3, NOTE_REST, NOTE_REST, NOTE_REST,
+    E3, G3, B3, G3,  G3, B3, D4, B3,
+    A3, C4, E4, C4,  B3, D4, FS4, D4,
+    E3, G3, B3, G3,  G3, B3, D4, B3,
+    A3, C4, E4, C4,  B3, D4, FS4, D4,
 };
 
 // Heavy drums
 static const unsigned char racing3_noise[RACING_LEN] = {
-    1, 0, 0, 3,  2, 0, 0, 3,
-    1, 0, 0, 3,  2, 0, 0, 3,
-    1, 0, 0, 3,  2, 0, 0, 3,
-    1, 0, 2, 0,  1, 0, 0, 0,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 3, 3,  2, 3, 3, 3,
+    1, 3, 2, 3,  1, 3, 3, 3,
 };
 
 // ============================================
@@ -392,41 +392,41 @@ static const unsigned char racing3_noise[RACING_LEN] = {
 #define BOSS_LEN 32
 
 static const unsigned char boss1_tri[BOSS_LEN] = {
-    A2, A2, A3, A2,  A2, A2, A3, A2,
-    G2, G2, G3, G2,  F2, F2, E2, E2,
-    A2, A2, A3, A2,  A2, A2, A3, A2,
-    G2, G2, F2, F2,  E2, E2, E3, E2,
+    A2, A2, E3, A2,  A2, A2, E3, A2,
+    G2, G2, D3, G2,  F2, F2, C3, F2,
+    A2, A2, E3, A2,  A2, A2, E3, A2,
+    G2, G2, F2, F2,  E2, E2, B2, E2,
 };
 
 static const unsigned char boss1_pl1[BOSS_LEN] = {
-    A4, C5, E5, C5,  A4, C5, E5, C5,
-    G4, B4, D5, B4,  F4, A4, C5, E5,
+    A4, C5, E5, C5,  A4, E5, C5, A4,
+    G4, B4, D5, B4,  F4, A4, C5, A4,
     A4, C5, E5, G5,  E5, C5, A4, C5,
-    G4, B4, F4, A4,  E4, E4, E5, E4,
+    G4, B4, D5, B4,  E4, E4, E5, E4,
 };
 
 static const unsigned char boss1_pl2[BOSS_LEN] = {
-    E4, A4, C5, A4,  E4, A4, C5, A4,
-    D4, G4, B4, G4,  C4, F4, A4, C5,
+    E4, A4, C5, A4,  E4, C5, A4, E4,
+    D4, G4, B4, G4,  C4, F4, A4, F4,
     E4, A4, C5, E5,  C5, A4, E4, A4,
-    D4, G4, C4, F4,  B3, B3, B4, B3,
+    D4, G4, B4, G4,  B3, B3, B4, B3,
 };
 
 static const unsigned char boss1_noise[BOSS_LEN] = {
     1, 3, 2, 3,  1, 3, 2, 3,
     1, 3, 2, 3,  1, 3, 2, 3,
     1, 3, 2, 3,  1, 3, 2, 3,
-    1, 2, 1, 2,  1, 2, 1, 2,
+    1, 3, 2, 3,  1, 3, 2, 3,
 };
 
 // ============================================
 // BOSS BGM LOOP 2 - Mysterious danger (D minor)
 // ============================================
 static const unsigned char boss2_tri[BOSS_LEN] = {
-    D2, D3, D2, D3,  D2, D3, D2, D3,
-    C2, C3, C2, C3,  AS2, AS3, A2, A3,
-    D2, D3, D2, D3,  E2, E3, F2, F3,
-    G2, G3, A2, A3,  D2, D3, D2, D3,
+    D2, D2, A2, D3,  D2, D2, A2, D3,
+    C2, C2, G2, C3,  AS2, AS2, F2, AS2,
+    D2, D2, A2, D3,  F2, F2, C3, F3,
+    G2, G2, D3, G3,  A2, A2, E3, A3,
 };
 
 static const unsigned char boss2_pl1[BOSS_LEN] = {
@@ -444,41 +444,41 @@ static const unsigned char boss2_pl2[BOSS_LEN] = {
 };
 
 static const unsigned char boss2_noise[BOSS_LEN] = {
-    1, 0, 2, 3,  1, 0, 2, 3,
-    1, 0, 2, 3,  1, 0, 2, 3,
-    1, 0, 2, 3,  1, 0, 2, 3,
-    1, 2, 1, 2,  1, 0, 1, 1,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 3, 2, 3,
 };
 
 // ============================================
 // BOSS BGM LOOP 3 - FINAL BOSS! Maximum intensity (E minor)
 // ============================================
 static const unsigned char boss3_tri[BOSS_LEN] = {
-    E2, E3, E2, E3,  E2, E3, E2, E3,
-    E2, E3, E2, E3,  G2, G3, A2, A3,
-    B2, B3, B2, B3,  A2, A3, G2, G3,
-    FS2, FS3, G2, G3,  E2, E2, E3, E2,
+    E2, E2, B2, E3,  E2, E2, B2, E3,
+    E2, E2, B2, E3,  G2, G2, D3, G3,
+    A2, A2, E3, A3,  B2, B2, FS3, B3,
+    G2, G2, E2, E2,  E2, E2, E3, E2,
 };
 
 static const unsigned char boss3_pl1[BOSS_LEN] = {
     E5, B4, E5, G5,  E5, B4, E5, G5,
     E5, G5, B5, G5,  E5, G5, A5, B5,
-    B4, DS5, FS5, B5,  A5, FS5, DS5, FS5,
-    FS5, G5, FS5, G5,  E5, E5, E5, E5,
+    B4, D5, FS5, B5,  A5, FS5, D5, FS5,
+    G5, A5, G5, A5,  E5, E5, E5, E5,
 };
 
 static const unsigned char boss3_pl2[BOSS_LEN] = {
     G4, E4, G4, B4,  G4, E4, G4, B4,
     G4, B4, E5, B4,  G4, B4, C5, E5,
-    DS4, FS4, B4, DS5,  C5, A4, FS4, A4,
-    A4, B4, A4, B4,  G4, G4, G4, G4,
+    D4, FS4, B4, D5,  C5, A4, FS4, A4,
+    B4, C5, B4, C5,  G4, G4, G4, G4,
 };
 
 static const unsigned char boss3_noise[BOSS_LEN] = {
-    1, 2, 1, 2,  1, 2, 1, 2,
-    1, 2, 1, 2,  1, 2, 1, 2,
-    1, 2, 1, 2,  1, 2, 1, 2,
-    1, 2, 1, 2,  1, 2, 1, 2,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 3, 2, 3,
+    1, 3, 2, 3,  1, 3, 2, 3,
 };
 
 // ============================================
@@ -488,26 +488,26 @@ static const unsigned char boss3_noise[BOSS_LEN] = {
 
 // Powerful triangle bass - driving rhythm
 static const unsigned char title_tri[TITLE_LEN] = {
-    C3, C3, C2, C3,  G2, G2, G2, G3,
-    A2, A2, A2, A3,  G2, G2, G2, G3,
-    F2, F2, F2, F3,  G2, G2, G2, G3,
-    A2, A2, G2, G2,  C3, C3, C3, C3,
+    C3, C3, G2, C3,  A2, A2, E3, A2,
+    F2, F2, C3, F3,  G2, G2, D3, G3,
+    C3, C3, G2, C3,  A2, A2, E3, A2,
+    F2, F2, G2, G2,  C3, C3, C3, C3,
 };
 
 // Heroic fanfare melody
 static const unsigned char title_pl1[TITLE_LEN] = {
-    C5, C5, G4, C5,  E5, E5, D5, C5,
-    A4, A4, C5, A4,  G4, G4, E4, G4,
-    F4, F4, A4, C5,  G4, G4, B4, D5,
-    E5, E5, D5, C5,  C5, NOTE_REST, C5, NOTE_REST,
+    C5, E5, G5, E5,  D5, C5, G4, C5,
+    A4, C5, E5, C5,  G4, A4, B4, G4,
+    F4, A4, C5, A4,  G4, B4, D5, B4,
+    E5, D5, C5, B4,  C5, NOTE_REST, C5, NOTE_REST,
 };
 
 // Power chord harmony
 static const unsigned char title_pl2[TITLE_LEN] = {
-    E4, E4, C4, E4,  G4, G4, F4, E4,
-    C4, C4, E4, C4,  D4, D4, C4, D4,
-    A3, A3, C4, E4,  D4, D4, F4, G4,
-    G4, G4, F4, E4,  E4, NOTE_REST, E4, NOTE_REST,
+    E4, G4, C5, G4,  G4, E4, C4, E4,
+    C4, E4, A4, E4,  D4, F4, G4, D4,
+    A3, C4, F4, C4,  B3, D4, G4, D4,
+    G4, F4, E4, D4,  E4, NOTE_REST, E4, NOTE_REST,
 };
 
 // ============================================
@@ -539,24 +539,24 @@ static const unsigned char win_pl2[WIN_LEN] = {
 static const unsigned char gameover_tri[GAMEOVER_LEN] = {
     A2, NOTE_REST, E2, NOTE_REST,
     F2, NOTE_REST, E2, NOTE_REST,
-    D2, NOTE_REST, A2, NOTE_REST,
-    E2, NOTE_REST, E2, NOTE_REST,
+    D2, NOTE_REST, C2, NOTE_REST,
+    B2, NOTE_REST, A2, NOTE_REST,
 };
 
 // Descending sad melody
 static const unsigned char gameover_pl1[GAMEOVER_LEN] = {
     E4, D4, C4, B3,
-    A3, NOTE_REST, GS3, NOTE_REST,
+    A3, NOTE_REST, G3, NOTE_REST,
     A3, B3, C4, NOTE_REST,
     B3, A3, NOTE_REST, NOTE_REST,
 };
 
 // Minor harmony
 static const unsigned char gameover_pl2[GAMEOVER_LEN] = {
-    C4, B3, A3, GS3,
+    C4, B3, A3, G3,
     F3, NOTE_REST, E3, NOTE_REST,
-    F3, GS3, A3, NOTE_REST,
-    GS3, E3, NOTE_REST, NOTE_REST,
+    F3, G3, A3, NOTE_REST,
+    G3, E3, NOTE_REST, NOTE_REST,
 };
 
 // ============================================
@@ -2242,13 +2242,13 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Version "V405" at bottom-right
+    // Version "V406" at bottom-right
     y = 216;
     x = 216;
     id = set_sprite(id, x,      y, SPR_LETTER + 21, 3);  // V
     id = set_sprite(id, x + 8,  y, SPR_DIGIT + 4, 3);    // 4
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, x + 24, y, SPR_DIGIT + 5, 3);    // 5
+    id = set_sprite(id, x + 24, y, SPR_DIGIT + 6, 3);    // 6
 
     // Copyright "(C) 2026 FUBA" at bottom-center
     y = 220;
