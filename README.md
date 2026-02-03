@@ -1,6 +1,28 @@
-# NES Racing Danmaku
+# EDGERACE
 
-A NASCAR-style racing game with bullet hell (danmaku) elements for the Nintendo Entertainment System (NES/Famicom).
+## 究極の弾幕レーシング、ここに始動！
+
+**EDGERACEは「グレイズ」で勝つ！** 敵弾をギリギリでかわすほどスコア倍率が上昇、敵車とすれすれのグレイズで倍率はさらに2倍！
+
+**追い越しが得点だ！** ミスなく走り抜ければ、天文学的スコアが君を待つ！
+
+1位でゴールして次のステージへ突入！夕方から夜へ…光が落ちるほど難度は上昇。
+
+**踏み込め、限界のエッジへ！**
+
+---
+
+## THE ULTIMATE BULLET-HELL RACE IGNITES!
+
+**EDGERACE is won by GRAZE!** Slip through enemy fire at the edge and your score multiplier climbs—graze enemy cars for DOUBLE the boost!
+
+**OVERTAKE TO SCORE!** Keep the line clean and the numbers go ASTRONOMICAL!
+
+Finish in 1st to advance—DUSK TO NIGHT, SPEED TO FEAR, DIFFICULTY RISING!
+
+**PUSH TO THE EDGE. RULE THE RACE!**
+
+---
 
 ## Play Online
 
@@ -8,12 +30,31 @@ A NASCAR-style racing game with bullet hell (danmaku) elements for the Nintendo 
 
 Works in browser with virtual controller support for mobile devices.
 
+## Controls / 操作方法
+
+| Button | Action |
+|--------|--------|
+| D-Pad / 十字キー | Move / 移動 |
+| START | Start / Pause / ゲーム開始・ポーズ |
+
+### Keyboard (Browser)
+- Arrow keys / WASD: D-Pad
+- Z / J: A button
+- X / K: B button
+- Enter: Start
+- Shift: Select
+
 ## Game Rules
 
 ### Objective
 - Start in **12th place** (last of 12 cars)
 - **Overtake enemies** by moving above them on screen
-- Complete **3 laps in 1st place** to win
+- Complete **3 laps in 1st place** to advance to next stage
+
+### Graze System
+- **Graze enemy bullets**: Score multiplier UP!
+- **Graze enemy cars**: Multiplier x2!
+- Chain grazes for ASTRONOMICAL scores!
 
 ### Position System
 - Each enemy you overtake improves your position by 1
@@ -22,11 +63,8 @@ Works in browser with virtual controller support for mobile devices.
 
 ### Health System
 - Start with **5 HP**
-- Lose HP when hit by:
-  - Enemy bullets (danmaku patterns)
-  - Track obstacles
-  - Enemy car collision
-- **Recover 3 HP** on each lap completion
+- Lose HP when hit by enemy bullets or cars
+- **Recover HP** by grazing
 - HP reaches 0: Game Over
 
 ### Danmaku Patterns
@@ -40,61 +78,37 @@ Enemy cars fire 8 different bullet patterns:
 7. Cross pattern
 8. Wave
 
-## Controls
-
-| Button | Action |
-|--------|--------|
-| D-Pad Up/Down | Move car vertically (overtake!) |
-| D-Pad Left/Right | Move car horizontally |
-| Start | Start game / Pause |
-
-### Keyboard (Browser)
-- Arrow keys: D-Pad
-- Z: A button
-- X: B button
-- Enter: Start
-- Shift: Select
-
 ## Features
 
 - **12-car race** with position tracking
 - **8 danmaku bullet patterns**
-- **Music**: Title BGM, Racing BGM, Victory fanfare, Game Over theme
-- **Triangle wave bass** and pulse wave melodies
-- **Progress bar** showing lap progress
-- **Victory celebration** with confetti animation
+- **Graze scoring system** for massive multipliers
+- **Day/Evening/Night** stage progression
+- **Music**: Title BGM, Racing BGM (3 variations), Boss BGM, Victory fanfare
+- **High score save** with battery backup
 
 ## Technical Specifications
 
+- **Platform**: Nintendo Entertainment System (NES/Famicom)
 - **Mapper**: NROM-128 (Mapper 0)
 - **PRG-ROM**: 16KB
 - **CHR-ROM**: 8KB
 - **Mirroring**: Horizontal (for vertical scrolling)
-- **RAM**: 2KB internal
 
 ## Building
 
 ### Requirements
-
 - cc65 (6502 C compiler)
 - Python 3 (for CHR generation)
 - Make
 
 ### Using Docker
-
 ```bash
-docker run --rm -v "$PWD:/app" -w /app ubuntu:22.04 bash -c \
+docker run --rm -v "$PWD:/app" -w /app ubuntu:24.04 bash -c \
   "apt-get update && apt-get install -y cc65 python3 make && make"
 ```
 
-Output: `build/race.nes`
-
-### Local Build (if cc65 installed)
-
-```bash
-python3 tools/generate_chr.py build/tiles.chr
-make
-```
+Output: `build/edgerace.nes`
 
 ## Testing
 
@@ -102,32 +116,13 @@ Test with any NES emulator:
 - **FCEUX** (recommended for debugging)
 - **Mesen** (high accuracy)
 - **Nestopia**
-- **Bizhawk**
 
 Or play in browser via GitHub Pages link above.
-
-For hardware: Use flash cartridges like Everdrive N8 or PowerPak.
-
-## Project Structure
-
-```
-race/
-├── .github/workflows/  # CI/CD (auto-build & deploy)
-├── src/
-│   ├── main.c          # Game logic + music engine
-│   ├── crt0.s          # Startup code
-│   └── nrom.cfg        # Linker configuration
-├── tools/
-│   └── generate_chr.py # Graphics generator
-├── web/
-│   ├── index.html      # Browser player (JSNES)
-│   └── race.nes        # ROM for web
-├── build/
-│   └── race.nes        # Built ROM
-└── doc/
-    └── README.md
-```
 
 ## License
 
 CC0 (Creative Commons Zero) - Public Domain
+
+---
+
+**(C) 2026 FUBA**
