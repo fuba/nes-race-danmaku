@@ -138,6 +138,7 @@ TILE_CAR_ICON = [
     "11111111",
     "01111110",
     "00111100",
+    "00000000",
 ]
 
 # Tile 0x09: Horizontal line (1 pixel, for goal line)
