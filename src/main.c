@@ -2091,10 +2091,10 @@ static void draw_game(void) {
                 m /= 10;
                 exp++;
             }
-            id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 10), 1);
-            id = set_sprite(id, mult_x + 8, 216, SPR_DIGIT + (m % 10), 1);
-            id = set_sprite(id, mult_x + 16, 216, SPR_LETTER + 4, 1);  // E
-            id = set_sprite(id, mult_x + 24, 216, SPR_DIGIT + exp, 1);
+            id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 10), 2);
+            id = set_sprite(id, mult_x + 8, 216, SPR_DIGIT + (m % 10), 2);
+            id = set_sprite(id, mult_x + 16, 216, SPR_LETTER + 4, 2);  // E
+            id = set_sprite(id, mult_x + 24, 216, SPR_DIGIT + exp, 2);
         }
     }
 
@@ -2124,11 +2124,11 @@ static void draw_game(void) {
             }
             mantissa = (unsigned char)full_score;
 
-            // Display in red (palette 1): MM E X
-            id = set_sprite(id, score_x, 224, SPR_DIGIT + (mantissa / 10), 1);
-            id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (mantissa % 10), 1);
-            id = set_sprite(id, score_x + 16, 224, SPR_LETTER + 4, 1);  // E
-            id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + exp, 1);
+            // Display in yellow (palette 2): MM E X
+            id = set_sprite(id, score_x, 224, SPR_DIGIT + (mantissa / 10), 2);
+            id = set_sprite(id, score_x + 8, 224, SPR_DIGIT + (mantissa % 10), 2);
+            id = set_sprite(id, score_x + 16, 224, SPR_LETTER + 4, 2);  // E
+            id = set_sprite(id, score_x + 24, 224, SPR_DIGIT + exp, 2);
         }
     }
 
@@ -2138,7 +2138,7 @@ static void draw_game(void) {
 
     // Loop counter (shown when in 2nd loop or higher) - next to lap
     if (loop_count > 0) {
-        id = set_sprite(id, 140, HUD_TOP_Y, SPR_DIGIT + loop_count + 1, 1);  // Loop number in red
+        id = set_sprite(id, 140, HUD_TOP_Y, SPR_DIGIT + loop_count + 1, 2);  // Loop number in yellow
     }
 
     // === Game objects (may be culled if too many) ===
@@ -2146,7 +2146,7 @@ static void draw_game(void) {
     // Warning marker for next enemy (single up arrow)
     // Position at Y=24 (between HUD top and game area)
     if (enemy_warn_timer > 0 && (frame_count & 8)) {
-        id = set_sprite(id, enemy_next_x + 4, 24, 0x0A, 1);
+        id = set_sprite(id, enemy_next_x + 4, 24, 0x0A, 2);  // yellow
     }
 
     // Bullets - danmaku (use remaining sprite slots)
@@ -2199,11 +2199,11 @@ static void draw_title(void) {
     id = set_sprite(id, x + 16, y, SPR_LETTER + 6,  0);  // G
     id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  0);  // E
 
-    // "RACE" - bottom line, offset right (red, enemy color)
-    id = set_sprite(id, x + 8,  y + 12, SPR_LETTER + 17, 1);  // R
-    id = set_sprite(id, x + 16, y + 12, SPR_LETTER + 0,  1);  // A
-    id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  1);  // C
-    id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  1);  // E
+    // "RACE" - bottom line, offset right (yellow)
+    id = set_sprite(id, x + 8,  y + 12, SPR_LETTER + 17, 2);  // R
+    id = set_sprite(id, x + 16, y + 12, SPR_LETTER + 0,  2);  // A
+    id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  2);  // C
+    id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  2);  // E
 
     // Blinking car below title
     if (frame_count & 0x20) {
@@ -2309,18 +2309,18 @@ static void draw_gameover(void) {
     unsigned char id = 0;
     unsigned char x = 88, y = 100;
 
-    // "GAME"
-    id = set_sprite(id, x,      y, SPR_LETTER + 6,  1);  // G
-    id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  1);  // A
-    id = set_sprite(id, x + 16, y, SPR_LETTER + 12, 1);  // M
-    id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  1);  // E
+    // "GAME" (yellow)
+    id = set_sprite(id, x,      y, SPR_LETTER + 6,  2);  // G
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 0,  2);  // A
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 12, 2);  // M
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 4,  2);  // E
 
-    // "OVER"
+    // "OVER" (yellow)
     x = 96; y = 116;
-    id = set_sprite(id, x,      y, SPR_LETTER + 14, 1);  // O
-    id = set_sprite(id, x + 8,  y, SPR_LETTER + 21, 1);  // V
-    id = set_sprite(id, x + 16, y, SPR_LETTER + 4,  1);  // E
-    id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 1);  // R
+    id = set_sprite(id, x,      y, SPR_LETTER + 14, 2);  // O
+    id = set_sprite(id, x + 8,  y, SPR_LETTER + 21, 2);  // V
+    id = set_sprite(id, x + 16, y, SPR_LETTER + 4,  2);  // E
+    id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
 
     // Hide rest
     while (id < 64) {
@@ -2416,9 +2416,9 @@ static void draw_highscore_entry(void) {
         id = set_sprite(id, x + i * 16, y, SPR_LETTER + entry_name[i],
                        (i == name_entry_pos) ? 0 : 3);
 
-        // Draw cursor under current position (blinking)
+        // Draw cursor under current position (blinking, yellow)
         if (i == name_entry_pos && (frame_count & 0x10)) {
-            id = set_sprite(id, x + i * 16, y + 10, SPR_BAR_FILL, 1);
+            id = set_sprite(id, x + i * 16, y + 10, SPR_BAR_FILL, 2);
         }
     }
 
@@ -2565,7 +2565,7 @@ static void draw_loop_clear(void) {
     id = set_sprite(id, 84,  60, SPR_LETTER + 14, 0);  // O
     id = set_sprite(id, 92,  60, SPR_LETTER + 14, 0);  // O
     id = set_sprite(id, 100, 60, SPR_LETTER + 15, 0);  // P
-    id = set_sprite(id, 112, 60, SPR_DIGIT + loop_count, 1);
+    id = set_sprite(id, 112, 60, SPR_DIGIT + loop_count, 2);  // yellow
 
     // "OK" (Y=80)
     id = set_sprite(id, 100, 80, SPR_LETTER + 14, 0);  // O
@@ -2759,29 +2759,29 @@ void main(void) {
                     id = set_sprite(id, player_x,     player_y + 8, SPR_CAR + 2, 0);
                     id = set_sprite(id, player_x + 8, player_y + 8, SPR_CAR + 3, 0);
 
-                    // Show position (e.g., "2ND" or "3RD")
+                    // Show position (e.g., "2ND" or "3RD") in yellow
                     x = 96;
                     y = 100;
-                    id = set_sprite(id, x, y, SPR_DIGIT + position, 1);
+                    id = set_sprite(id, x, y, SPR_DIGIT + position, 2);
                     if (position == 2) {
-                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 13, 1);  // N
-                        id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  1);  // D
+                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 13, 2);  // N
+                        id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  2);  // D
                     } else if (position == 3) {
-                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 17, 1);  // R
-                        id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  1);  // D
+                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 17, 2);  // R
+                        id = set_sprite(id, x + 16, y, SPR_LETTER + 3,  2);  // D
                     } else {
-                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 1);  // T
-                        id = set_sprite(id, x + 16, y, SPR_LETTER + 7,  1);  // H
+                        id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
+                        id = set_sprite(id, x + 16, y, SPR_LETTER + 7,  2);  // H
                     }
 
-                    // "PLACE" below
+                    // "PLACE" below (yellow)
                     x = 88;
                     y = 116;
-                    id = set_sprite(id, x,      y, SPR_LETTER + 15, 1);  // P
-                    id = set_sprite(id, x + 8,  y, SPR_LETTER + 11, 1);  // L
-                    id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  1);  // A
-                    id = set_sprite(id, x + 24, y, SPR_LETTER + 2,  1);  // C
-                    id = set_sprite(id, x + 32, y, SPR_LETTER + 4,  1);  // E
+                    id = set_sprite(id, x,      y, SPR_LETTER + 15, 2);  // P
+                    id = set_sprite(id, x + 8,  y, SPR_LETTER + 11, 2);  // L
+                    id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
+                    id = set_sprite(id, x + 24, y, SPR_LETTER + 2,  2);  // C
+                    id = set_sprite(id, x + 32, y, SPR_LETTER + 4,  2);  // E
 
                     // Hide remaining sprites
                     while (id < 64) {
