@@ -1994,10 +1994,13 @@ static void draw_game(void) {
     }
 
     // Enemy cars (4 sprites each) - color/design based on rank
+    // Also show rank number above each enemy car
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (enemy_on[i] && enemy_y[i] >= HUD_BAND_BOTTOM) {
             unsigned char tile, pal;
             unsigned char rank = enemy_rank[i];
+            unsigned char ex = enemy_x[i];
+            unsigned char ey = enemy_y[i];
 
             // Top 3 positions (rank 1-3): Boss design
             if (rank <= 3) {
@@ -2020,7 +2023,20 @@ static void draw_game(void) {
                 pal = 1;
             }
 
-            id = set_car(id, enemy_x[i], enemy_y[i], tile, pal);
+            id = set_car(id, ex, ey, tile, pal);
+
+            // Draw rank number above enemy car (yellow for visibility)
+            if (ey >= 16 && id < 60) {  // Make sure there's room above
+                unsigned char rank_y = ey - 10;
+                if (rank >= 10) {
+                    // Two digits: "1X"
+                    id = set_sprite(id, ex + 2, rank_y, SPR_DIGIT + 1, 2);
+                    id = set_sprite(id, ex + 10, rank_y, SPR_DIGIT + (rank - 10), 2);
+                } else {
+                    // Single digit centered
+                    id = set_sprite(id, ex + 6, rank_y, SPR_DIGIT + rank, 2);
+                }
+            }
         }
     }
 
@@ -2029,33 +2045,10 @@ static void draw_game(void) {
         id = set_sprite(id, explode_x + 4, explode_y + 4, SPR_EXPLOSION, 1);
     }
 
-    // === Critical HUD first (always visible) ===
-
-    // HUD - Position (3-4 sprites)
-    if (position >= 10) {
-        id = set_sprite(id, 8, HUD_TOP_Y, SPR_DIGIT + 1, 3);              // "1"
-        id = set_sprite(id, 16, HUD_TOP_Y, SPR_DIGIT + (position - 10), 3); // 0,1,2
-        id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 19, 3);  // T
-        id = set_sprite(id, 32, HUD_TOP_Y, SPR_LETTER + 7, 3);   // H
-    } else {
-        id = set_sprite(id, 8, HUD_TOP_Y, SPR_DIGIT + position, 3);
-        if (position == 1) {
-            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 18, 3);  // S
-            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 19, 3);  // T
-        } else if (position == 2) {
-            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 13, 3);  // N
-            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 3, 3);   // D
-        } else if (position == 3) {
-            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 17, 3);  // R
-            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 3, 3);   // D
-        } else {
-            id = set_sprite(id, 16, HUD_TOP_Y, SPR_LETTER + 19, 3);  // T
-            id = set_sprite(id, 24, HUD_TOP_Y, SPR_LETTER + 7, 3);   // H
-        }
-    }
-
-    // HUD Layout (redesigned to avoid sprite overflow):
-    // Row 1 (Y=8):   Position(left), Lap(center), HP(right) - max 8 sprites
+    // === Critical HUD (always visible) ===
+    // Position is now shown above each enemy car, not in HUD
+    // HUD Layout:
+    // Row 1 (Y=8):   Lap(center), HP(right)
     // Row 2 (Y=216): Progress indicator (left-center), Multiplier (right)
     // Row 3 (Y=224): Score (right)
 
