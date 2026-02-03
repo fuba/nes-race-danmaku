@@ -97,6 +97,7 @@
 #define SPR_BAR_FILL    0x06
 #define SPR_BAR_EMPTY   0x07
 #define SPR_CAR_ICON    0x08
+#define SPR_HLINE       0x09    // Small horizontal line marker
 #define SPR_EXPLOSION   0x0E
 #define SPR_HITBOX      0x0F    // Hitbox indicator
 #define SPR_BULLET      0x0B    // Diamond bullet sprite
@@ -2221,15 +2222,18 @@ static void draw_game(void) {
         // Draw GOAL marker at top
         id = set_sprite(id, 8, 24, SPR_LETTER + 6, 3);  // G (goal)
 
+        // Draw START marker at bottom
+        id = set_sprite(id, 8, 208, SPR_LETTER + 18, 3);  // S (start)
+
         // Draw lap boundary markers (1/3 and 2/3 of the way)
         // Lap 1 boundary: Y = 200 - 56 = 144
         // Lap 2 boundary: Y = 200 - 112 = 88
         marker_y1 = 144;  // End of lap 1
         marker_y2 = 88;   // End of lap 2
 
-        // Show markers as horizontal lines (using bar sprites)
-        id = set_sprite(id, 4, marker_y1, SPR_BAR_FILL, 3);
-        id = set_sprite(id, 4, marker_y2, SPR_BAR_FILL, 3);
+        // Show markers as small horizontal lines
+        id = set_sprite(id, 4, marker_y1, SPR_HLINE, 3);
+        id = set_sprite(id, 4, marker_y2, SPR_HLINE, 3);
     }
 
     // Hide remaining sprites
