@@ -325,7 +325,7 @@
         <div id="status" class="loading">Loading emulator...</div>
 
         <div id="keyboard-hint">
-            Keyboard: Arrow keys / WASD = D-Pad, Z = A, X = B, Enter = Start, Shift = Select<br>
+            Keyboard: Arrow keys + Z/X, or WASD + J/K, Enter = Start, Shift = Select<br>
             Gamepad: D-Pad/Stick, A/B buttons, Start/Select supported
         </div>
 
@@ -415,7 +415,7 @@
             }
         }
 
-        // Key mapping (Arrow keys and WASD)
+        // Key mapping (Arrow keys + Z/X, or WASD + J/K)
         const keyMap = {
             'ArrowUp': jsnes.Controller.BUTTON_UP,
             'ArrowDown': jsnes.Controller.BUTTON_DOWN,
@@ -427,6 +427,8 @@
             'KeyD': jsnes.Controller.BUTTON_RIGHT,
             'KeyZ': jsnes.Controller.BUTTON_A,
             'KeyX': jsnes.Controller.BUTTON_B,
+            'KeyJ': jsnes.Controller.BUTTON_A,
+            'KeyK': jsnes.Controller.BUTTON_B,
             'Enter': jsnes.Controller.BUTTON_START,
             'ShiftRight': jsnes.Controller.BUTTON_SELECT,
             'ShiftLeft': jsnes.Controller.BUTTON_SELECT
