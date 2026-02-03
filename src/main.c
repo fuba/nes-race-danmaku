@@ -2177,21 +2177,21 @@ static void draw_title(void) {
     }
 
     // High scores display (2 lines per entry to avoid 8-sprite limit)
-    // Line 1: Rank + Name (4 sprites)
-    // Line 2: Score (6 sprites)
+    // Line 1: Rank + Name (4 sprites, 40px wide, centered)
+    // Line 2: Score (6 sprites, 48px wide, centered)
     for (i = 0; i < NUM_HIGH_SCORES; ++i) {
         unsigned char y_base = 112 + i * 20;  // 112, 132, 152
 
-        // Line 1: Rank + Name (4 sprites)
+        // Line 1: Rank + Name (4 sprites) - centered at X=108
         y = y_base;
-        id = set_sprite(id, 72, y, SPR_DIGIT + i + 1, 3);  // Rank
-        id = set_sprite(id, 88, y, SPR_LETTER + high_names[i][0], 3);
-        id = set_sprite(id, 96, y, SPR_LETTER + high_names[i][1], 3);
-        id = set_sprite(id, 104, y, SPR_LETTER + high_names[i][2], 3);
+        id = set_sprite(id, 108, y, SPR_DIGIT + i + 1, 3);  // Rank
+        id = set_sprite(id, 124, y, SPR_LETTER + high_names[i][0], 3);
+        id = set_sprite(id, 132, y, SPR_LETTER + high_names[i][1], 3);
+        id = set_sprite(id, 140, y, SPR_LETTER + high_names[i][2], 3);
 
-        // Line 2: Score (6 sprites)
+        // Line 2: Score (6 sprites) - centered at X=104
         y = y_base + 10;
-        x = 88;
+        x = 104;
         if (high_scores_high[i] > 0) {
             // 32-bit score: use unsigned long for calculation
             unsigned long full_score = ((unsigned long)high_scores_high[i] << 16) | high_scores[i];
@@ -2215,10 +2215,10 @@ static void draw_title(void) {
     }
 
     // Loop selection (only show if player has completed at least 1 loop)
-    // Positioned above high scores
+    // Positioned above high scores, centered
     if (max_loop > 0) {
         y = 104;
-        x = 80;
+        x = 100;  // Centered: "LOOP X" is ~48px, start at 104
         // "LOOP" label
         id = set_sprite(id, x,      y, SPR_LETTER + 11, 3);  // L
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 14, 3);  // O
@@ -2226,7 +2226,7 @@ static void draw_title(void) {
         id = set_sprite(id, x + 24, y, SPR_LETTER + 15, 3);  // P
 
         // Loop number (blinking if selectable)
-        x = 120;
+        x = 136;
         if (frame_count & 0x10) {
             id = set_sprite(id, x, y, SPR_DIGIT + title_select_loop + 1,
                            title_select_loop > 0 ? 1 : 3);  // Red if loop 2+
@@ -2239,10 +2239,10 @@ static void draw_title(void) {
         }
     }
 
-    // "START" prompt (blinking)
+    // "START" prompt (blinking) - centered (40px wide)
     if (frame_count & 0x20) {
-        y = 168;
-        x = 88;
+        y = 176;
+        x = 108;  // Centered: 128 - 20 = 108
         id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
         id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
@@ -2250,9 +2250,9 @@ static void draw_title(void) {
         id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
-    // Copyright "(C) 2026 FUBA" at bottom-center (8 sprites, version moved to top)
+    // Copyright "(C) 2026 FUBA" at bottom-center (88px wide, centered)
     y = 224;
-    x = 72;
+    x = 84;  // Centered: 128 - 44 = 84
     id = set_sprite(id, x,      y, SPR_COPYRIGHT, 3);    // (C)
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
     id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
