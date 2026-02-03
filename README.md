@@ -123,5 +123,3 @@ Or play in browser via GitHub Pages link above.
 ## License
 
 CC0 (Creative Commons Zero) - Public Domain
-
----
