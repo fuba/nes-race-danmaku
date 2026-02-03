@@ -703,13 +703,13 @@ static void update_sfx(void) {
         sfx_damage_pitch += 40;
         --sfx_damage_timer;
     }
-    // Low HP warning beep - short high-pitched pip
+    // Low HP warning beep - distinct high-pitched pip (HP=1 critical warning)
     if (sfx_lowhp_timer > 0) {
         if (sfx_lowhp_timer > 2) {
-            // Beep on (high pitch, low volume)
-            APU_PL2_VOL = 0x34;  // Duty 12.5%, volume 4 (quiet)
+            // Beep on (high pitch, medium volume, 50% duty for clarity)
+            APU_PL2_VOL = 0xB8;  // Duty 50%, volume 8 (audible over BGM)
             APU_PL2_SWP = 0x00;
-            APU_PL2_LO = 0x7D;   // High pitch (~1000Hz)
+            APU_PL2_LO = 0x50;   // Higher pitch (~1500Hz)
             APU_PL2_HI = 0x00;
         }
         --sfx_lowhp_timer;
@@ -1964,10 +1964,10 @@ static void update_game(void) {
     // This prevents "last frame of inv" vulnerability
     if (player_inv > 0) --player_inv;
 
-    // Low HP warning beep (when HP <= 3)
-    if (player_hp > 0 && player_hp <= 3 && sfx_lowhp_timer == 0) {
-        // Beep every 30 frames (~0.5 sec)
-        if ((frame_count & 0x1F) == 0) {
+    // Low HP warning beep (critical: HP == 1)
+    if (player_hp == 1 && sfx_lowhp_timer == 0) {
+        // Beep every 20 frames (~0.33 sec) for urgency
+        if ((frame_count & 0x13) == 0) {
             sfx_lowhp_timer = 5;  // Short pip duration
         }
     }
