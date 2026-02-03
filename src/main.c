@@ -1425,31 +1425,35 @@ static void spawn_danmaku(void) {
     ++burst_phase;
     if (burst_phase >= 80) burst_phase = 0;
 
-    // When in 1st place: beautiful danmaku from behind
+    // When in 1st place: danmaku from behind (only when no retreating enemies left)
     if (position == 1) {
-        // Only fire during burst phase
-        if (burst_phase >= 56) return;
-
-        // Wave pattern from bottom - sweeping left to right
-        if ((bullet_timer & 0x17) == 0) {
-            // Sine-like wave using frame count
-            cx = 80 + ((bullet_timer >> 2) & 0x3F);
-            dx = calc_aim_dx(cx);
-            spawn_bullet(cx, 236, dx, -2);
+        unsigned char has_retreating = 0;
+        for (i = 0; i < MAX_ENEMIES; ++i) {
+            if (enemy_on[i]) has_retreating = 1;
         }
-        if ((bullet_timer & 0x17) == 12) {
-            cx = 176 - ((bullet_timer >> 2) & 0x3F);
-            dx = calc_aim_dx(cx);
-            spawn_bullet(cx, 236, dx, -2);
+        // If no enemies left, spawn danmaku from behind
+        if (!has_retreating && burst_phase < 56) {
+            // Wave pattern from bottom - sweeping left to right
+            if ((bullet_timer & 0x17) == 0) {
+                cx = 80 + ((bullet_timer >> 2) & 0x3F);
+                dx = calc_aim_dx(cx);
+                spawn_bullet(cx, 236, dx, -2);
+            }
+            if ((bullet_timer & 0x17) == 12) {
+                cx = 176 - ((bullet_timer >> 2) & 0x3F);
+                dx = calc_aim_dx(cx);
+                spawn_bullet(cx, 236, dx, -2);
+            }
+            // Center aimed shot
+            if ((bullet_timer & 0x2F) == 0) {
+                cx = ROAD_LEFT + 64;
+                dx = calc_aim_dx(cx);
+                spawn_bullet(cx, 232, dx, -3);
+                spawn_bullet(cx + 32, 232, calc_aim_dx(cx + 32), -3);
+            }
+            return;
         }
-        // Center aimed shot
-        if ((bullet_timer & 0x2F) == 0) {
-            cx = ROAD_LEFT + 64;
-            dx = calc_aim_dx(cx);
-            spawn_bullet(cx, 232, dx, -3);
-            spawn_bullet(cx + 32, 232, calc_aim_dx(cx + 32), -3);
-        }
-        return;
+        // Fall through to let retreating enemies shoot
     }
 
     // Each enemy shoots (destroyed enemies can't shoot)
@@ -1462,7 +1466,8 @@ static void spawn_danmaku(void) {
         cy = enemy_y[i] + 8;
 
         // Boss enemies (rank 1-3): special danmaku patterns
-        if (enemy_rank[i] <= 3 && !enemy_passed[i]) {
+        // Continue shooting even when retreating (passed)
+        if (enemy_rank[i] <= 3) {
             // Bosses fire continuously with beautiful patterns (no pause phase)
             spawn_boss_danmaku(i, cx, cy);
             continue;
@@ -1863,10 +1868,23 @@ static unsigned char has_final_boss(void) {
 static void update_enemy(void) {
     unsigned char i, enemies_ahead;
 
-    // When in 1st place, no enemies spawn
+    // When in 1st place, don't spawn new enemies but keep existing ones retreating
     if (position == 1) {
-        for (i = 0; i < MAX_ENEMIES; ++i) enemy_on[i] = 0;
         enemy_warn_timer = 0;
+        // Update existing enemies - they retreat but stay active
+        for (i = 0; i < MAX_ENEMIES; ++i) {
+            if (!enemy_on[i]) continue;
+            // Mark as passed if not already
+            if (!enemy_passed[i]) {
+                enemy_passed[i] = 1;
+            }
+            // Retreat: move down screen (appears to fall behind player)
+            enemy_y[i] += 3;
+            // Remove when off screen
+            if (enemy_y[i] > 240) {
+                enemy_on[i] = 0;
+            }
+        }
         return;
     }
 
