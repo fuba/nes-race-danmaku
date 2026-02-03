@@ -2068,15 +2068,27 @@ static void draw_game(void) {
         id = set_sprite(id, 224, HUD_TOP_Y, SPR_DIGIT + (hp % 10), 3);
     }
 
-    // HUD - Multiplier "x" + 3 digits (capped at 999) - bottom right row 1
+    // HUD - Multiplier "x" + digits - bottom right row 1
+    // Show high digits (10000+) in red when multiplier > 9999
     {
         unsigned int m = score_multiplier;
-        if (m > 999u) m = 999u;
-        id = set_sprite(id, 200, 216, SPR_LETTER + 23, 3);  // X
-        id = set_sprite(id, 208, 216, SPR_DIGIT + (m / 100), 3);
+        unsigned char mult_x = 184;
+        id = set_sprite(id, mult_x, 216, SPR_LETTER + 23, 3);  // X
+        mult_x += 8;
+
+        if (m >= 10000u) {
+            // Show 10000s digit in red
+            id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 10000), 1);
+            mult_x += 8;
+            m %= 10000;
+        }
+        // Show remaining 4 digits (or less if small)
+        id = set_sprite(id, mult_x, 216, SPR_DIGIT + (m / 1000), 3);
+        m %= 1000;
+        id = set_sprite(id, mult_x + 8, 216, SPR_DIGIT + (m / 100), 3);
         m %= 100;
-        id = set_sprite(id, 216, 216, SPR_DIGIT + (m / 10), 3);
-        id = set_sprite(id, 224, 216, SPR_DIGIT + (m % 10), 3);
+        id = set_sprite(id, mult_x + 16, 216, SPR_DIGIT + (m / 10), 3);
+        id = set_sprite(id, mult_x + 24, 216, SPR_DIGIT + (m % 10), 3);
     }
 
     // HUD - Score: bottom right row 2
