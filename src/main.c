@@ -2395,44 +2395,19 @@ static void draw_title(void) {
         }
     }
 
-    // "START" prompt (blinking) with car icon and exhaust smoke
-    {
-        unsigned char car_x = 84;
-        unsigned char car_y = 184;
-        unsigned char smoke_frame = (frame_count >> 3) & 0x07;  // 0-7, changes every 8 frames
+    // "START" prompt (blinking) with car icon
+    // Car always visible
+    id = set_car(id, 84, 184, SPR_CAR, 0);
 
-        // Always show car (not blinking)
-        id = set_car(id, car_x, car_y, SPR_CAR, 0);
-
-        // Exhaust smoke animation - puffs cycle through positions
-        // Creates illusion of smoke rising and fading
-        // Phase 0-1: puff 1 appears (white, close)
-        // Phase 2-3: puff 1 fades, puff 2 appears
-        // Phase 4-5: puff 2 fades, puff 3 appears
-        // Phase 6-7: puff 3 fades, restart
-        if (smoke_frame < 4) {
-            // Puff 1: closest to car (white)
-            id = set_sprite(id, car_x - 2, car_y + 12, SPR_SMOKE, 3);
-        }
-        if (smoke_frame >= 2 && smoke_frame < 6) {
-            // Puff 2: middle (gray/blue)
-            id = set_sprite(id, car_x - 6, car_y + 16, SPR_SMOKE, 0);
-        }
-        if (smoke_frame >= 4) {
-            // Puff 3: furthest (fading)
-            id = set_sprite(id, car_x - 10, car_y + 20, SPR_SMOKE, 0);
-        }
-
-        // START text (blinking)
-        if (frame_count & 0x20) {
-            y = 188;
-            x = 108;
-            id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
-            id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
-            id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
-            id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
-            id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
-        }
+    // START text (blinking)
+    if (frame_count & 0x20) {
+        y = 188;
+        x = 108;
+        id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
+        id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
+        id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
+        id = set_sprite(id, x + 24, y, SPR_LETTER + 17, 2);  // R
+        id = set_sprite(id, x + 32, y, SPR_LETTER + 19, 2);  // T
     }
 
     // "2026 FUBA" at bottom-center (no copyright symbol)
