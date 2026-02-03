@@ -1,133 +1,67 @@
-# NES Racing Danmaku
+# EDGERACE - Technical Documentation
 
-A NASCAR-style racing game with bullet hell (danmaku) elements for the Nintendo Entertainment System (NES/Famicom).
+For gameplay instructions and features, see the main [README.md](../README.md).
 
-## Play Online
+## Architecture Overview
 
-**[Play Now on GitHub Pages](https://fuba.github.io/nes-race-danmaku/)**
+### Main Components
 
-Works in browser with virtual controller support for mobile devices.
+- `src/main.c` - All game logic, rendering, and music in a single file
+- `src/crt0.s` - NES startup code and interrupt handlers
+- `src/nrom.cfg` - Linker configuration for NROM mapper
+- `tools/generate_chr.py` - Graphics tile generator
 
-## Game Rules
-
-### Objective
-- Start in **12th place** (last of 12 cars)
-- **Overtake enemies** by moving above them on screen
-- Complete **3 laps in 1st place** to win
-
-### Position System
-- Each enemy you overtake improves your position by 1
-- Overtake 11 cars to reach 1st place
-- If you finish 3 laps but not in 1st place: Game Over
-
-### Health System
-- Start with **5 HP**
-- Lose HP when hit by:
-  - Enemy bullets (danmaku patterns)
-  - Track obstacles
-  - Enemy car collision
-- **Recover 3 HP** on each lap completion
-- HP reaches 0: Game Over
-
-### Danmaku Patterns
-Enemy cars fire 8 different bullet patterns:
-1. Spread shot
-2. Aimed shot
-3. Spiral
-4. Ring burst
-5. Random scatter
-6. Stream
-7. Cross pattern
-8. Wave
-
-## Controls
-
-| Button | Action |
-|--------|--------|
-| D-Pad Up/Down | Move car vertically (overtake!) |
-| D-Pad Left/Right | Move car horizontally |
-| Start | Start game / Pause |
-
-### Keyboard (Browser)
-- Arrow keys: D-Pad
-- Z: A button
-- X: B button
-- Enter: Start
-- Shift: Select
-
-## Features
-
-- **12-car race** with position tracking
-- **8 danmaku bullet patterns**
-- **Music**: Title BGM, Racing BGM, Victory fanfare, Game Over theme
-- **Triangle wave bass** and pulse wave melodies
-- **Progress bar** showing lap progress
-- **Victory celebration** with confetti animation
-
-## Technical Specifications
-
-- **Mapper**: NROM-128 (Mapper 0)
-- **PRG-ROM**: 16KB
-- **CHR-ROM**: 8KB
-- **Mirroring**: Horizontal (for vertical scrolling)
-- **RAM**: 2KB internal
-
-## Building
-
-### Requirements
-
-- cc65 (6502 C compiler)
-- Python 3 (for CHR generation)
-- Make
-
-### Using Docker
-
-```bash
-docker run --rm -v "$PWD:/app" -w /app ubuntu:22.04 bash -c \
-  "apt-get update && apt-get install -y cc65 python3 make && make"
-```
-
-Output: `build/race.nes`
-
-### Local Build (if cc65 installed)
-
-```bash
-python3 tools/generate_chr.py build/tiles.chr
-make
-```
-
-## Testing
-
-Test with any NES emulator:
-- **FCEUX** (recommended for debugging)
-- **Mesen** (high accuracy)
-- **Nestopia**
-- **Bizhawk**
-
-Or play in browser via GitHub Pages link above.
-
-For hardware: Use flash cartridges like Everdrive N8 or PowerPak.
-
-## Project Structure
+### Memory Map
 
 ```
-race/
-├── .github/workflows/  # CI/CD (auto-build & deploy)
-├── src/
-│   ├── main.c          # Game logic + music engine
-│   ├── crt0.s          # Startup code
-│   └── nrom.cfg        # Linker configuration
-├── tools/
-│   └── generate_chr.py # Graphics generator
-├── web/
-│   ├── index.html      # Browser player (JSNES)
-│   └── race.nes        # ROM for web
-├── build/
-│   └── race.nes        # Built ROM
-└── doc/
-    └── README.md
+$0000-$07FF: Internal RAM (2KB)
+$6000-$7FFF: Battery-backed SRAM (8KB, used for high scores)
+$8000-$BFFF: PRG-ROM (16KB)
+$C000-$FFFF: PRG-ROM mirror
 ```
 
-## License
+### SRAM Layout ($6000-$7FFF)
 
-CC0 (Creative Commons Zero) - Public Domain
+```
+$6000: save_magic (validation marker)
+$6002-$6007: high_scores[3] (16-bit each, low word)
+$6008-$600D: high_scores_high[3] (16-bit each, high word)
+$600E-$6016: high_names[3][3] (3-letter names)
+$6017: max_loop (highest loop completed)
+$6018: title_select_loop (selected starting loop)
+```
+
+### Sprite System
+
+- 64 sprites maximum (NES hardware limit)
+- Player car: 4 sprites (16x16)
+- Enemy cars: 4 sprites each (16x16, max 3 enemies = 12 sprites)
+- Bullets: 1 sprite each (max 48 bullets)
+- HUD elements use remaining sprites
+
+### Music Engine
+
+Simple sequencer using NES APU:
+- Triangle channel: Bass line
+- Pulse 1: Melody
+- Pulse 2: Harmony / SFX
+- Noise: Percussion / SFX
+
+Tracks:
+- Title BGM, Racing BGM (3 variations), Boss BGM (3 variations)
+- Victory fanfare, Game Over theme
+
+### Build Process
+
+1. `generate_chr.py` creates tile graphics (8KB CHR-ROM)
+2. `cc65` compiles C to 6502 assembly
+3. `ca65` assembles startup code and compiled output
+4. `ld65` links everything into PRG-ROM binary
+5. CHR-ROM appended to create final .nes file
+
+### Version History
+
+- V5.0: Title screen improvements, graze exploit fix
+- V5.1: High score ranking order fix
+- V5.2: Enemy car graze destruction system
+- V5.3: Improved enemy car mechanics (tighter hitbox, visible 1st place retreat)

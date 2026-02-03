@@ -61,10 +61,17 @@ Works in browser with virtual controller support for mobile devices.
 
 ### Graze System
 - **Graze enemy bullets**: Score multiplier +1!
-- **Graze enemy cars**: Multiplier x2!
 - **HP Recovery**: Every 20 bullet grazes restores +1 HP
 - Chain grazes for ASTRONOMICAL scores!
 - Score per graze = multiplier × 2^(loop number)
+
+### Enemy Car Destruction
+- **Enemy cars have 2 HP**
+- **Side graze**: Deal 1 HP damage (bump sound effect)
+- **Destroy enemy** (2 grazes): Multiplier x2 bonus!
+- Destroyed cars slow down and scroll off screen
+- Destroyed enemies stop shooting and can't damage you
+- Risk/reward: Get close for big multiplier gains!
 
 ### Position System
 - Each enemy you overtake improves your position by 1
@@ -95,7 +102,8 @@ Works in browser with virtual controller support for mobile devices.
 - Only one boss spawns at a time
 
 ### 1st Place Challenge
-- When in 1st place, danmaku comes from **behind** (bottom of screen)
+- When you overtake 1st place, the enemy **retreats visibly** while shooting
+- After the enemy scrolls off, danmaku comes from **behind** (bottom of screen)
 - Sweeping wave patterns to test your skills
 - Survive 3 laps to complete the loop!
 
