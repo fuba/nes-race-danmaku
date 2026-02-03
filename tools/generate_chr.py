@@ -644,6 +644,18 @@ COPYRIGHT = [
     "00111100",
 ]
 
+# Heart symbol for HP display
+HEART = [
+    "01100110",
+    "11111111",
+    "11111111",
+    "11111111",
+    "01111110",
+    "00111100",
+    "00011000",
+    "00000000",
+]
+
 # Explosion sprite
 EXPLOSION = [
     "00100100",
@@ -992,6 +1004,8 @@ def main():
         sprites.append((0x30 + i, letter))  # Changed to 0x30 for SPR_LETTER
     # Copyright symbol at 0x4A (after Z at 0x49)
     sprites.append((0x4A, COPYRIGHT))
+    # Heart symbol at 0x4B for HP display
+    sprites.append((0x4B, HEART))
 
     # Note: LAP display simplified to "LX" format, slash not needed
 

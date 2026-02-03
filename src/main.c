@@ -104,6 +104,7 @@
 #define SPR_DIGIT       0x10
 #define SPR_LETTER      0x30
 #define SPR_COPYRIGHT   0x4A    // (C) symbol
+#define SPR_HEART       0x4B    // Heart symbol for HP
 #define SPR_BOSS        0x60    // Boss/Elite enemy car
 
 // NMI flag from crt0.s (set by NMI handler, cleared by main loop)
@@ -2099,11 +2100,11 @@ static void draw_game(void) {
     // Row 2 (Y=216): Progress indicator (left-center), Multiplier (right)
     // Row 3 (Y=224): Score (right)
 
-    // HUD - HP (3 sprites) - top right
+    // HUD - HP (3 sprites) - top right: ❤XX
     {
         unsigned char hp = player_hp;
         if (hp > 99) hp = 99;  // Cap display at 99
-        id = set_sprite(id, 208, HUD_TOP_Y, SPR_LETTER + 7, 3);  // H
+        id = set_sprite(id, 208, HUD_TOP_Y, SPR_HEART, 1);  // Red heart
         id = set_sprite(id, 216, HUD_TOP_Y, SPR_DIGIT + (hp / 10), 3);
         id = set_sprite(id, 224, HUD_TOP_Y, SPR_DIGIT + (hp % 10), 3);
     }
