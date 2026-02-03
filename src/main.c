@@ -2292,7 +2292,7 @@ static void draw_game(void) {
 // Draw title screen
 static void draw_title(void) {
     unsigned char id = 0;
-    unsigned char x = 96, y = 48;
+    unsigned char x = 96, y = 40;
     unsigned char i;
     unsigned int s;
 
@@ -2314,16 +2314,11 @@ static void draw_title(void) {
     id = set_sprite(id, x + 24, y + 12, SPR_LETTER + 2,  1);  // C
     id = set_sprite(id, x + 32, y + 12, SPR_LETTER + 4,  1);  // E
 
-    // Blinking car below title
-    if (frame_count & 0x20) {
-        id = set_car(id, x + 12, y + 36, SPR_CAR, 0);
-    }
-
     // High scores display (2 lines per entry to avoid 8-sprite limit)
     // Line 1: Rank + Name (4 sprites, 40px wide, centered)
     // Line 2: Score (6 sprites, 48px wide, centered)
     for (i = 0; i < NUM_HIGH_SCORES; ++i) {
-        unsigned char y_base = 118 + i * 20;  // 118, 138, 158
+        unsigned char y_base = 110 + i * 20;  // 110, 130, 150
 
         // Line 1: Rank + Name (4 sprites) - centered at X=108
         y = y_base;
@@ -2377,7 +2372,7 @@ static void draw_title(void) {
     // Loop selection (only show if player has completed at least 1 loop)
     // Positioned above high scores, centered
     if (max_loop > 0) {
-        y = 92;
+        y = 84;
         x = 100;  // Centered: "LOOP X" is ~48px, start at 104
         // "LOOP" label
         id = set_sprite(id, x,      y, SPR_LETTER + 11, 3);  // L
@@ -2399,10 +2394,13 @@ static void draw_title(void) {
         }
     }
 
-    // "START" prompt (blinking) - centered (40px wide)
+    // "START" prompt (blinking) with car icon - centered
     if (frame_count & 0x20) {
-        y = 196;
+        y = 188;
         x = 108;  // Centered: 128 - 20 = 108
+        // Car icon to the left of START
+        id = set_car(id, x - 24, y - 4, SPR_CAR, 0);
+        // START text
         id = set_sprite(id, x,      y, SPR_LETTER + 18, 2);  // S
         id = set_sprite(id, x + 8,  y, SPR_LETTER + 19, 2);  // T
         id = set_sprite(id, x + 16, y, SPR_LETTER + 0,  2);  // A
@@ -2411,7 +2409,7 @@ static void draw_title(void) {
     }
 
     // "2026 FUBA" at bottom-center (no copyright symbol)
-    y = 224;
+    y = 216;
     x = 88;  // Centered: 128 - 40 = 88
     id = set_sprite(id, x,      y, SPR_DIGIT + 2, 3);    // 2
     id = set_sprite(id, x + 8,  y, SPR_DIGIT + 0, 3);    // 0
