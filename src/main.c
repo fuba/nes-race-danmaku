@@ -2032,16 +2032,16 @@ static void draw_game(void) {
 
             id = set_car(id, ex, ey, tile, pal);
 
-            // Draw rank number above enemy car (yellow for visibility)
-            if (ey >= 16 && id < 60) {  // Make sure there's room above
-                unsigned char rank_y = ey - 10;
+            // Draw rank number ON enemy car (centered on car body)
+            if (id < 60) {
+                unsigned char rank_y = ey + 4;  // Center vertically on car
                 if (rank >= 10) {
-                    // Two digits: "1X"
-                    id = set_sprite(id, ex + 2, rank_y, SPR_DIGIT + 1, 2);
-                    id = set_sprite(id, ex + 10, rank_y, SPR_DIGIT + (rank - 10), 2);
+                    // Two digits: "1X" centered
+                    id = set_sprite(id, ex + 1, rank_y, SPR_DIGIT + 1, 2);
+                    id = set_sprite(id, ex + 9, rank_y, SPR_DIGIT + (rank - 10), 2);
                 } else {
-                    // Single digit centered
-                    id = set_sprite(id, ex + 6, rank_y, SPR_DIGIT + rank, 2);
+                    // Single digit centered on car
+                    id = set_sprite(id, ex + 4, rank_y, SPR_DIGIT + rank, 2);
                 }
             }
         }
