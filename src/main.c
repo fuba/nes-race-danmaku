@@ -131,6 +131,8 @@ static unsigned char enemy_y[MAX_ENEMIES];
 static unsigned char enemy_on[MAX_ENEMIES];
 static unsigned char enemy_passed[MAX_ENEMIES];
 static unsigned char enemy_rank[MAX_ENEMIES];  // Position/rank of this enemy (1-11)
+static unsigned char enemy_hp[MAX_ENEMIES];    // HP (2 = full, 0 = destroyed)
+static unsigned char enemy_destroyed[MAX_ENEMIES]; // Destroyed flag (slowing down)
 static unsigned char enemy_next_x;     // Next enemy spawn X position
 static unsigned char enemy_warn_timer; // Warning countdown before spawn
 static unsigned char enemy_slot;       // Next enemy slot to use
@@ -669,6 +671,8 @@ static unsigned char sfx_damage_timer;
 static unsigned int sfx_damage_pitch;
 // Low HP warning beep timer
 static unsigned char sfx_lowhp_timer;
+// Bump SFX timer (car-to-car side collision)
+static unsigned char sfx_bump_timer;
 
 // Play graze sound effect (short metallic scrape)
 static void sfx_graze(void) {
@@ -681,11 +685,17 @@ static void sfx_damage(void) {
     sfx_damage_pitch = 200; // Start at mid-high pitch
 }
 
+// Play bump sound effect (car-to-car side collision)
+static void sfx_bump(void) {
+    sfx_bump_timer = 6;  // 6 frames duration (quick thud)
+}
+
 // Stop all SFX (call on scene transitions)
 static void sfx_stop(void) {
     sfx_graze_timer = 0;
     sfx_damage_timer = 0;
     sfx_lowhp_timer = 0;
+    sfx_bump_timer = 0;
     APU_NOI_VOL = 0x30;  // Silence noise channel
 }
 
@@ -719,6 +729,14 @@ static void update_sfx(void) {
             APU_PL2_HI = 0x00;
         }
         --sfx_lowhp_timer;
+    }
+    // Bump SFX - low thud noise for car-to-car collision
+    if (sfx_bump_timer > 0) {
+        // Low-pitched noise burst (metallic thud)
+        APU_NOI_VOL = 0x3E;   // Volume 14
+        APU_NOI_LO = 0x06;    // Low frequency noise (deeper thud)
+        APU_NOI_HI = 0x08;
+        --sfx_bump_timer;
     }
 }
 
@@ -1244,6 +1262,8 @@ static void spawn_enemy(void) {
     enemy_on[slot] = 1;
     enemy_passed[slot] = 0;
     enemy_rank[slot] = enemy_next_rank;  // Assign unique rank
+    enemy_hp[slot] = 2;  // 2 HP - can take 2 grazes to destroy
+    enemy_destroyed[slot] = 0;  // Not destroyed yet
     enemy_next_rank--;  // Next enemy gets lower rank
     enemy_warn_timer = 0;
     // Cycle through slots (can't use bitwise AND since MAX_ENEMIES is not power of 2)
@@ -1432,9 +1452,10 @@ static void spawn_danmaku(void) {
         return;
     }
 
-    // Each enemy shoots
+    // Each enemy shoots (destroyed enemies can't shoot)
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (!enemy_on[i]) continue;
+        if (enemy_destroyed[i]) continue;  // Destroyed enemies don't shoot
         if (enemy_y[i] < 24 && enemy_y[i] < player_y) continue;
 
         cx = enemy_x[i] + 8;
@@ -1881,8 +1902,19 @@ static void update_enemy(void) {
     for (i = 0; i < MAX_ENEMIES; ++i) {
         if (!enemy_on[i]) continue;
 
-        // Speed depends on whether enemy is ahead or behind player
-        if (enemy_passed[i]) {
+        // Destroyed enemies slow down dramatically and scroll off
+        if (enemy_destroyed[i]) {
+            // Move down very fast (appears to fall behind rapidly)
+            enemy_y[i] += 4;
+            // Mark as passed if not already (they're out of the race)
+            if (!enemy_passed[i]) {
+                enemy_passed[i] = 1;
+                add_score(20 * score_multiplier);  // Still award overtake points
+                if (position > 1) --position;
+            }
+        }
+        // Normal movement for non-destroyed enemies
+        else if (enemy_passed[i]) {
             // Behind player: double speed (2 pixels/frame)
             enemy_y[i] += 2;
         } else if (enemy_rank[i] < 3) {
@@ -1939,9 +1971,9 @@ static unsigned char check_collisions(void) {
 
     if (player_inv > 0) return 0;
 
-    // Enemy collisions - damage check first
+    // Enemy collisions - damage check first (skip destroyed enemies)
     for (i = 0; i < MAX_ENEMIES; ++i) {
-        if (enemy_on[i]) {
+        if (enemy_on[i] && !enemy_destroyed[i]) {
             dx = abs_diff(player_x, enemy_x[i]);
             dy = abs_diff(player_y, enemy_y[i]);
 
@@ -1964,9 +1996,10 @@ static unsigned char check_collisions(void) {
         }
     }
 
-    // Graze check only if no damage
+    // Enemy car graze check - deals HP damage, destroy for bonus
     for (i = 0; i < MAX_ENEMIES; ++i) {
-        if (enemy_on[i]) {
+        // Only active, non-destroyed enemies can be grazed
+        if (enemy_on[i] && !enemy_destroyed[i]) {
             dx = abs_diff(player_x, enemy_x[i]);
             dy = abs_diff(player_y, enemy_y[i]);
 
@@ -1975,14 +2008,23 @@ static unsigned char check_collisions(void) {
             if (!(dx < 10 && dy < 10) &&
                 car_graze_cooldown == 0 &&
                 ((dx < 20 && dy < 32) || (dx < 28 && dy < 20))) {
-                // Double the multiplier (max 65535)
-                if (score_multiplier <= 32767u) {
-                    score_multiplier *= 2;
-                } else {
-                    score_multiplier = 65535u;
+                // Deal 1 HP damage to enemy car
+                if (enemy_hp[i] > 0) {
+                    --enemy_hp[i];
+                    sfx_bump();  // Car-to-car collision sound
+                    car_graze_cooldown = 30;  // Half second cooldown
+
+                    // Check if destroyed
+                    if (enemy_hp[i] == 0) {
+                        enemy_destroyed[i] = 1;  // Mark as destroyed (will slow down)
+                        // Double the multiplier as reward (max 65535)
+                        if (score_multiplier <= 32767u) {
+                            score_multiplier *= 2;
+                        } else {
+                            score_multiplier = 65535u;
+                        }
+                    }
                 }
-                sfx_graze();
-                car_graze_cooldown = 30;  // Half second cooldown
             }
         }
     }
@@ -2336,11 +2378,11 @@ static void draw_title(void) {
     unsigned char i;
     unsigned int s;
 
-    // Version "V5.1" at top-right (4 sprites)
+    // Version "V5.2" at top-right (4 sprites)
     id = set_sprite(id, 216, 8, SPR_LETTER + 21, 3);  // V
     id = set_sprite(id, 224, 8, SPR_DIGIT + 5, 3);    // 5
     id = set_sprite(id, 232, 8, SPR_DOT, 3);          // .
-    id = set_sprite(id, 240, 8, SPR_DIGIT + 1, 3);    // 1
+    id = set_sprite(id, 240, 8, SPR_DIGIT + 2, 3);    // 2
 
     // "EDGE" - top line (blue, player color)
     id = set_sprite(id, x,      y, SPR_LETTER + 4,  0);  // E
