@@ -2250,19 +2250,6 @@ static void draw_title(void) {
     id = set_sprite(id, x + 16, y, SPR_DIGIT + 0, 3);    // 0
     id = set_sprite(id, x + 24, y, SPR_DIGIT + 6, 3);    // 6
 
-    // Copyright "(C) 2026 FUBA" at bottom-center
-    y = 220;
-    x = 84;
-    id = set_sprite(id, x,      y, SPR_COPYRIGHT, 3);    // (C)
-    id = set_sprite(id, x + 16, y, SPR_DIGIT + 2, 3);    // 2
-    id = set_sprite(id, x + 24, y, SPR_DIGIT + 0, 3);    // 0
-    id = set_sprite(id, x + 32, y, SPR_DIGIT + 2, 3);    // 2
-    id = set_sprite(id, x + 40, y, SPR_DIGIT + 6, 3);    // 6
-    id = set_sprite(id, x + 56, y, SPR_LETTER + 5, 3);   // F
-    id = set_sprite(id, x + 64, y, SPR_LETTER + 20, 3);  // U
-    id = set_sprite(id, x + 72, y, SPR_LETTER + 1, 3);   // B
-    id = set_sprite(id, x + 80, y, SPR_LETTER + 0, 3);   // A
-
     // Hide rest
     while (id < 64) {
         OAM[id * 4] = 0xFF;

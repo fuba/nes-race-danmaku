@@ -125,5 +125,3 @@ Or play in browser via GitHub Pages link above.
 CC0 (Creative Commons Zero) - Public Domain
 
 ---
-
-**(C) 2026 FUBA**
