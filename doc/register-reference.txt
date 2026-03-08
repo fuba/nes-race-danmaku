@@ -1,0 +1,242 @@
+EDGERACE - レジスタ・メモリマップ リファレンス
+================================================
+
+■ NES メモリマップ概要
+──────────────────────────────────────────────
+$0000-$07FF  内部RAM (2KB)
+$0800-$1FFF  (ミラー/未使用)
+$2000-$3FFF  PPU I/Oレジスタ (ミラーあり)
+$4000-$401F  APU・I/Oレジスタ
+$4020-$5FFF  (カートリッジ拡張領域)
+$6000-$7FFF  バッテリーバックアップSRAM (8KB)
+$8000-$BFFF  PRG-ROM (16KB)
+$C000-$FFFF  PRG-ROMミラー
+
+
+■ ハードウェアレジスタ
+──────────────────────────────────────────────
+
+◆ PPU (Picture Processing Unit)
+$2000  PPU_CTRL    NMI有効、スプライトサイズ、ネームテーブル選択等
+$2001  PPU_MASK    スプライト/BG表示、クリッピング
+$2002  PPU_STATUS  VBlankフラグ、スプライトオーバーフロー
+$2003  OAM_ADDR    OAMアドレスポート
+$2004  OAM_DATA    OAMデータポート
+$2005  PPU_SCROLL  スクロール位置 (X→Y の順に書き込み)
+$2006  PPU_ADDR    VRAMアドレス (上位→下位)
+$2007  PPU_DATA    VRAMデータポート
+$4014  OAM_DMA     スプライトDMA ($02を書き込み→$0200-$02FF転送)
+
+◆ APU (Audio Processing Unit)
+$4000  APU_PL1_VOL  パルス1 デューティ/ループ/エンベロープ/音量
+$4001  APU_PL1_SWP  パルス1 スウィープ
+$4002  APU_PL1_LO   パルス1 タイマー下位
+$4003  APU_PL1_HI   パルス1 長さ/タイマー上位
+$4004  APU_PL2_VOL  パルス2 デューティ/ループ/エンベロープ/音量
+$4005  APU_PL2_SWP  パルス2 スウィープ
+$4006  APU_PL2_LO   パルス2 タイマー下位
+$4007  APU_PL2_HI   パルス2 長さ/タイマー上位
+$4008  APU_TRI_LIN  三角波 リニアカウンタ
+$400A  APU_TRI_LO   三角波 タイマー下位
+$400B  APU_TRI_HI   三角波 長さ/タイマー上位
+$400C  APU_NOI_VOL  ノイズ ループ/エンベロープ/音量
+$400E  APU_NOI_LO   ノイズ モード/周期
+$400F  APU_NOI_HI   ノイズ 長さ
+$4015  APU_STATUS   APUステータス (各チャンネル有効フラグ)
+$4017  APU_FRAME    APUフレームカウンタ
+
+◆ コントローラ入力
+$4016  JOYPAD1  コントローラ1 (bit0=ボタン状態)
+$4017  JOYPAD2  コントローラ2
+
+  ボタンビット配置:
+  bit7 (0x80): A
+  bit6 (0x40): B
+  bit5 (0x20): Select
+  bit4 (0x10): Start
+  bit3 (0x08): Up
+  bit2 (0x04): Down
+  bit1 (0x02): Left
+  bit0 (0x01): Right
+
+
+■ PPU VRAMアドレス
+──────────────────────────────────────────────
+$2000  ネームテーブルA (BG画面)
+$2400  ネームテーブルB
+$2800  ネームテーブルC
+$2C00  ネームテーブルD
+$3F00  BGパレット (16バイト)
+$3F10  スプライトパレット (16バイト)
+
+
+■ ゼロページ変数 ($0002-$001B)
+──────────────────────────────────────────────
+cc65ランタイム用:
+$0002-$0003  sp    Cスタックポインタ
+$0004-$0005  ptr1  汎用ポインタ1
+$0006        tmp1  一時変数1
+$0007        tmp2  一時変数2
+$0008        tmp3  一時変数3
+$0009        tmp4  一時変数4
+$000A-$001B  (cc65内部使用)
+
+
+■ OAMバッファ ($0200-$02FF)
+──────────────────────────────────────────────
+64スプライト × 4バイト:
+  +0: Y座標 (0-239, $FFで非表示)
+  +1: タイルインデックス
+  +2: 属性 (VHP---CC)
+       V=垂直反転, H=水平反転, P=優先度, CC=パレット
+  +3: X座標 (0-255)
+
+スプライト割り当て:
+$0200-$020F  (0-3)   プレイヤーカー (16×16, 4スプライト)
+$0210-$021F  (4-7)   敵車0
+$0220-$022F  (8-11)  敵車1
+$0230-$023F  (12-15) 敵車2
+$0240-$02BF  (16-47) 弾丸 (最大32個)
+$02C0-$02FF  (48-63) HUD要素 (スコア、HP、順位等)
+
+
+■ ゲーム変数 (BSSセグメント)
+──────────────────────────────────────────────
+
+◆ ゲーム状態
+$0325  game_state     状態 (0=タイトル, 1=レース, 2=ゲームオーバー,
+                       3=勝利, 4=ポーズ, 5=ハイスコア入力,
+                       6=ループクリア, 7=爆発, 8=フィニッシュ)
+$0326  frame_count    フレームカウンタ (0-255, ラップ)
+$0327  scroll_y       BG縦スクロール位置
+
+◆ 入力
+$0328  pad_now        現在のボタン状態
+$0329  pad_old        前フレームのボタン状態
+$032A  pad_new        今フレームで新しく押されたボタン
+
+◆ プレイヤー
+$032B  player_x       X座標 (40-216, 道路範囲)
+$032C  player_y       Y座標 (通常200固定)
+$032D  player_hp      HP (0-100, 0でゲームオーバー)
+$032E  player_inv     無敵フレーム残り
+
+◆ 敵車 (各3個分)
+$032F  enemy_x[3]     敵X座標
+$0332  enemy_y[3]     敵Y座標
+$0335  enemy_on[3]    敵アクティブフラグ (0/1)
+$0338  enemy_passed[3]   追い越しフラグ
+$033B  enemy_rank[3]     敵ランク (1-11, 1-3=ボス)
+$033E  enemy_hp[3]       敵HP (2=満タン, 0=破壊)
+$0341  enemy_destroyed[3] 破壊/減速フラグ
+$0344  enemy_next_x      次の敵出現X座標
+$0345  enemy_warn_timer  出現警告タイマー
+$0346  enemy_slot        次に使う敵スロット (0-2)
+$0347  enemy_next_rank   次に割り当てるランク (11→1)
+
+◆ 爆発/リタイア演出
+$0348  explode_x      爆発X座標
+$0349  explode_y      爆発Y座標
+$034A  explode_timer  アニメーションタイマー
+
+◆ レース進行
+$034B  position        現在の順位 (1-12)
+$034C  lap_count       現在の周回 (0-2, 3で勝利)
+$034D  loop_count      現在のループ (0=Loop1, 1=Loop2...)
+$034E  score (2B)      スコア下位16bit (リトルエンディアン)
+$0350  score_high (2B) スコア上位16bit
+$0352  distance (2B)   ラップ内走行距離
+$0354  score_multiplier (2B) スコア倍率
+$0356  graze_count     弾グレイズ回数 (20でHP回復)
+$0357  car_graze_cooldown  車グレイズクールダウン
+$0358  boost_remaining ブースト残数 (最大2)
+$0359  boost_active    ブースト中フラグ
+$035A  boss_music_active ボスBGM再生中フラグ
+
+◆ 弾丸システム (各48個分)
+$035B  bullet_x[48]     弾X座標
+$038B  bullet_y[48]     弾Y座標
+$03BB  bullet_dx[48]    弾X速度 (符号付き)
+$03EB  bullet_dy[48]    弾Y速度 (符号付き)
+$041B  bullet_on[48]    弾アクティブフラグ
+$044B  bullet_grazed[48] グレイズ済みフラグ
+$047B  bullet_timer     弾発射タイマー
+$047C  bullet_next      次の弾スロット (0-47循環)
+$047D  burst_phase      バーストパターン位相 (0-79)
+
+◆ その他
+$047E  rnd_seed          乱数シード
+$047F  win_timer         勝利アニメタイマー
+$0480  loop_clear_timer  ループクリア演出タイマー
+$0481  confetti_x[8]     紙吹雪X座標
+$0489  confetti_y[8]     紙吹雪Y座標
+$0491  confetti_color[8] 紙吹雪色
+
+◆ ネームエントリー
+$0499  name_entry_pos   入力中の文字位置 (0-2)
+$049A  name_entry_char  選択中の文字 (0-25=A-Z)
+$049B  entry_name[3]    入力中の名前 (3文字)
+$049E  new_score_rank   達成ランク (0-2)
+$049F  title_select_loop 選択中の開始ループ
+
+◆ 音楽/効果音
+$04A0  music_enabled     音楽有効フラグ
+$04A1  music_frame       音楽フレームカウンタ
+$04A2  music_pos         音楽シーケンス位置
+$04A3  music_tempo       テンポ
+$04A4  current_track     現在のトラック番号
+$04A8  sfx_graze_timer   グレイズSEタイマー
+$04A9  sfx_damage_timer  ダメージSEタイマー
+$04AC  sfx_lowhp_timer   低HPワーニングタイマー
+$04AD  sfx_bump_timer    バンプSEタイマー
+
+
+■ バッテリーバックアップSRAM ($6000-$6018)
+──────────────────────────────────────────────
+$6000  save_magic          検証バイト (0x52で有効)
+$6001  high_scores[3] (6B) 上位3件スコア下位 (各2バイト)
+$6007  high_scores_high[3] (6B) 上位3件スコア上位 (各2バイト)
+$600D  high_names[3][3] (9B)    3文字の名前 (各3バイト)
+$6016  max_loop            最高到達ループ
+$6017  title_select_loop   選択中の開始ループ
+
+
+■ ゲーム定数
+──────────────────────────────────────────────
+
+◆ 画面レイアウト
+ROAD_LEFT      = 40    道路左端
+ROAD_RIGHT     = 216   道路右端
+SCREEN_HEIGHT  = 240   画面高さ
+
+◆ プレイヤー
+PLAYER_START_X = 120   初期X座標
+PLAYER_START_Y = 200   初期Y座標
+PLAYER_SPEED   = 2     移動速度 (px/frame)
+PLAYER_START_HP= 5     初期HP
+PLAYER_MAX_HP  = 100   最大HP
+
+◆ 敵・弾丸
+MAX_ENEMIES    = 3     同時出現最大敵数
+MAX_BULLETS    = 48    同時存在最大弾数
+SCROLL_SPEED   = 2     BGスクロール速度 (px/frame)
+
+◆ レース
+LAP_DISTANCE   = 700   1周の距離
+SAVE_MAGIC     = 0x52  SRAM検証バイト ('R')
+
+◆ スプライトタイルインデックス
+SPR_CAR       = $00   プレイヤーカー
+SPR_ENEMY     = $04   通常敵車
+SPR_BOSS      = $60   ボス/エリート車
+SPR_BULLET    = $0B   弾丸 (ダイヤ型)
+SPR_EXPLOSION = $0E   爆発アニメ
+SPR_DIGIT     = $10   数字
+SPR_LETTER    = $30   アルファベット
+SPR_HEART     = $4B   HP表示
+SPR_SMOKE     = $4D   排気煙
+
+◆ BGタイルインデックス
+TILE_ROAD     = $01   道路
+TILE_GRASS    = $02   草
+TILE_LINE     = $03   道路ライン
